@@ -1,114 +1,34 @@
-# Stargaze Names Deployment Scripts
+# Bitsong NFT Scripts
 
-## Requirements
+## Contents
+This library contains both Rust & Bash scripts for the BS-NFT repository.
 
-- `starsd` binary installed
-- Environment variable manager like [dotenv](https://github.com/motdotla/dotenv)
 
-## Deploy Contracts
+| Name | Language | Version | Description |
+|----------|----------|----------|----------|
+| [**Testing Suite**](./src/test/mod.rs) | `Rust`   | `tbd`  | Integration test suite for all contracts.  |
+| [**Cw-Orch Deployment** ](./src/deploy/mod.rs)  | `Rust`   | `tbd`   | Used for production and simulation environment contract deployment workflows.  |
+| **Bitsong Account Framework Deployment**  | `Rust` |`tbd`  | Automation scripts for deployment of smart contract and IBC infrastructure that powers Bitsong Accounts.   |
 
-`cp .env.example .env` and modify for your setup.
 
-### Step 1: Upload code to chain
+## Current Orchestrator Suites
+| Suite Name | Description |
+|----------|----------|
+| [`BtsgAccountSuite`](./src/deploy/bundles/account.rs#12)| Account Collection, Marketplace, and Minter. |
 
-Download the latest WASM code from [releases](https://github.com/public-awesome/names/releases).
 
-Alternatively, run `00-download.sh`.
 
-`./01-store.sh`
-
-Update `.env` with code ids.
-
-### Step 2: Instantiate Marketplace
-
-`./02-init_mkt.sh`
-
-Update `.env` with Marketplace address (`MKT`).
-
-### Step 3: Instantiate Minter + Collection
-
-`./03-init_minter.sh`
-
-Update `.env` with both the minter and collection addresses (`MINTER` and `COLLECTION`).
-
-You can verify the correct addresses with the query helpers.
-
-```sh
-./query_col.sh
-./query_minter.sh
-```
-
-Since the minter and collection addresses are output at the same time, it might be difficult to know which is which. Try one of them for `MINTER` and perform the above queries. If they fail, switch around the minter and collection.
-
-### Step 4: Setup Marketplace
-
-Marketplace has to be setup with the minter and collection addresses.
-
-```sh
-./04-exec_mkt_setup.sh
-```
-
-Verify it was setup correctly with:
-
-```sh
-./query_mkt.sh
-```
-
-You should see the minter and collection addresses.
-
-## Profit!
-
-### Execute a mint
-
-```sh
-./exec_mint.sh [name]
-```
-
-### Associate name with an address
-
-```sh
-./exec_assoc.sh [name]
-```
-
-Reverse lookup:
-
-```sh
-./query_lookup.sh
-```
-
-Query name metadata:
-
-```sh
-./query_metadata.sh [name]
-```
-
-### Place a bid
-
-```
-./exec_bid.sh [name] [price (in STARS)]
-```
-
-### Accept a bid
-
-```
-./exec_accept_bid.sh [name] [bidder] [price (in STARS)]
-```
-
-## Whitelists
-
-Instantiate as many whitelists as needed.
-
-Pause minting, then add/remove whitelists as needed for the next wave. Then resume minting.
-
-## Deploying with a Multisig
-
-These scripts optionally work with a multisig admin.
-
-Update env vars to support them:
-
-```
-ADMIN_MULTISIG=true
-MULTISIG_NAME=admin
-```
-
-Now when you run the instantiate scripts, it'll use the `admin` multisig address, and generate `unsignedTx.json` and your signed version as `$USER.json`. Please share `$USER.json` with others in the multisig, and finally broadcast the tx with `broadcast.sh [signed1.json] [signed2.json] [signed3.json]`.
+## Commands 
+| Command | Description |
+|----------|----------|
+| `cargo test` | Run all test in codebase |
+| `sh build_shema.sh` | Build cosmwasm schemas for each contract in codebase |
+| `cargo run --bin connect-ibc` | Connect IBC between two chains. |
+| `cargo run --bin create-remote-account` | Creates remote bitsong account between 2 chains |
+| `cargo run --bin deploy-ibc` | Deploy IBC client & host contracts, register to version control contract. |
+| `cargo run --bin deploy-modules` | Deploy default account modules & adapters |
+| `cargo run --bin full-deploy` | Deploy & register default account framework contracts. |
+| `cargo run --bin ibc-test` | Test ibc connection of bitsong accounts between 2 chains |
+| `cargo run --bin manual-deploy -- --network-ids <network-id-1> <network-id-2> ... ` | Manual deployment of account framework |
+<!-- | `cargo run --bin migrate` | Test ibc connection of bitsong accounts between 2 chains | -->
+<!-- | `sh simulate.sh` | Simulate bs721-bonding-curve iterations | -->

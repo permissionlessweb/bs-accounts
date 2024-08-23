@@ -1,0 +1,18 @@
+[package]
+name = "btsg-cw-orch"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+version.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+cw-orch.workspace = true
+cosmwasm-std.workspace = true
+serde.workspace     = true
+bs721-account.workspace = true
+btsg-account.workspace = true
+bs721-account-marketplace    = { version = "0.1.0-alpha.1", path = "../../contracts/account-market" }
+bs721-account-minter.workspace = true
+

@@ -9,52 +9,32 @@ homepage   = "https://stargaze.zone"
 repository = "https://github.com/public-awesome/names"
 license    = "Apache-2.0"
 
+
 [workspace.dependencies]
-cosmwasm-schema  = "1.2.1"
-cosmwasm-std     = "1.2.1"
-cw2              = "1.1.2"
-cw721            = "0.16.0"
-cw721-base       = "0.16.0"
-cw-controllers   = "0.16.0"
-cw-multi-test    = "0.16.0"
-cw-storage-macro = "0.16.0"
-cw-storage-plus  = "0.16.0"
-cw-utils         = "0.16.0"
-schemars         = "0.8.11"
-semver           = "1"
-serde            = { version = "1.0.145", default-features = false, features = ["derive"] }
-sg1              = "0.22.9"
-sg721            = "0.22.9"
-sg721-base       = "0.22.9"
-sg-controllers   = "0.22.9"
-sg-metadata      = "0.22.9"
-sg-multi-test    = "0.22.9"
-sg-std           = "0.22.9"
-thiserror        = "1.0.31"
-sg-name-common   = { path = "./packages/sg-name-common" }
-sg-name          = { path = "./packages/sg-name" }
-sg-name-market   = { path = "./packages/sg-name-market" }
-sg-name-minter   = { path = "./packages/sg-name-minter" }
-name-marketplace = { path = "./contracts/marketplace", features = ["library"] }
-name-minter      = { path = "./contracts/name-minter", features = ["library"] }
-sg721-name       = { path = "./contracts/sg721-name", features = ["library"] }
-
-[profile.release.package.name-minter]
-codegen-units = 1
-incremental   = false
-
-[profile.release.package.sg721-name]
-codegen-units = 1
-incremental   = false
-
-[profile.release.package.name-marketplace]
-codegen-units = 1
-incremental   = false
-
-[profile.release]
-rpath            = false
-lto              = true
-overflow-checks  = true
-opt-level        = 3
-debug            = false
-debug-assertions = false
+anyhow                       = { version = "1.0" }
+bs721                        = { git = "https://github.com/permissionlessweb/bs-nft.git", rev = "68c0af1b5ffd483d5495d703dda51be3fbb5188c" }
+bs721-base                   = { git = "https://github.com/permissionlessweb/bs-nft.git", rev = "68c0af1b5ffd483d5495d703dda51be3fbb5188c" }
+bs721-account                = { version = "0.1.0-alpha.1", path = "./contracts/bs721-account" }
+bs721-account-minter         = { version = "0.1.0-alpha.1", path = "./contracts/account-minter" }
+bs721-account-marketplace    = { version = "0.1.0-alpha.1", path = "./contracts/account-market" }
+btsg-account                 = { version = "0.1.0-rc1", path = "./packages/btsg-account" }
+bs-controllers               = { version = "0.1.0-rc1", path = "./packages/controllers" }
+btsg-cw-orch                 = { version = "0.1.0-rc1", path = "./packages/cw-orch" }
+cosmwasm-schema              = "1.1.5"
+cosmwasm-std                 = "1.1.5"
+cw-controllers               = { version = "1.1.2" }
+cw2                          = "1.1"
+cw20                         = "0.16.0"
+cw721                        = "0.18.0"
+cw721-base                   = "0.18.0"
+cw-multi-test                = "1.1.0"
+cw-orch                      = "0.24.1"
+cw-ownable                   = "0.5.1"
+cw-storage-macro             = "1.2.0"
+cw-storage-plus              = "1.2.0" 
+cw-utils                     = "0.16.0"
+schemars                     = "0.8.10"
+semver                       = "1.0"
+serde                        = { version = "1.0.140", default-features = false, features = ["derive"] }
+thiserror                    = "1.0.31"
+url                          = "2.2.2"
