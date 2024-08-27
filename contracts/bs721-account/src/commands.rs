@@ -27,7 +27,7 @@ pub fn execute_associate_address(
 ) -> Result<Response, ContractError> {
     only_owner(deps.as_ref(), &info.sender, &name)?;
 
-    println!("// 1. remove old token_uri from reverse map if it exists");
+    // println!("// 1. remove old token_uri from reverse map if it exists");
     Bs721AccountsContract::default()
         .tokens
         .load(deps.storage, &name)
@@ -37,7 +37,7 @@ pub fn execute_associate_address(
             }
         })?;
 
-    println!("// 2. validate the new address");
+    // println!("// 2. validate the new address");
     let token_uri = address
         .clone()
         .map(|address| {
@@ -47,12 +47,12 @@ pub fn execute_associate_address(
         })
         .transpose()?;
 
-    println!("// 3. look up prev name if it exists for the new address");
+    // println!("// 3. look up prev name if it exists for the new address");
     let old_name = token_uri
         .clone()
         .and_then(|addr| REVERSE_MAP.may_load(deps.storage, &addr).unwrap_or(None));
 
-    println!("// 4. remove old token_uri / address from previous name");
+    // println!("// 4. remove old token_uri / address from previous name");
     old_name.map(|token_id| {
         Bs721AccountsContract::default()
             .tokens
@@ -65,7 +65,7 @@ pub fn execute_associate_address(
             })
     });
 
-    println!("// 5. associate new token_uri / address with new name / token_id");
+    // println!("// 5. associate new token_uri / address with new name / token_id");
     Bs721AccountsContract::default()
         .tokens
         .update(deps.storage, &name, |token| match token {
@@ -76,8 +76,8 @@ pub fn execute_associate_address(
             None => Err(ContractError::NameNotFound {}),
         })?;
 
-    println!("// 6. update new manager in token metadata");
-    println!("// 7. save new reverse map entry");
+    // println!("// 6. update new manager in token metadata");
+    // println!("// 7. save new reverse map entry");
 
     token_uri.map(|addr| REVERSE_MAP.save(deps.storage, &addr, &name));
 

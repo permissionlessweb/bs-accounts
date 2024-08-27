@@ -16,7 +16,6 @@ use btsg_account::{
     account::{
         ExecuteMsg as BsAccountExecuteMsg, InstantiateMsg as BsAccountCollectionInstantiateMsg,
     },
-    common::SECONDS_PER_YEAR,
     minter::{Config, SudoParams},
     Metadata,
 };
@@ -28,10 +27,7 @@ use crate::{
     },
     error::ContractError,
     msg::{ExecuteMsg, InstantiateMsg, QueryMsg, SudoMsg},
-    state::{
-        WhitelistContract, WhitelistContractType, ACCOUNT_COLLECTION, ACCOUNT_MARKETPLACE, ADMIN,
-        CONFIG, PAUSED, SUDO_PARAMS,
-    },
+    state::{ACCOUNT_COLLECTION, ACCOUNT_MARKETPLACE, ADMIN, CONFIG, PAUSED, SUDO_PARAMS},
     sudo::*,
 };
 
@@ -296,26 +292,4 @@ mod tests {
             base_price * 100
         );
     }
-
-    // #[test]
-    // fn check_validate_payment_with_flatrate_discount() {
-    //     let base_price = 100_000_000;
-
-    //     let info = MessageInfo {
-    //         sender: Addr::unchecked("sender"),
-    //         funds: vec![coin(base_price, "ubtsg")],
-    //     };
-    //     assert_eq!(
-    //         // we treat the discount as a flat amount given as 100.0
-    //         validate_payment(
-    //             5, &info, base_price,
-    //             // Some(contract::Discount::Flatrate(100)),
-    //         )
-    //         .unwrap()
-    //         .unwrap()
-    //         .amount
-    //         .u128(),
-    //         base_price
-    //     );
-    // }
 }

@@ -67,13 +67,13 @@ impl BtsgAccountSuite<MockBech32> {
         self.market
             .setup(self.account.address()?, self.minter.address()?)?;
 
-        println!("TOKEN:   {:#?}", self.account.addr_str()?);
-        println!("MARKET:  {:#?}", self.market.addr_str()?);
-        println!("MINTER:  {:#?}", self.minter.addr_str()?);
-        println!("SENDER:  {:#?}", mock.sender_addr().to_string());
-        println!("ADMIN2:  {:#?}", admin2.to_string());
-        println!("ADMIN:   {:#?}", admin);
-        println!("CREATOR: {:#?}", creator);
+        // println!("TOKEN:   {:#?}", self.account.addr_str()?);
+        // println!("MARKET:  {:#?}", self.market.addr_str()?);
+        // println!("MINTER:  {:#?}", self.minter.addr_str()?);
+        // println!("SENDER:  {:#?}", mock.sender_addr().to_string());
+        // println!("ADMIN2:  {:#?}", admin2.to_string());
+        // println!("ADMIN:   {:#?}", admin);
+        // println!("CREATOR: {:#?}", creator);
 
         Ok(())
     }
