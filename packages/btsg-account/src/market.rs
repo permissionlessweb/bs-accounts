@@ -207,14 +207,14 @@ pub struct InstantiateMsg {
 #[cosmwasm_schema::cw_serde]
 #[derive(cw_orch::ExecuteFns)]
 pub enum ExecuteMsg {
-    /// List name NFT on the marketplace by creating a new ask.
+    /// List account NFT on the marketplace by creating a new ask.
     /// Only the account factory can call this.
     SetAsk { token_id: TokenId, seller: String },
     /// Remove account on the marketplace.
     /// Only the account collection can call this (i.e: when burned).
     RemoveAsk { token_id: TokenId },
     /// Update ask when an NFT is transferred
-    /// Only the name collection can call this
+    /// Only the account collection can call this
     UpdateAsk { token_id: TokenId, seller: String },
     /// Place a bid on an existing ask
     SetBid { token_id: TokenId },
@@ -222,9 +222,9 @@ pub enum ExecuteMsg {
     RemoveBid { token_id: TokenId },
     /// Accept a bid on an existing ask
     AcceptBid { token_id: TokenId, bidder: String },
-    /// Fully renew a name if within the renewal period
+    /// Fully renew a account if within the renewal period
     // Renew { token_id: TokenId },
-    /// Fund renewal of a name
+    /// Fund renewal of a account
     // FundRenewal { token_id: TokenId },
     /// Refund a renewal of a name
     // RefundRenewal { token_id: TokenId },

@@ -1,5 +1,3 @@
-#[cfg(not(feature = "library"))]
-
 use btsg_account::minter::SudoParams;
 use cosmwasm_std::{Addr, DepsMut, Event, Response, Uint128};
 

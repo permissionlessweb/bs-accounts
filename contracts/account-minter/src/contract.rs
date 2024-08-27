@@ -4,11 +4,11 @@ use std::vec;
 use cosmwasm_std::entry_point;
 
 use cosmwasm_std::{
-    coin, to_json_binary, Addr, Binary, Deps, DepsMut, Empty, Env, Event, MessageInfo, Reply,
-    Response, StdError, StdResult, SubMsg, Uint128, WasmMsg,
+    to_json_binary, Addr, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Reply, Response,
+    StdError, StdResult, SubMsg, WasmMsg,
 };
 use cw2::set_contract_version;
-use cw_utils::{maybe_addr, must_pay, parse_reply_instantiate_data};
+use cw_utils::{maybe_addr, parse_reply_instantiate_data};
 
 use semver::Version;
 
@@ -16,30 +16,30 @@ use btsg_account::{
     account::{
         ExecuteMsg as BsAccountExecuteMsg, InstantiateMsg as BsAccountCollectionInstantiateMsg,
     },
-    common::{charge_fees, SECONDS_PER_YEAR},
-    market::ExecuteMsg as MarketplaceExecuteMsg,
+    common::SECONDS_PER_YEAR,
     minter::{Config, SudoParams},
     Metadata,
 };
 
-use crate::commands::{
-    execute_mint_and_list, execute_pause, execute_update_config, query_collection, query_config,
-    query_params,
+use crate::{
+    commands::{
+        execute_mint_and_list, execute_pause, execute_update_config, query_collection,
+        query_config, query_params,
+    },
+    error::ContractError,
+    msg::{ExecuteMsg, InstantiateMsg, QueryMsg, SudoMsg},
+    state::{
+        WhitelistContract, WhitelistContractType, ACCOUNT_COLLECTION, ACCOUNT_MARKETPLACE, ADMIN,
+        CONFIG, PAUSED, SUDO_PARAMS,
+    },
+    sudo::*,
 };
-use crate::error::ContractError;
-use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg, SudoMsg};
-use crate::state::{
-    WhitelistContract, WhitelistContractType, ACCOUNT_COLLECTION, ACCOUNT_MARKETPLACE, ADMIN,
-    CONFIG, PAUSED, SUDO_PARAMS,
-};
-use crate::sudo::*;
 
 // // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:account-minter";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 const INIT_COLLECTION_REPLY_ID: u64 = 1;
-const TRADING_START_TIME_OFFSET_IN_SECONDS: u64 = 2 * SECONDS_PER_YEAR;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(

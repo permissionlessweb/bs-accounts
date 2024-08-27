@@ -3,7 +3,7 @@ members  = ["packages/*", "contracts/*"]
 resolver = "2"
 
 [workspace.package]
-version    = "2.1.2"
+version    = "0.1.0-rc1"
 edition    = "2021"
 homepage   = "https://stargaze.zone"
 repository = "https://github.com/public-awesome/names"
@@ -12,11 +12,11 @@ license    = "Apache-2.0"
 
 [workspace.dependencies]
 anyhow                       = { version = "1.0" }
-bs721                        = { git = "https://github.com/permissionlessweb/bs-nft.git", rev = "68c0af1b5ffd483d5495d703dda51be3fbb5188c" }
-bs721-base                   = { git = "https://github.com/permissionlessweb/bs-nft.git", rev = "68c0af1b5ffd483d5495d703dda51be3fbb5188c" }
-bs721-account                = { version = "0.1.0-alpha.1", path = "./contracts/bs721-account" }
-bs721-account-minter         = { version = "0.1.0-alpha.1", path = "./contracts/account-minter" }
-bs721-account-marketplace    = { version = "0.1.0-alpha.1", path = "./contracts/account-market" }
+bs721                        = { git = "https://github.com/permissionlessweb/bs-nfts", rev = "68c0af1b5ffd483d5495d703dda51be3fbb5188c" }
+bs721-base                   = { git = "https://github.com/permissionlessweb/bs-nfts", rev = "68c0af1b5ffd483d5495d703dda51be3fbb5188c"}
+bs721-account                = { version = "0.1.0-alpha.1", path = "./contracts/bs721-account",  features = ["library"] }
+bs721-account-minter         = { version = "0.1.0-alpha.1", path = "./contracts/account-minter",  features = ["library"] }
+bs721-account-marketplace    = { version = "0.1.0-alpha.1", path = "./contracts/account-market", features = ["library"] }
 btsg-account                 = { version = "0.1.0-rc1", path = "./packages/btsg-account" }
 bs-controllers               = { version = "0.1.0-rc1", path = "./packages/controllers" }
 btsg-cw-orch                 = { version = "0.1.0-rc1", path = "./packages/cw-orch" }
@@ -38,3 +38,23 @@ semver                       = "1.0"
 serde                        = { version = "1.0.140", default-features = false, features = ["derive"] }
 thiserror                    = "1.0.31"
 url                          = "2.2.2"
+
+[profile.release.package.bs721-account-minter ]
+codegen-units = 1
+incremental   = false
+
+[profile.release.package.bs721-account ]
+codegen-units = 1
+incremental   = false
+
+[profile.release.package.bs721-account-marketplace]
+codegen-units = 1
+incremental   = false
+
+[profile.release]
+rpath            = false
+lto              = true
+overflow-checks  = true
+opt-level        = 3
+debug            = false
+debug-assertions = false

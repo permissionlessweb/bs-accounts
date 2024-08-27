@@ -4,6 +4,7 @@ use crate::{
     hooks::{prepare_ask_hook, prepare_bid_hook, prepare_sale_hook},
 };
 use btsg_account::common::NATIVE_DENOM;
+use btsg_account::Metadata;
 use btsg_account::{
     common::{charge_fees, SECONDS_PER_YEAR},
     minter::SudoParams as BsProfileMinterSudoParams,
@@ -19,8 +20,8 @@ use cosmwasm_std::{
 };
 use std::marker::PhantomData;
 
-use cw721::{Cw721ExecuteMsg, OwnerOfResponse};
-use cw721_base::helpers::Cw721Contract;
+use bs721::{Bs721ExecuteMsg, OwnerOfResponse};
+use bs721_base::helpers::Bs721Contract;
 use cw_storage_plus::Bound;
 use cw_utils::{may_pay, must_pay, nonpayable};
 
@@ -67,7 +68,7 @@ pub fn execute_set_ask(
     let collection = ACCOUNT_COLLECTION.load(deps.storage)?;
 
     // check if collection is approved to transfer on behalf of the seller
-    let ops = Cw721Contract::<Empty, Empty>(collection, PhantomData, PhantomData).all_operators(
+    let ops = Bs721Contract::<Empty, Empty>(collection, PhantomData, PhantomData).all_operators(
         &deps.querier,
         seller.to_string(),
         false,
@@ -75,7 +76,7 @@ pub fn execute_set_ask(
         None,
     )?;
 
-    println!("{:#?}", ops);
+    // println!("{:#?}", ops);
     if ops.is_empty() {
         return Err(ContractError::NotApproved {});
     }
@@ -267,7 +268,7 @@ pub fn execute_accept_bid(
     token_id: &str,
     bidder: Addr,
 ) -> Result<Response, ContractError> {
-    println!("1.0 execute_accept bid ----------------------------");
+    // println!("1.0 execute_accept bid ----------------------------");
     nonpayable(&info)?;
     let collection = ACCOUNT_COLLECTION.load(deps.storage)?;
     only_owner(deps.as_ref(), &info, &collection, token_id)?;
@@ -279,7 +280,7 @@ pub fn execute_accept_bid(
     let bid = bids().load(deps.storage, bid_key.clone())?;
 
     // Check if token is approved for transfer
-    Cw721Contract::<Empty, Empty>(collection, PhantomData, PhantomData).approval(
+    Bs721Contract::<Empty, Empty>(collection, PhantomData, PhantomData).approval(
         &deps.querier,
         token_id,
         info.sender.as_ref(),
@@ -431,49 +432,6 @@ pub fn execute_renew(
     Ok(response)
 }
 
-/// Anyone can call this to process renewals for a block and earn a reward
-pub fn execute_process_renewal(
-    _deps: DepsMut,
-    env: Env,
-    time: Timestamp,
-) -> Result<Response, ContractError> {
-    println!("Processing renewals at time {}", time);
-
-    if time > env.block.time {
-        return Err(ContractError::CannotProcessFutureRenewal {});
-    }
-
-    // // TODO: add renewal processing logic
-    // let renewal_queue = RENEWAL_QUEUE.load(deps.storage, time)?;
-    // for name in renewal_queue.iter() {
-    //     let ask = asks().load(deps.storage, ask_key(name))?;
-    //     if ask.renewal_fund.is_zero() {
-    //         continue;
-    //         // transfer ownership to name service
-    //         // list in marketplace for 0.5% of bid price
-    //         // if no bids, list for original price
-    //     }
-
-    //     // charge renewal fee
-    //     // pay out reward to operator
-    //     // reset ask
-
-    //     // Update Ask with new renewal_time
-    //     let renewal_time = env.block.time.plus_seconds(SECONDS_PER_YEAR);
-    //     let ask = Ask {
-    //         token_id: name.to_string(),
-    //         id: ask.id,
-    //         seller: ask.seller,
-    //         renewal_time,
-    //         renewal_fund: ask.renewal_fund - payment, // validate payment
-    //     };
-    //     store_ask(deps.storage, &ask)?;
-    // }
-
-    let event = Event::new("process-renewal").add_attribute("time", time.to_string());
-    Ok(Response::new().add_event(event))
-}
-
 /// Transfers funds and NFT, updates bid
 fn finalize_sale(
     deps: Deps,
@@ -482,10 +440,10 @@ fn finalize_sale(
     buyer: Addr,
     res: &mut Response,
 ) -> StdResult<()> {
-    println!("1.1 finalize sale ----------------------------");
+    // println!("1.1 finalize sale ----------------------------");
     payout(deps, price, ask.seller.clone(), res)?;
 
-    let cw721_transfer_msg = Cw721ExecuteMsg::TransferNft {
+    let cw721_transfer_msg = Bs721ExecuteMsg::<Metadata, Empty>::TransferNft {
         token_id: ask.token_id.to_string(),
         recipient: buyer.to_string(),
     };
@@ -552,7 +510,7 @@ fn only_owner(
     collection: &Addr,
     token_id: &str,
 ) -> Result<OwnerOfResponse, ContractError> {
-    let res = Cw721Contract::<Empty, Empty>(collection.clone(), PhantomData, PhantomData)
+    let res = Bs721Contract::<Empty, Empty>(collection.clone(), PhantomData, PhantomData)
         .owner_of(&deps.querier, token_id, false)?;
     if res.owner != info.sender {
         return Err(ContractError::UnauthorizedOwner {});
