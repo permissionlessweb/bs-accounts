@@ -1,10 +1,9 @@
-use bs721_account_minter::msg::InstantiateMsg as AccountMinterInitMsg;
+use bs721_account_minter::msg::{ExecuteMsgFns as _, InstantiateMsg as AccountMinterInitMsg};
 use btsg_account::market::{ExecuteMsgFns as _, InstantiateMsg as AccountMarketInitMsg};
-use cosmwasm_std::Decimal;
-use cw_orch::prelude::*;
-
 use btsg_account::Metadata;
 use btsg_cw_orch::*;
+use cosmwasm_std::Decimal;
+use cw_orch::prelude::*;
 
 // Bitsong Accounts Collection Framework Suite.
 pub struct BtsgAccountSuite<Chain> {
@@ -86,8 +85,8 @@ impl<Chain: CwEnv> cw_orch::contract::Deploy<Chain> for BtsgAccountSuite<Chain> 
                     verifier: None,
                     collection_code_id: suite.account.code_id()?,
                     marketplace_addr: suite.market.addr_str()?,
-                    min_name_length: 3u32,
-                    max_name_length: 128u32,
+                    min_account_length: 3u32,
+                    max_account_length: 128u32,
                     base_price: 10u128.into(),
                 },
                 None,
@@ -104,6 +103,8 @@ impl<Chain: CwEnv> cw_orch::contract::Deploy<Chain> for BtsgAccountSuite<Chain> 
             .market
             .setup(suite.account.address()?, suite.minter.address()?)?;
 
+        // Mint governance owned name
+        suite.minter.mint_and_list("Bitsong")?;
         Ok(suite)
     }
 }

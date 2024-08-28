@@ -1,4 +1,4 @@
-use crate::bundles::account::BtsgAccountSuite;
+use crate::deploy::account::BtsgAccountSuite;
 use ::bs721_account::{commands::transcode, ContractError};
 use bs721_base::ContractError::Unauthorized;
 use btsg_account::account::{Bs721AccountsQueryMsgFns, ExecuteMsgFns};
@@ -62,7 +62,7 @@ fn mint_and_update() -> anyhow::Result<()> {
 
     // add text record
     let new_record = TextRecord {
-        name: "test".to_string(),
+        account: "test".to_string(),
         value: "test".to_string(),
         verified: None,
     };
@@ -76,7 +76,7 @@ fn mint_and_update() -> anyhow::Result<()> {
     assert_eq!(record, new_record);
     let records = suite.account.text_records(token_id)?;
     assert_eq!(records.len(), 1);
-    assert_eq!(records[0].name, "test");
+    assert_eq!(records[0].account, "test");
     assert_eq!(records[0].value, "test");
 
     assert!(!suite.account.is_twitter_verified(token_id)?);
@@ -84,7 +84,7 @@ fn mint_and_update() -> anyhow::Result<()> {
     // trigger too many records error
     for i in 1..=(max_record_count) {
         let new_record = TextRecord {
-            name: format!("key{:?}", i),
+            account: format!("key{:?}", i),
             value: "value".to_string(),
             verified: None,
         };
@@ -107,8 +107,8 @@ fn mint_and_update() -> anyhow::Result<()> {
     suite.account.remove_text_record(token_id, "test")?;
 
     for i in 1..=(max_record_count) {
-        let record_name = format!("key{:?}", i);
-        suite.account.remove_text_record(token_id, record_name)?;
+        let record_account = format!("key{:?}", i);
+        suite.account.remove_text_record(token_id, record_account)?;
     }
     // txt record count should be 0
     let res = suite.account.nft_info(token_id)?;
@@ -130,16 +130,16 @@ fn mint_and_update() -> anyhow::Result<()> {
 
     // add another txt record
     let record = TextRecord {
-        name: "twitter".to_string(),
+        account: "twitter".to_string(),
         value: "jackdorsey".to_string(),
         verified: None,
     };
     suite.account.add_text_record(token_id, record)?;
     assert_eq!(suite.account.nft_info(token_id)?.extension.records.len(), 2);
 
-    // add duplicate record RecordNameAlreadyExists
+    // add duplicate record RecordAccountAlreadyExists
     let record = TextRecord {
-        name: "test".to_string(),
+        account: "test".to_string(),
         value: "testtesttest".to_string(),
         verified: None,
     };
@@ -150,7 +150,7 @@ fn mint_and_update() -> anyhow::Result<()> {
             .unwrap_err()
             .root()
             .to_string(),
-        ContractError::RecordNameAlreadyExists {}.to_string()
+        ContractError::RecordAccountAlreadyExists {}.to_string()
     );
     // update txt record
     suite.account.update_text_record(token_id, record.clone())?;
@@ -158,14 +158,14 @@ fn mint_and_update() -> anyhow::Result<()> {
     assert_eq!(res.extension.records.len(), 2);
     assert_eq!(res.extension.records[1].value, record.value);
     // rm txt record
-    suite.account.remove_text_record(token_id, record.name)?;
+    suite.account.remove_text_record(token_id, record.account)?;
     let res = suite.account.nft_info(token_id)?;
     assert_eq!(res.extension.records.len(), 1);
 
     Ok(())
 }
 #[test]
-fn test_query_names() -> anyhow::Result<()> {
+fn test_query_accounts() -> anyhow::Result<()> {
     let mock = MockBech32::new("bitsong");
     let mut suite = BtsgAccountSuite::new(mock.clone());
     suite.default_setup(mock.clone(), None, None)?;
@@ -180,7 +180,7 @@ fn test_query_names() -> anyhow::Result<()> {
             .to_string(),
         StdError::GenericErr {
             msg: format!(
-                "Querier contract error: Generic error: No name associated with address {}",
+                "Querier contract error: Generic error: No account associated with address {}",
                 addr
             )
         }

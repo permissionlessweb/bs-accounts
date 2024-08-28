@@ -11,5 +11,5 @@ struct Args {
 
 fn main() {
     let args = Args::parse();
-    println!("Deploying Headstash Framework, {}!", args.name);
+    println!("Deploying Headstash Framework As Governance Module, {}!", args.name);
 }

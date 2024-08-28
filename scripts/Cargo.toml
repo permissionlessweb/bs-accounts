@@ -2,13 +2,13 @@
 name = "scripts"
 edition = "2021"
 license = "BSD-3-Clause"
-repository = "https://github.com/DA0-DA0/dao-contracts"
+repository = "https://github.com/bitsongofficial/bs-accounts"
 version.workspace = true
 
 [dependencies]
 bs721.workspace = true
 bs721-account              = { path = "../contracts/bs721-account", version = "0.1.0-rc1" }
-bs721-base                 = { path = "../contracts/bs721-base", version = "0.1.0-rc1" }
+bs721-base                 = {workspace = true}
 bs721-account-minter       = { path = "../contracts/account-minter", version = "0.1.0-rc1" }
 bs721-account-marketplace  = { path = "../contracts/account-market", version = "0.1.0-rc1" }
 btsg-account               = { path = "../packages/btsg-account", version = "0.1.0-rc1" }
@@ -42,26 +42,8 @@ cw-orch-interchain-core = "0.5.0"
 
 # Cargo CLI commands
 [[bin]]
-name = "connect-ibc"
-path = "src/bin/connect_ibc.rs"
-[[bin]]
-name = "create-remote-account"
-path = "src/bin/create_remote_account.rs"
-[[bin]]
-name = "deploy-ibc"
-path = "src/bin/deploy_ibc.rs"
-[[bin]]
-name = "deploy-modules"
-path = "src/bin/deploy_modules.rs"
-[[bin]]
-name = "full-deploy"
-path = "src/bin/full_deploy.rs"
-[[bin]]
-name = "ibc-test"
-path = "src/bin/ibc_test.rs"
-[[bin]]
-name = "manual-deploy"
+name = "deploy"
 path = "src/bin/manual_deploy.rs"
 [[bin]]
-name = "migrate"
-path = "src/bin/migrate.rs"
+name = "deploy-as-gov"
+path = "src/bin/deploy_as_gov.rs"

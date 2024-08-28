@@ -1,3 +1,3 @@
-mod collections;
-mod minters;
-mod markets;
+mod account;
+mod market;
+mod minter;

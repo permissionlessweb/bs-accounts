@@ -1,13 +1,12 @@
 use btsg_account::common::SECONDS_PER_YEAR;
 use cw_orch::{anyhow, mock::MockBech32, prelude::*};
 
-use crate::bundles::account::BtsgAccountSuite;
+use crate::deploy::account::BtsgAccountSuite;
+use bs721_account_minter::msg::QueryMsgFns as _;
 use btsg_account::market::{ExecuteMsgFns as _, QueryMsgFns, SudoMsg as MarketplaceSudoMsg};
+use btsg_account::minter::Config;
 use cosmwasm_std::{attr, coins, to_json_binary, Decimal};
 use cw_orch::mock::cw_multi_test::{SudoMsg, WasmSudo};
-
-use bs721_account_minter::msg::QueryMsgFns as _;
-use btsg_account::minter::Config;
 
 use bs721_account_minter::msg::ExecuteMsgFns as _;
 use cosmwasm_std::Uint128;
@@ -84,7 +83,7 @@ mod execute {
         mock.wait_seconds(1)?;
         suite.mint_and_list(mock.clone(), &token_id, &owner)?;
 
-        // check if name is listed in marketplace
+        // check if account is listed in marketplace
         let res = suite.market.ask(token_id.to_string())?.unwrap();
         assert_eq!(res.token_id, token_id);
 
@@ -199,7 +198,7 @@ mod execute {
             .associated_address(token_id)
             .unwrap_err();
 
-        // associate owner address with account name
+        // associate owner address with account account
         suite
             .account
             .call_as(&admin2)
@@ -461,11 +460,11 @@ mod query {
         // added to get around rate limiting
         mock.wait_seconds(60)?;
 
-        // test pagination with multiple names and bids
-        let name = "jump";
-        let res = suite.mint_and_list(mock.clone(), name, &admin)?;
-        suite.bid_w_funds(mock.clone(), name, bidder1, BID_AMOUNT * 3)?;
-        suite.bid_w_funds(mock.clone(), name, bidder2, BID_AMOUNT * 2)?;
+        // test pagination with multiple accounts and bids
+        let account = "jump";
+        let res = suite.mint_and_list(mock.clone(), account, &admin)?;
+        suite.bid_w_funds(mock.clone(), account, bidder1, BID_AMOUNT * 3)?;
+        suite.bid_w_funds(mock.clone(), account, bidder2, BID_AMOUNT * 2)?;
         let res = suite.market.bids_for_seller(admin, None, Some(filter))?;
         // should be length 2 because there is token_id "jump" with 2 bids
         assert_eq!(res.len(), 2);
@@ -508,10 +507,10 @@ mod query {
         // added to get around rate limiting
         mock.wait_seconds(60)?;
 
-        let name = "jump";
-        suite.mint_and_list(mock.clone(), &name, &admin)?;
-        suite.bid_w_funds(mock.clone(), name, bidder1.clone(), BID_AMOUNT * 3)?;
-        suite.bid_w_funds(mock.clone(), name, bidder2, BID_AMOUNT * 2)?;
+        let account = "jump";
+        suite.mint_and_list(mock.clone(), &account, &admin)?;
+        suite.bid_w_funds(mock.clone(), account, bidder1.clone(), BID_AMOUNT * 3)?;
+        suite.bid_w_funds(mock.clone(), account, bidder2, BID_AMOUNT * 2)?;
         // should be length 2 because there is token_id "jump" with 2 bids
         let res = suite.market.bids_for_seller(
             admin.clone(),
@@ -555,7 +554,7 @@ mod query {
         Ok(())
     }
     #[test]
-    fn test_query_name() -> anyhow::Result<()> {
+    fn test_query_account() -> anyhow::Result<()> {
         let mock = MockBech32::new("bitsong");
         let mut suite = BtsgAccountSuite::new(mock.clone());
         suite.default_setup(mock.clone(), None, Some(mock.sender.clone()))?;
@@ -609,32 +608,32 @@ mod collection {
 
         suite.mint_and_list(mock, token_id, &admin_user)?;
 
-        let name = "twitter";
+        let account = "twitter";
         let value = "loaf0bred";
 
         suite
             .account
-            .add_text_record(token_id, TextRecord::new(name, value))?;
+            .add_text_record(token_id, TextRecord::new(account, value))?;
 
         // query text record to see if verified is not set
         let res = suite.account.nft_info(token_id)?;
-        assert_eq!(res.extension.records[0].name, name.to_string());
+        assert_eq!(res.extension.records[0].account, account.to_string());
         assert_eq!(res.extension.records[0].verified, None);
 
         suite
             .account
-            .verify_text_record(token_id, name, true)
+            .verify_text_record(token_id, account, true)
             .unwrap_err();
 
         suite
             .account
             .call_as(&verifier)
-            .verify_text_record(token_id, name, true)?;
+            .verify_text_record(token_id, account, true)?;
 
         // query text record to see if verified is set
         let res = suite.account.nft_info(token_id)?;
 
-        assert_eq!(res.extension.records[0].name, name.to_string());
+        assert_eq!(res.extension.records[0].account, account.to_string());
         assert_eq!(res.extension.records[0].verified, Some(true));
 
         Ok(())
@@ -653,22 +652,22 @@ mod collection {
 
         suite.mint_and_list(mock, token_id, &admin_user)?;
 
-        let name = "twitter";
+        let account = "twitter";
         let value = "loaf0bred";
 
         suite
             .account
-            .add_text_record(token_id, TextRecord::new(name, value))?;
+            .add_text_record(token_id, TextRecord::new(account, value))?;
 
         suite
             .account
             .call_as(&verifier)
-            .verify_text_record(token_id, name, false)?;
+            .verify_text_record(token_id, account, false)?;
 
         // query text record to see if verified is not set
         let res = suite.account.nft_info(token_id)?;
 
-        assert_eq!(res.extension.records[0].name, name.to_string());
+        assert_eq!(res.extension.records[0].account, account.to_string());
         assert_eq!(res.extension.records[0].verified, Some(false));
 
         Ok(())
@@ -686,23 +685,23 @@ mod collection {
 
         suite.mint_and_list(mock, token_id, &admin_user)?;
 
-        let name = "twitter";
+        let account = "twitter";
         let value = "loaf0bred";
 
         suite
             .account
-            .add_text_record(token_id, TextRecord::new(name, value))?;
+            .add_text_record(token_id, TextRecord::new(account, value))?;
 
         // query text record to see if verified is not set
         let res = suite.account.nft_info(token_id)?;
-        assert_eq!(res.extension.records[0].name, name.to_string());
+        assert_eq!(res.extension.records[0].account, account.to_string());
         assert_eq!(res.extension.records[0].verified, None);
 
         // attempt update text record w verified value
         suite.account.update_text_record(
             token_id,
             TextRecord {
-                name: token_id.into(),
+                account: token_id.into(),
                 value: "some new value".to_string(),
                 verified: Some(true),
             },
@@ -711,7 +710,7 @@ mod collection {
         // query text record to see if verified is set
         let res = suite.account.nft_info(token_id)?;
 
-        assert_eq!(res.extension.records[0].name, name.to_string());
+        assert_eq!(res.extension.records[0].account, account.to_string());
         assert_eq!(res.extension.records[0].verified, None);
 
         // query image nft
@@ -772,7 +771,7 @@ mod collection {
 
         suite.bid_w_funds(mock.clone(), &token_id, bidder1.clone(), BID_AMOUNT * 3)?;
 
-        // user2 must approve the marketplace to transfer their name
+        // user2 must approve the marketplace to transfer their account
         suite
             .account
             .call_as(&user1)
@@ -948,7 +947,7 @@ mod associate_address {
     fn test_associate_with_a_contract_with_no_admin() -> anyhow::Result<()> {
         // For the purposes of this test, a collection contract with no admin needs to be instantiated (contract_with_no_admin)
         // This contract needs to have a creator that is itself a contract and this creator contract should have an admin (USER).
-        // The admin (USER) of the creator contract will mint a name and associate the name with the collection contract that doesn't have an admin successfully.
+        // The admin (USER) of the creator contract will mint a account and associate the account with the collection contract that doesn't have an admin successfully.
         let mock = MockBech32::new("bitsong");
         let mut suite = BtsgAccountSuite::new(mock.clone());
         suite.default_setup(mock.clone(), None, Some(mock.sender.clone()))?;
@@ -1000,10 +999,10 @@ mod associate_address {
             .instantiated_contract_address()?;
 
         mock.wait_seconds(1)?;
-        // USER4 mints a name
+        // USER4 mints a account
         suite.mint_and_list(mock.clone(), &token_id, &admin_user)?;
 
-        // USER4 tries to associate the name with the collection contract that doesn't have an admin
+        // USER4 tries to associate the account with the collection contract that doesn't have an admin
         suite
             .account
             .call_as(&admin_user)
@@ -1016,7 +1015,7 @@ mod associate_address {
     fn test_associate_with_a_contract_with_no_admin_fail() -> anyhow::Result<()> {
         // For the purposes of this test, a collection contract with no admin needs to be instantiated (contract_with_no_admin)
         // This contract needs to have a creator that is itself a contract and this creator contract should have an admin (USER).
-        // An address other than the admin (USER) of the creator contract will mint a name, try to associate the name with the collection contract that doesn't have an admin and fail.
+        // An address other than the admin (USER) of the creator contract will mint a account, try to associate the account with the collection contract that doesn't have an admin and fail.
         let mock = MockBech32::new("bitsong");
         let mut suite = BtsgAccountSuite::new(mock.clone());
         suite.default_setup(mock.clone(), None, Some(mock.sender.clone()))?;
@@ -1069,10 +1068,10 @@ mod associate_address {
             .instantiated_contract_address()?;
 
         mock.wait_seconds(1)?;
-        // USER4 mints a name
+        // USER4 mints a account
         suite.mint_and_list(mock.clone(), &token_id, &user4)?;
 
-        // USER4 tries to associate the name with the collection contract that doesn't have an admin
+        // USER4 tries to associate the account with the collection contract that doesn't have an admin
         let err = suite
             .account
             .call_as(&user4)

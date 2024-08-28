@@ -11,8 +11,8 @@ export interface InstantiateMsg {
   collection_code_id: number;
   fair_burn_bps: number;
   marketplace_addr: string;
-  max_name_length: number;
-  min_name_length: number;
+  max_account_length: number;
+  min_account_length: number;
   verifier?: string | null;
   whitelists: string[];
 }
@@ -66,7 +66,7 @@ export type Decimal = string;
 export interface SudoParams {
   base_price: Uint128;
   fair_burn_percent: Decimal;
-  max_name_length: number;
-  min_name_length: number;
+  max_account_length: number;
+  min_account_length: number;
 }
 export type ArrayOfAddr = Addr[];
