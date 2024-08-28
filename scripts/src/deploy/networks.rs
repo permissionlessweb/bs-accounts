@@ -2,6 +2,9 @@ use cw_orch::environment::{ChainKind, NetworkInfo};
 //////////////// SUPPORTED NETWORK CONFIGS ////////////////
 /// Add more chains in SUPPORTED_CHAINS to include in account framework instance.
 use cw_orch::prelude::{networks::UNI_6, *};
+/// Cw-orch imports
+use reqwest::Url;
+use std::net::TcpStream;
 
 pub const SUPPORTED_CHAINS: &[ChainInfo] = &[UNI_6, BITSONG_MAINNET];
 pub const BITSONG_SUPPORTED_NETWORKS: &[ChainInfo] = &SUPPORTED_CHAINS;
@@ -73,3 +76,22 @@ pub const LOCAL_NETWORK2: ChainInfo = ChainInfo {
     lcd_url: None,
     fcd_url: None,
 };
+
+pub async fn ping_grpc(url_str: &str) -> anyhow::Result<()> {
+    let parsed_url = Url::parse(url_str)?;
+
+    let host = parsed_url
+        .host_str()
+        .ok_or_else(|| anyhow::anyhow!("No host in url"))?;
+
+    let port = parsed_url.port_or_known_default().ok_or_else(|| {
+        anyhow::anyhow!(
+            "No port in url, and no default for scheme {:?}",
+            parsed_url.scheme()
+        )
+    })?;
+    let socket_addr = format!("{}:{}", host, port);
+
+    let _ = TcpStream::connect(socket_addr);
+    Ok(())
+}

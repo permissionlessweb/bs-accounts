@@ -23,7 +23,7 @@ pub struct DeploymentStatus {
     pub chain_ids: Vec<String>,
     pub success: bool,
 }
-
+/// MockBech32 implementation for the Bitsong Account Suite.
 impl BtsgAccountSuite<MockBech32> {
     /// Creates intitial suite for testing
     pub fn default_setup(
