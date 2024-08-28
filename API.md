@@ -1,6 +1,6 @@
-# Stargaze Names API Docs
+# Bitsong Accounts API Docs
 
-Stargaze Names associates human-readable usernames with Cosmos addresses. Address lookups can be done via an API or Typescript library.
+Bitsong Accounts associates human-readable useraccounts with Cosmos addresses. Address lookups can be done via an API or Typescript library.
 
 ## API
 
@@ -8,19 +8,19 @@ Stargaze Names associates human-readable usernames with Cosmos addresses. Addres
 
 | Network | `endpoint`                         | `contract`                                                         |
 | ------- | ---------------------------------- | ------------------------------------------------------------------ |
-| Testnet | `rest.elgafar-1.stargaze-apis.com` | `stars1rgn9tuxnl3ju9td3mfxdl2vm4t8xuaztcdakgtyx23c4ffm97cus25fvjs` |
-| Mainnet | `rest.stargaze-apis.com`           | `stars1fx74nkqkw2748av8j7ew7r3xt9cgjqduwn8m0ur5lhe49uhlsasszc5fhr` |
+| Testnet | `` | `` |
+| Mainnet | ``           | `` |
 
 ### Query Associated Address
 
-Given a name, get its associated address. Queries are base64 encoded.
+Given a account, get its associated address. Queries are base64 encoded.
 
-Let's say you want to query the name `alice`.
+Let's say you want to query the account `alice`.
 
 ```json
 {
   "associated_address": {
-    "name": "alice"
+    "account": "alice"
   }
 }
 ```
@@ -35,13 +35,13 @@ API call:
 {endpoint}/cosmwasm/wasm/v1/contract/{contract}/smart/{query}
 ```
 
-### Query Name
+### Query Account
 
-Given an address, query it's associated name. An address can be _any_ Cosmos address for a chain that uses the 118 coin type. In the future, Stargaze Names will support other coin types.
+Given an address, query it's associated account. An address can be _any_ Cosmos address for a chain that uses the 118 coin type. In the future, Bitsong Accounts will support other coin types.
 
 ```json
 {
-  "name": { "address": "stars1tqzzmxsvzu4952mnd5ul800wfusr6p72magyge" }
+  "account": { "address": "bitsong1" }
 }
 ```
 
@@ -55,9 +55,9 @@ API call:
 {endpoint}/cosmwasm/wasm/v1/contract/{contract}/smart/{query}
 ```
 
-### Query all info about name 
+### Query all info about an account 
 
-If you just need to fetch address associated with name, it's recommended to use query from "Query Associated Address" section of this document, however if you need more advanced info like text records, associated NFT, minter address etc, then you might consider querying full name info.
+If you just need to fetch address associated with account, it's recommended to use query from "Query Associated Address" section of this document, however if you need more advanced info like text records, associated NFT, minter address etc, then you might consider querying full account info.
 
 
 ```json
@@ -82,8 +82,8 @@ API call:
 
 | Network | `endpoint`                        | `contract`                                                         |
 | ------- | --------------------------------- | ------------------------------------------------------------------ |
-| Testnet | `rpc.elgafar-1.stargaze-apis.com` | `stars1rgn9tuxnl3ju9td3mfxdl2vm4t8xuaztcdakgtyx23c4ffm97cus25fvjs` |
-| Mainnet | `rpc.stargaze-apis.com`           | `stars1fx74nkqkw2748av8j7ew7r3xt9cgjqduwn8m0ur5lhe49uhlsasszc5fhr` |
+| Testnet | `rpc.` | `` |
+| Mainnet | `rpc.`           | `` |
 
 ### Query Associated Address
 
@@ -93,27 +93,27 @@ import { CosmWasmClient } from "cosmwasm";
 const client = await CosmWasmClient.connect(endpoint);
 
 const address = await client.queryContractSmart(contract, {
-  associated_address: { name: "alice" },
+  associated_address: { account: "alice" },
 });
 
 console.log("address:", address);
 ```
 
-### Query Name
+### Query Account
 
 ```ts
 import { CosmWasmClient } from "cosmwasm";
 
 const client = await CosmWasmClient.connect(endpoint);
 
-const name = await client.queryContractSmart(contract, {
-  name: { address: "stars1tqzzmxsvzu4952mnd5ul800wfusr6p72magyge" },
+const account = await client.queryContractSmart(contract, {
+  account: { address: "bitsong1" },
 });
 
-console.log("name:", name);
+console.log("account:", account);
 ```
 
-### Query all info about name 
+### Query all info about account 
 
 
 ```ts
@@ -121,9 +121,9 @@ import { CosmWasmClient } from "cosmwasm";
 
 const client = await CosmWasmClient.connect(endpoint);
 
-const fullNameInfo = await client.queryContractSmart(contract, {
+const fullAccountInfo = await client.queryContractSmart(contract, {
   all_nft_info: { token_id: "alice" },
 });
 
-console.log("name info:", fullNameInfo);
+console.log("account info:", fullAccountInfo);
 ```

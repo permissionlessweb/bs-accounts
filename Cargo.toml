@@ -5,8 +5,8 @@ resolver = "2"
 [workspace.package]
 version    = "0.1.0-rc1"
 edition    = "2021"
-homepage   = "https://stargaze.zone"
-repository = "https://github.com/public-awesome/names"
+homepage   = "https://bitsong.io"
+repository = "https://github.com/bitsongofficial/bs-accounts"
 license    = "Apache-2.0"
 
 

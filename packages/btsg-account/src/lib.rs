@@ -20,15 +20,15 @@ impl NFT {
 
 #[cosmwasm_schema::cw_serde]
 pub struct TextRecord {
-    pub name: String,           // "twitter"
+    pub account: String,           // "twitter"
     pub value: String,          // "shan3v"
     pub verified: Option<bool>, // can only be set by oracle
 }
 
 impl TextRecord {
-    pub fn new(name: impl Into<String>, value: impl Into<String>) -> Self {
+    pub fn new(account: impl Into<String>, value: impl Into<String>) -> Self {
         Self {
-            name: name.into(),
+            account: account.into(),
             value: value.into(),
             verified: None,
         }
@@ -39,7 +39,7 @@ impl TextRecord {
     }
 }
 
-/// Note that the address mapped to the name is stored in `token_uri`.
+/// Note that the address mapped to the account is stored in `token_uri`.
 #[cosmwasm_schema::cw_serde]
 #[derive(Default)]
 pub struct Metadata {
@@ -74,7 +74,7 @@ mod test {
         let json = record.into_json_string();
         assert_eq!(
             json,
-            r#"{"name":"twitter","value":"shan3v","verified":null}"#
+            r#"{"account":"twitter","value":"shan3v","verified":null}"#
         );
 
         record.verified = Some(true);
@@ -82,7 +82,7 @@ mod test {
         let json = record.into_json_string();
         assert_eq!(
             json,
-            r#"{"name":"twitter","value":"shan3v","verified":true}"#
+            r#"{"account":"twitter","value":"shan3v","verified":true}"#
         );
 
         record.verified = Some(false);
@@ -90,7 +90,7 @@ mod test {
         let json = record.into_json_string();
         assert_eq!(
             json,
-            r#"{"name":"twitter","value":"shan3v","verified":false}"#
+            r#"{"account":"twitter","value":"shan3v","verified":false}"#
         );
     }
 
@@ -109,7 +109,7 @@ mod test {
         let json = metadata.into_json_string().unwrap();
         assert_eq!(
             json,
-            r#"{"image_nft":{"collection":"bitsong1y54exmx84cqtasvjnskf9f63djuuj68pj7jph3","token_id":"1"},"records":[{"name":"twitter","value":"shan3v","verified":null},{"name":"discord","value":"shan3v","verified":true}]}"#,
+            r#"{"image_nft":{"collection":"bitsong1y54exmx84cqtasvjnskf9f63djuuj68pj7jph3","token_id":"1"},"records":[{"account":"twitter","value":"shan3v","verified":null},{"account":"discord","value":"shan3v","verified":true}]}"#,
         );
     }
 }

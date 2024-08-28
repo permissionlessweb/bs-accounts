@@ -1,4 +1,4 @@
-use crate::helpers::{get_renewal_price_and_bid, renew_name};
+use crate::helpers::{get_renewal_price_and_bid, renew_account};
 use crate::{
     error::ContractError,
     hooks::{prepare_ask_hook, prepare_bid_hook, prepare_sale_hook},
@@ -180,7 +180,7 @@ pub fn execute_update_ask(
     Ok(res.add_event(event))
 }
 
-/// Places a bid on a name. The bid is escrowed in the contract.
+/// Places a bid on a account. The bid is escrowed in the contract.
 pub fn execute_set_bid(
     deps: DepsMut,
     env: Env,
@@ -399,9 +399,9 @@ pub fn execute_renew(
         ContractError::CannotProcessFutureRenewal {}
     );
 
-    let name_minter = ACCOUNT_MINTER.load(deps.storage)?;
-    let name_minter_params = deps.querier.query_wasm_smart::<BsProfileMinterSudoParams>(
-        name_minter,
+    let account_minter = ACCOUNT_MINTER.load(deps.storage)?;
+    let account_minter_params = deps.querier.query_wasm_smart::<BsProfileMinterSudoParams>(
+        account_minter,
         &BsAccountMinterQueryMsg::Params {},
     )?;
 
@@ -410,7 +410,7 @@ pub fn execute_renew(
         &env.block.time,
         &sudo_params,
         &ask.token_id,
-        name_minter_params.base_price.u128(),
+        account_minter_params.base_price.u128(),
     )?;
 
     let payment = may_pay(&info, NATIVE_DENOM)?;
@@ -427,7 +427,7 @@ pub fn execute_renew(
 
     let mut response = Response::new();
 
-    response = renew_name(deps, &env, &sudo_params, ask, renewal_price, response)?;
+    response = renew_account(deps, &env, &sudo_params, ask, renewal_price, response)?;
 
     Ok(response)
 }
@@ -527,15 +527,15 @@ pub fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
 }
 
 pub fn query_renewal_queue(deps: Deps, time: Timestamp) -> StdResult<Vec<Ask>> {
-    let names = RENEWAL_QUEUE
+    let accounts = RENEWAL_QUEUE
         .prefix(time.seconds())
         .range(deps.storage, None, None, Order::Ascending)
         .map(|item| item.map(|item| item.1))
         .collect::<StdResult<Vec<_>>>()?;
 
-    names
+    accounts
         .iter()
-        .map(|name| asks().load(deps.storage, ask_key(name)))
+        .map(|account| asks().load(deps.storage, ask_key(account)))
         .collect::<StdResult<Vec<_>>>()
 }
 
@@ -790,9 +790,9 @@ pub fn query_ask_renew_price(
         return Ok((None, None));
     }
 
-    let name_minter = ACCOUNT_MINTER.load(deps.storage)?;
-    let name_minter_params = deps.querier.query_wasm_smart::<BsProfileMinterSudoParams>(
-        name_minter,
+    let account_minter = ACCOUNT_MINTER.load(deps.storage)?;
+    let account_minter_params = deps.querier.query_wasm_smart::<BsProfileMinterSudoParams>(
+        account_minter,
         &(BsAccountMinterQueryMsg::Params {}),
     )?;
 
@@ -801,7 +801,7 @@ pub fn query_ask_renew_price(
         &current_time,
         &sudo_params,
         &ask.token_id,
-        name_minter_params.base_price.u128(),
+        account_minter_params.base_price.u128(),
     )
     .map_err(|_| StdError::generic_err("failed to fetch renewal price".to_string()))?;
 
@@ -846,14 +846,14 @@ pub fn sudo_update_params(
     Ok(Response::new().add_event(event))
 }
 
-pub fn sudo_update_name_minter(deps: DepsMut, collection: Addr) -> Result<Response, ContractError> {
+pub fn sudo_update_account_minter(deps: DepsMut, collection: Addr) -> Result<Response, ContractError> {
     ACCOUNT_MINTER.save(deps.storage, &collection)?;
 
     let event = Event::new("update-account-minter").add_attribute("minter", collection);
     Ok(Response::new().add_event(event))
 }
 
-pub fn sudo_update_name_collection(
+pub fn sudo_update_account_collection(
     deps: DepsMut,
     collection: Addr,
 ) -> Result<Response, ContractError> {
@@ -911,7 +911,7 @@ fn _propose_accepted_bidder_a(_deps: Deps, _env: Env, _res: &mut Response) -> St
     Ok(())
 }
 
-pub(crate) fn propose_accepted_bidder_a_response(
+pub(crate) fn _propose_accepted_bidder_a_response(
     _env: Env,
     _deps: DepsMut,
     _result: SubMsgResult,

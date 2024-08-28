@@ -131,10 +131,10 @@ pub fn find_valid_bid(
     Ok(bid)
 }
 
-// Calculate the renewal price based on the name length
-pub fn get_char_price(base_price: u128, name_len: usize) -> Uint128 {
-    match name_len {
-        0..=2 => unreachable!("name_len should be at least 3"),
+// Calculate the renewal price based on the account length
+pub fn get_char_price(base_price: u128, account_len: usize) -> Uint128 {
+    match account_len {
+        0..=2 => unreachable!("account_len should be at least 3"),
         3 => base_price * 100,
         4 => base_price * 10,
         _ => base_price,
@@ -142,7 +142,7 @@ pub fn get_char_price(base_price: u128, name_len: usize) -> Uint128 {
     .into()
 }
 
-pub fn renew_name(
+pub fn renew_account(
     deps: DepsMut,
     _env: &Env,
     _sudo_params: &SudoParams,
@@ -172,7 +172,7 @@ pub fn renew_name(
     store_ask(deps.storage, &ask)?;
 
     response = response.add_event(
-        Event::new("renew-name")
+        Event::new("renew-account")
             .add_attribute("token_id", ask.token_id.to_string())
             .add_attribute("renewal_price", renewal_price)
             .add_attribute("next_renewal_time", ask.renewal_time.to_string()),

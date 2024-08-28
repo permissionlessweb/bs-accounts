@@ -216,10 +216,10 @@ pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> Result<Response, ContractE
         SudoMsg::RemoveAskHook { hook } => sudo_remove_ask_hook(deps, api.addr_validate(&hook)?),
         SudoMsg::RemoveBidHook { hook } => sudo_remove_bid_hook(deps, api.addr_validate(&hook)?),
         SudoMsg::UpdateAccountCollection { collection } => {
-            sudo_update_name_collection(deps, api.addr_validate(&collection)?)
+            sudo_update_account_collection(deps, api.addr_validate(&collection)?)
         }
         SudoMsg::UpdateAccountFactory { factory } => {
-            sudo_update_name_minter(deps, api.addr_validate(&factory)?)
+            sudo_update_account_minter(deps, api.addr_validate(&factory)?)
         }
     }
 }

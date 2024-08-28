@@ -23,26 +23,26 @@ pub struct InstantiateMsg {
 #[cw_serde]
 #[derive(cw_orch::ExecuteFns)]
 pub enum ExecuteMsg<T> {
-    /// Set name marketplace contract address
+    /// Set account marketplace contract address
     SetMarketplace { address: String },
-    /// Set an address for name reverse lookup and updates token_uri
+    /// Set an address for account reverse lookup and updates token_uri
     /// Can be an EOA or a contract address.
     AssociateAddress {
-        name: String,
+        account: String,
         address: Option<String>,
     },
     /// Update image NFT
-    UpdateImageNft { name: String, nft: Option<NFT> },
-    /// Add text record ex: twitter handle, discord name, etc
-    AddTextRecord { name: String, record: TextRecord },
-    /// Remove text record ex: twitter handle, discord name, etc
-    RemoveTextRecord { name: String, record_name: String },
-    /// Update text record ex: twitter handle, discord name, etc
-    UpdateTextRecord { name: String, record: TextRecord },
+    UpdateImageNft { account: String, nft: Option<NFT> },
+    /// Add text record ex: twitter handle, discord account, etc
+    AddTextRecord { account: String, record: TextRecord },
+    /// Remove text record ex: twitter handle, discord account, etc
+    RemoveTextRecord { account: String, record_account: String },
+    /// Update text record ex: twitter handle, discord account, etc
+    UpdateTextRecord { account: String, record: TextRecord },
     /// Verify a text record as true or false (via oracle)
     VerifyTextRecord {
-        name: String,
-        record_name: String,
+        account: String,
+        record_account: String,
         result: bool,
     },
     /// Update the reset the verification oracle
@@ -165,24 +165,24 @@ pub enum Bs721AccountsQueryMsg {
     /// Returns sudo params
     #[returns(SudoParams)]
     Params {},
-    /// Reverse lookup of name for address
+    /// Reverse lookup of account for address
     #[returns(String)]
     Account { address: String },
     /// Returns the marketplace contract address
     #[returns(Addr)]
     AccountMarketplace {},
-    /// Returns the associated address for a name
+    /// Returns the associated address for a account
     #[returns(Addr)]
-    AssociatedAddress { name: String },
-    /// Returns the image NFT for a name
+    AssociatedAddress { account: String },
+    /// Returns the image NFT for a account
     #[returns(Option<NFT>)]
-    ImageNFT { name: String },
-    /// Returns the text records for a name
+    ImageNFT { account: String },
+    /// Returns the text records for a account
     #[returns(Vec<TextRecord>)]
-    TextRecords { name: String },
-    /// Returns if Twitter is verified for a name
+    TextRecords { account: String },
+    /// Returns if Twitter is verified for a account
     #[returns(bool)]
-    IsTwitterVerified { name: String },
+    IsTwitterVerified { account: String },
     /// Returns the verification oracle address
     #[returns(Option<String>)]
     Verifier {},

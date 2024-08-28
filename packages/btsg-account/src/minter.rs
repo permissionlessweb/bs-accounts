@@ -4,9 +4,9 @@ use cosmwasm_std::{Addr, Timestamp, Uint128};
 #[cosmwasm_schema::cw_serde]
 pub struct SudoParams {
     /// 3 (same as DNS)
-    pub min_name_length: u32,
+    pub min_account_length: u32,
     /// 63 (same as DNS)
-    pub max_name_length: u32,
+    pub max_account_length: u32,
     /// 100_000_000 (5+ ASCII char price)
     pub base_price: Uint128,
     // Fair Burn fee (rest goes to Community Pool)
@@ -20,8 +20,8 @@ pub struct Config {
 
 #[cosmwasm_schema::cw_serde]
 pub enum BsProfileMinterExecuteMsg {
-    /// Mint a name and list on Stargaze Name Marketplace
-    MintAndList { name: String },
+    /// Mint a account and list on Bitsong Account Marketplace
+    MintAndList { account: String },
     /// Change the admin that manages the whitelist
     /// Will be set to null after go-to-market
     UpdateAdmin { admin: Option<String> },

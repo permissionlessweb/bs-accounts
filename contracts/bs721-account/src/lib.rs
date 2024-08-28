@@ -68,24 +68,24 @@ pub fn execute(
     let api = deps.api;
 
     match msg {
-        ExecuteMsg::AssociateAddress { name, address } => {
-            execute_associate_address(deps, info, name, address)
+        ExecuteMsg::AssociateAddress { account, address } => {
+            execute_associate_address(deps, info, account, address)
         }
-        ExecuteMsg::UpdateImageNft { name, nft } => execute_update_image_nft(deps, info, name, nft),
-        ExecuteMsg::AddTextRecord { name, record } => {
-            execute_add_text_record(deps, info, name, record)
+        ExecuteMsg::UpdateImageNft { account, nft } => execute_update_image_nft(deps, info, account, nft),
+        ExecuteMsg::AddTextRecord { account, record } => {
+            execute_add_text_record(deps, info, account, record)
         }
-        ExecuteMsg::RemoveTextRecord { name, record_name } => {
-            execute_remove_text_record(deps, info, name, record_name)
+        ExecuteMsg::RemoveTextRecord { account, record_account } => {
+            execute_remove_text_record(deps, info, account, record_account)
         }
-        ExecuteMsg::UpdateTextRecord { name, record } => {
-            execute_update_text_record(deps, info, name, record)
+        ExecuteMsg::UpdateTextRecord { account, record } => {
+            execute_update_text_record(deps, info, account, record)
         }
         ExecuteMsg::VerifyTextRecord {
-            name,
-            record_name,
+            account,
+            record_account,
             result,
-        } => execute_verify_text_record(deps, info, name, record_name, result),
+        } => execute_verify_text_record(deps, info, account, record_account, result),
         ExecuteMsg::UpdateVerifier { verifier } => {
             Ok(VERIFIER.execute_update_admin(deps, info, maybe_addr(api, verifier)?)?)
         }
@@ -134,13 +134,13 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::AccountMarketplace {} => to_json_binary(&query_profile_marketplace(deps)?),
         QueryMsg::Account { address } => to_json_binary(&query_account(deps, address)?),
         QueryMsg::Verifier {} => to_json_binary(&VERIFIER.query_admin(deps)?),
-        QueryMsg::AssociatedAddress { name } => {
-            to_json_binary(&query_associated_address(deps, &name)?)
+        QueryMsg::AssociatedAddress { account } => {
+            to_json_binary(&query_associated_address(deps, &account)?)
         }
-        QueryMsg::ImageNFT { name } => to_json_binary(&query_image_nft(deps, &name)?),
-        QueryMsg::TextRecords { name } => to_json_binary(&query_text_records(deps, &name)?),
-        QueryMsg::IsTwitterVerified { name } => {
-            to_json_binary(&query_is_twitter_verified(deps, &name)?)
+        QueryMsg::ImageNFT { account } => to_json_binary(&query_image_nft(deps, &account)?),
+        QueryMsg::TextRecords { account } => to_json_binary(&query_text_records(deps, &account)?),
+        QueryMsg::IsTwitterVerified { account } => {
+            to_json_binary(&query_is_twitter_verified(deps, &account)?)
         }
         _ => Bs721AccountsContract::default().query(deps, env, msg.into()),
     }

@@ -34,7 +34,7 @@ pub fn execute_mint_and_list(
         return Err(ContractError::MintingNotStarted {});
     }
 
-    validate_name(account, params.min_name_length, params.max_name_length)?;
+    validate_account(account, params.min_account_length, params.max_account_length)?;
     let price = validate_payment(account.len(), &info, params.base_price.u128())?;
 
     let mut res = Response::new();
@@ -72,7 +72,7 @@ pub fn execute_mint_and_list(
     };
 
     let event = Event::new("mint-and-list")
-        .add_attribute("name", account)
+        .add_attribute("account", account)
         .add_attribute("owner", sender)
         .add_attribute(
             "price",
@@ -124,26 +124,26 @@ pub fn execute_update_config(
     Ok(Response::new().add_event(event))
 }
 
-// This follows the same rules as Internet domain names
-pub fn validate_name(name: &str, min: u32, max: u32) -> Result<(), ContractError> {
-    let len = name.len() as u32;
+// This follows the same rules as Internet domain accounts
+pub fn validate_account(account: &str, min: u32, max: u32) -> Result<(), ContractError> {
+    let len = account.len() as u32;
     if len < min {
-        return Err(ContractError::NameTooShort {});
+        return Err(ContractError::AccountTooShort {});
     } else if len >= max {
-        return Err(ContractError::NameTooLong {});
+        return Err(ContractError::AccountTooLong {});
     }
 
-    name.find(invalid_char)
-        .map_or(Ok(()), |_| Err(ContractError::InvalidName {}))?;
+    account.find(invalid_char)
+        .map_or(Ok(()), |_| Err(ContractError::InvalidAccount {}))?;
 
-    (if name.starts_with('-') || name.ends_with('-') {
-        Err(ContractError::InvalidName {})
+    (if account.starts_with('-') || account.ends_with('-') {
+        Err(ContractError::InvalidAccount {})
     } else {
         Ok(())
     })?;
 
-    if len > 4u32 && name[2..4].contains("--") {
-        return Err(ContractError::InvalidName {});
+    if len > 4u32 && account[2..4].contains("--") {
+        return Err(ContractError::InvalidAccount {});
     }
 
     Ok(())
@@ -154,15 +154,15 @@ pub enum Discount {
 }
 
 pub fn validate_payment(
-    name_len: usize,
+    account_len: usize,
     info: &MessageInfo,
     base_price: u128,
     // discount: Option<Discount>,
 ) -> Result<Option<Coin>, ContractError> {
     // Because we know we are left with ASCII chars, a simple byte count is enough
-    let amount: Uint128 = (match name_len {
+    let amount: Uint128 = (match account_len {
         0..=2 => {
-            return Err(ContractError::NameTooShort {});
+            return Err(ContractError::AccountTooShort {});
         }
         3 => base_price * 100,
         4 => base_price * 10,

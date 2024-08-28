@@ -1,7 +1,7 @@
 use crate::error::ContractError;
-use btsg_account::account::SudoParams;
 use crate::state::{ACCOUNT_MARKETPLACE, REVERSE_MAP, SUDO_PARAMS, VERIFIER};
 use crate::Bs721AccountsContract;
+use btsg_account::account::SudoParams;
 use cosmwasm_std::{
     ensure, to_json_binary, Addr, Binary, ContractInfoResponse, Deps, DepsMut, Empty, Env, Event,
     MessageInfo, Response, StdError, StdResult, WasmMsg,
@@ -22,15 +22,15 @@ use subtle_encoding::bech32;
 pub fn execute_associate_address(
     deps: DepsMut,
     info: MessageInfo,
-    name: String,
+    account: String,
     address: Option<String>,
 ) -> Result<Response, ContractError> {
-    only_owner(deps.as_ref(), &info.sender, &name)?;
+    only_owner(deps.as_ref(), &info.sender, &account)?;
 
     // println!("// 1. remove old token_uri from reverse map if it exists");
     Bs721AccountsContract::default()
         .tokens
-        .load(deps.storage, &name)
+        .load(deps.storage, &account)
         .map(|prev_token_info| {
             if let Some(address) = prev_token_info.token_uri {
                 REVERSE_MAP.remove(deps.storage, &Addr::unchecked(address));
@@ -47,13 +47,13 @@ pub fn execute_associate_address(
         })
         .transpose()?;
 
-    // println!("// 3. look up prev name if it exists for the new address");
-    let old_name = token_uri
+    // println!("// 3. look up prev account if it exists for the new address");
+    let old_account = token_uri
         .clone()
         .and_then(|addr| REVERSE_MAP.may_load(deps.storage, &addr).unwrap_or(None));
 
-    // println!("// 4. remove old token_uri / address from previous name");
-    old_name.map(|token_id| {
+    // println!("// 4. remove old token_uri / address from previous account");
+    old_account.map(|token_id| {
         Bs721AccountsContract::default()
             .tokens
             .update(deps.storage, &token_id, |token| match token {
@@ -61,28 +61,30 @@ pub fn execute_associate_address(
                     token_info.token_uri = None;
                     Ok(token_info)
                 }
-                None => Err(ContractError::NameNotFound {}),
+                None => Err(ContractError::AccountNotFound {}),
             })
     });
 
-    // println!("// 5. associate new token_uri / address with new name / token_id");
-    Bs721AccountsContract::default()
-        .tokens
-        .update(deps.storage, &name, |token| match token {
+    // println!("// 5. associate new token_uri / address with new account / token_id");
+    Bs721AccountsContract::default().tokens.update(
+        deps.storage,
+        &account,
+        |token| match token {
             Some(mut token_info) => {
                 token_info.token_uri = token_uri.clone().map(|addr| addr.to_string());
                 Ok(token_info)
             }
-            None => Err(ContractError::NameNotFound {}),
-        })?;
+            None => Err(ContractError::AccountNotFound {}),
+        },
+    )?;
 
     // println!("// 6. update new manager in token metadata");
     // println!("// 7. save new reverse map entry");
 
-    token_uri.map(|addr| REVERSE_MAP.save(deps.storage, &addr, &name));
+    token_uri.map(|addr| REVERSE_MAP.save(deps.storage, &addr, &account));
 
     let mut event = Event::new("associate-address")
-        .add_attribute("name", name)
+        .add_attribute("account", account)
         .add_attribute("owner", info.sender);
 
     if let Some(address) = address {
@@ -280,17 +282,17 @@ pub fn execute_send_nft(
 pub fn execute_update_image_nft(
     deps: DepsMut,
     info: MessageInfo,
-    name: String,
+    account: String,
     nft: Option<NFT>,
 ) -> Result<Response, ContractError> {
-    let token_id = name.clone();
+    let token_id = account.clone();
 
     nonpayable(&info)?;
     only_owner(deps.as_ref(), &info.sender, &token_id)?;
 
     let mut event = Event::new("update_image_nft")
         .add_attribute("owner", info.sender.to_string())
-        .add_attribute("token_id", name);
+        .add_attribute("token_id", account);
 
     Bs721AccountsContract::default().tokens.update(
         deps.storage,
@@ -300,7 +302,7 @@ pub fn execute_update_image_nft(
                 token_info.extension.image_nft = nft.clone();
                 Ok(token_info)
             }
-            None => Err(ContractError::NameNotFound {}),
+            None => Err(ContractError::AccountNotFound {}),
         },
     )?;
 
@@ -314,10 +316,10 @@ pub fn execute_update_image_nft(
 pub fn execute_add_text_record(
     deps: DepsMut,
     info: MessageInfo,
-    name: String,
+    account: String,
     mut record: TextRecord,
 ) -> Result<Response, ContractError> {
-    let token_id = name;
+    let token_id = account;
     let params = SUDO_PARAMS.load(deps.storage)?;
     let max_record_count = params.max_record_count;
 
@@ -333,10 +335,10 @@ pub fn execute_add_text_record(
         &token_id,
         |token| match token {
             Some(mut token_info) => {
-                // can not add a record with existing name
+                // can not add a record with existing account
                 for r in token_info.extension.records.iter() {
-                    if r.name == record.name {
-                        return Err(ContractError::RecordNameAlreadyExists {});
+                    if r.account == record.account {
+                        return Err(ContractError::RecordAccountAlreadyExists {});
                     }
                 }
                 token_info.extension.records.push(record.clone());
@@ -348,13 +350,13 @@ pub fn execute_add_text_record(
                 }
                 Ok(token_info)
             }
-            None => Err(ContractError::NameNotFound {}),
+            None => Err(ContractError::AccountNotFound {}),
         },
     )?;
 
     let event = Event::new("add-text-record")
         .add_attribute("sender", info.sender)
-        .add_attribute("name", token_id)
+        .add_attribute("account", token_id)
         .add_attribute("record", record.into_json_string());
     Ok(Response::new().add_event(event))
 }
@@ -362,10 +364,10 @@ pub fn execute_add_text_record(
 pub fn execute_remove_text_record(
     deps: DepsMut,
     info: MessageInfo,
-    name: String,
-    record_name: String,
+    account: String,
+    record_account: String,
 ) -> Result<Response, ContractError> {
-    let token_id = name;
+    let token_id = account;
 
     nonpayable(&info)?;
     only_owner(deps.as_ref(), &info.sender, &token_id)?;
@@ -378,27 +380,27 @@ pub fn execute_remove_text_record(
                 token_info
                     .extension
                     .records
-                    .retain(|r| r.name != record_name);
+                    .retain(|r| r.account != record_account);
                 Ok(token_info)
             }
-            None => Err(ContractError::NameNotFound {}),
+            None => Err(ContractError::AccountNotFound {}),
         },
     )?;
 
     let event = Event::new("remove-text-record")
         .add_attribute("sender", info.sender)
-        .add_attribute("name", token_id)
-        .add_attribute("record_name", record_name);
+        .add_attribute("account", token_id)
+        .add_attribute("record_account", record_account);
     Ok(Response::new().add_event(event))
 }
 
 pub fn execute_update_text_record(
     deps: DepsMut,
     info: MessageInfo,
-    name: String,
+    account: String,
     mut record: TextRecord,
 ) -> Result<Response, ContractError> {
-    let token_id = name;
+    let token_id = account;
     let params = SUDO_PARAMS.load(deps.storage)?;
     let max_record_count = params.max_record_count;
 
@@ -417,7 +419,7 @@ pub fn execute_update_text_record(
                 token_info
                     .extension
                     .records
-                    .retain(|r| r.name != record.name);
+                    .retain(|r| r.account != record.account);
                 token_info.extension.records.push(record.clone());
                 // check record length
                 if token_info.extension.records.len() > max_record_count as usize {
@@ -427,13 +429,13 @@ pub fn execute_update_text_record(
                 }
                 Ok(token_info)
             }
-            None => Err(ContractError::NameNotFound {}),
+            None => Err(ContractError::AccountNotFound {}),
         },
     )?;
 
     let event = Event::new("update-text-record")
         .add_attribute("sender", info.sender)
-        .add_attribute("name", token_id)
+        .add_attribute("account", token_id)
         .add_attribute("record", record.into_json_string());
     Ok(Response::new().add_event(event))
 }
@@ -441,14 +443,14 @@ pub fn execute_update_text_record(
 pub fn execute_verify_text_record(
     deps: DepsMut,
     info: MessageInfo,
-    name: String,
-    record_name: String,
+    account: String,
+    record_account: String,
     result: bool,
 ) -> Result<Response, ContractError> {
     nonpayable(&info)?;
     VERIFIER.assert_admin(deps.as_ref(), &info.sender)?;
 
-    let token_id = name;
+    let token_id = account;
 
     Bs721AccountsContract::default().tokens.update(
         deps.storage,
@@ -459,20 +461,20 @@ pub fn execute_verify_text_record(
                     .extension
                     .records
                     .iter_mut()
-                    .find(|r| r.name == record_name)
+                    .find(|r| r.account == record_account)
                 {
                     r.verified = Some(result);
                 }
                 Ok(token_info)
             }
-            None => Err(ContractError::NameNotFound {}),
+            None => Err(ContractError::AccountNotFound {}),
         },
     )?;
 
     let event = Event::new("verify-text-record")
         .add_attribute("sender", info.sender)
-        .add_attribute("name", token_id)
-        .add_attribute("record", record_name)
+        .add_attribute("account", token_id)
+        .add_attribute("record", record_account)
         .add_attribute("result", result.to_string());
     Ok(Response::new().add_event(event))
 }
@@ -491,7 +493,7 @@ pub fn execute_set_profile_marketplace(
 
     ACCOUNT_MARKETPLACE.save(deps.storage, &deps.api.addr_validate(&address)?)?;
 
-    let event = Event::new("set-name-marketplace")
+    let event = Event::new("set-account-marketplace")
         .add_attribute("sender", info.sender)
         .add_attribute("address", address);
     Ok(Response::new().add_event(event))
@@ -514,11 +516,11 @@ fn validate_record(record: &TextRecord) -> Result<(), ContractError> {
     if record.verified.is_some() {
         return Err(ContractError::UnauthorizedVerification {});
     }
-    let name_len = record.name.len();
+    let name_len = record.account.len();
     if name_len > MAX_TEXT_LENGTH as usize {
-        return Err(ContractError::RecordNameTooLong {});
+        return Err(ContractError::RecordAccountTooLong {});
     } else if name_len == 0 {
-        return Err(ContractError::RecordNameEmpty {});
+        return Err(ContractError::RecordAccountEmpty {});
     }
 
     if record.value.len() > MAX_TEXT_LENGTH as usize {
@@ -533,52 +535,58 @@ pub fn query_profile_marketplace(deps: Deps) -> StdResult<Addr> {
     ACCOUNT_MARKETPLACE.load(deps.storage)
 }
 
-pub fn query_account(deps: Deps, mut address: String) -> StdResult<String> {
+pub fn query_account(deps: Deps, address: String) -> StdResult<String> {
     if !address.starts_with("bitsong") {
-        address = transcode(&address)?;
+        // todo: update to transcode if prefix is not one of the prefix we expect to have the same coin type as Bitsong (639)
+        // address = transcode(&address)?;
+        return Err(StdError::GenericErr {
+            msg: "invalid address".into(),
+        });
     }
 
     REVERSE_MAP
         .load(deps.storage, &deps.api.addr_validate(&address)?)
-        .map_err(|_| StdError::generic_err(format!("No name associated with address {}", address)))
+        .map_err(|_| {
+            StdError::generic_err(format!("No account associated with address {}", address))
+        })
 }
 
 pub fn query_params(deps: Deps) -> StdResult<SudoParams> {
     SUDO_PARAMS.load(deps.storage)
 }
 
-pub fn query_associated_address(deps: Deps, name: &str) -> StdResult<String> {
+pub fn query_associated_address(deps: Deps, account: &str) -> StdResult<String> {
     Bs721AccountsContract::default()
         .tokens
-        .load(deps.storage, name)?
+        .load(deps.storage, account)?
         .token_uri
         .ok_or_else(|| StdError::generic_err("No associated address"))
 }
 
-pub fn query_image_nft(deps: Deps, name: &str) -> StdResult<Option<NFT>> {
+pub fn query_image_nft(deps: Deps, account: &str) -> StdResult<Option<NFT>> {
     Ok(Bs721AccountsContract::default()
         .tokens
-        .load(deps.storage, name)?
+        .load(deps.storage, account)?
         .extension
         .image_nft)
 }
 
-pub fn query_text_records(deps: Deps, name: &str) -> StdResult<Vec<TextRecord>> {
+pub fn query_text_records(deps: Deps, account: &str) -> StdResult<Vec<TextRecord>> {
     Ok(Bs721AccountsContract::default()
         .tokens
-        .load(deps.storage, name)?
+        .load(deps.storage, account)?
         .extension
         .records)
 }
-pub fn query_is_twitter_verified(deps: Deps, name: &str) -> StdResult<bool> {
+pub fn query_is_twitter_verified(deps: Deps, account: &str) -> StdResult<bool> {
     let records = Bs721AccountsContract::default()
         .tokens
-        .load(deps.storage, name)?
+        .load(deps.storage, account)?
         .extension
         .records;
 
     for record in records {
-        if record.name == "twitter" {
+        if record.account == "twitter" {
             return Ok(record.verified.unwrap_or(false));
         }
     }

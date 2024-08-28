@@ -55,8 +55,8 @@ pub fn instantiate(
     ACCOUNT_MARKETPLACE.save(deps.storage, &marketplace)?;
 
     let params = SudoParams {
-        min_name_length: msg.min_name_length,
-        max_name_length: msg.max_name_length,
+        min_account_length: msg.min_account_length,
+        max_account_length: msg.max_account_length,
         base_price: msg.base_price,
     };
     SUDO_PARAMS.save(deps.storage, &params)?;
@@ -123,7 +123,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     }
 }
 
-/// Mint a name for the sender, or `contract` if specified
+/// Mint a account for the sender, or `contract` if specified
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
@@ -189,19 +189,19 @@ pub fn sudo(deps: DepsMut, _env: Env, msg: SudoMsg) -> Result<Response, Contract
 
     match msg {
         SudoMsg::UpdateParams {
-            min_name_length,
-            max_name_length,
+            min_account_length,
+            max_account_length,
             base_price,
             // fair_burn_bps,
         } => sudo_update_params(
             deps,
-            min_name_length,
-            max_name_length,
+            min_account_length,
+        max_account_length,
             base_price,
             // fair_burn_bps,
         ),
         SudoMsg::UpdateAccountCollection { collection } => {
-            sudo_update_name_collection(deps, api.addr_validate(&collection)?)
+            sudo_update_account_collection(deps, api.addr_validate(&collection)?)
         }
         SudoMsg::UpdateAccountMarketplace { marketplace } => {
             sudo_update_account_marketplace(deps, api.addr_validate(&marketplace)?)
@@ -213,40 +213,40 @@ pub fn sudo(deps: DepsMut, _env: Env, msg: SudoMsg) -> Result<Response, Contract
 mod tests {
     use cosmwasm_std::{coin, Addr, MessageInfo};
 
-    use crate::commands::{validate_name, validate_payment};
+    use crate::commands::{validate_account, validate_payment};
 
     use super::*;
 
     #[test]
-    fn check_validate_name() {
+    fn check_validate_account() {
         let min = 3;
         let max = 63;
-        assert!(validate_name("bobo", min, max).is_ok());
-        assert!(validate_name("-bobo", min, max).is_err());
-        assert!(validate_name("bobo-", min, max).is_err());
-        assert!(validate_name("bo-bo", min, max).is_ok());
-        assert!(validate_name("bo--bo", min, max).is_err());
-        assert!(validate_name("bob--o", min, max).is_ok());
-        assert!(validate_name("bo", min, max).is_err());
-        assert!(validate_name("b", min, max).is_err());
-        assert!(validate_name("bob", min, max).is_ok());
-        assert!(validate_name(
+        assert!(validate_account("bobo", min, max).is_ok());
+        assert!(validate_account("-bobo", min, max).is_err());
+        assert!(validate_account("bobo-", min, max).is_err());
+        assert!(validate_account("bo-bo", min, max).is_ok());
+        assert!(validate_account("bo--bo", min, max).is_err());
+        assert!(validate_account("bob--o", min, max).is_ok());
+        assert!(validate_account("bo", min, max).is_err());
+        assert!(validate_account("b", min, max).is_err());
+        assert!(validate_account("bob", min, max).is_ok());
+        assert!(validate_account(
             "bobobobobobobobobobobobobobobobobobobobobobobobobobobobobobobo",
             min,
             max
         )
         .is_ok());
-        assert!(validate_name(
+        assert!(validate_account(
             "bobobobobobobobobobobobobobobobobobobobobobobobobobobobobobobob",
             min,
             max
         )
         .is_err());
-        assert!(validate_name("0123456789", min, max).is_ok());
-        assert!(validate_name("😬", min, max).is_err());
-        assert!(validate_name("BOBO", min, max).is_err());
-        assert!(validate_name("b-o----b", min, max).is_ok());
-        assert!(validate_name("bobo.stars", min, max).is_err());
+        assert!(validate_account("0123456789", min, max).is_ok());
+        assert!(validate_account("😬", min, max).is_err());
+        assert!(validate_account("BOBO", min, max).is_err());
+        assert!(validate_account("b-o----b", min, max).is_ok());
+        assert!(validate_account("bobo.stars", min, max).is_err());
     }
 
     #[test]

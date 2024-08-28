@@ -8,16 +8,16 @@ use crate::{
 
 pub fn sudo_update_params(
     deps: DepsMut,
-    min_name_length: u32,
-    max_name_length: u32,
+    min_account_length: u32,
+    max_account_length: u32,
     base_price: Uint128,
     // fair_burn_bps: u64,
 ) -> Result<Response, ContractError> {
     SUDO_PARAMS.save(
         deps.storage,
         &SudoParams {
-            min_name_length,
-            max_name_length,
+            min_account_length,
+            max_account_length,
             base_price,
             // fair_burn_percent: Decimal::percent(fair_burn_bps) / Uint128::from(100u128),
         },
@@ -26,7 +26,7 @@ pub fn sudo_update_params(
     Ok(Response::new().add_attribute("action", "sudo_update_params"))
 }
 
-pub fn sudo_update_name_collection(
+pub fn sudo_update_account_collection(
     deps: DepsMut,
     collection: Addr,
 ) -> Result<Response, ContractError> {

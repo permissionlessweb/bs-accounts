@@ -20,20 +20,23 @@ pub enum ContractError {
     #[error("{0}")]
     Base(#[from] bs721_base::ContractError),
 
-    #[error("NameNotFound")]
-    NameNotFound {},
+    #[error("AccountNotFound")]
+    AccountNotFound {},
 
     #[error("AddressAlreadyMapped")]
     AddressAlreadyMapped {},
 
-    #[error("RecordNameAlreadyExists")]
-    RecordNameAlreadyExists {},
+    #[error("InvalidAddress")]
+    InvalidAddress {},
+    
+    #[error("RecordAccountAlreadyExists")]
+    RecordAccountAlreadyExists {},
 
-    #[error("RecordNameEmpty")]
-    RecordNameEmpty {},
+    #[error("RecordAccountEmpty")]
+    RecordAccountEmpty {},
 
-    #[error("RecordNameTooLong")]
-    RecordNameTooLong {},
+    #[error("RecordAccountTooLong")]
+    RecordAccountTooLong {},
 
     #[error("RecordValueTooLong")]
     RecordValueTooLong {},

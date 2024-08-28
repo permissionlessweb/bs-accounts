@@ -13,17 +13,17 @@ pub struct InstantiateMsg {
     /// Contract Address to Marketplace contract.
     pub marketplace_addr: String,
     /// Minimum length an account id can be
-    pub min_name_length: u32,
+    pub min_account_length: u32,
     /// Maximum length an account id can be
-    pub max_name_length: u32,
-    /// Base price for a name. Used to calculate premium for small account names
+    pub max_account_length: u32,
+    /// Base price for a account. Used to calculate premium for small account accounts
     pub base_price: Uint128,
 }
 
 #[cw_serde]
 #[derive(cw_orch::ExecuteFns)]
 pub enum ExecuteMsg {
-    /// Mint a account and list on Stargaze Account Marketplace
+    /// Mint a account and list on Bitsong Account Marketplace
     MintAndList { account: String },
     /// Change the admin that manages the whitelist
     /// Will be set to null after go-to-market
@@ -37,8 +37,8 @@ pub enum ExecuteMsg {
 #[cw_serde]
 pub enum SudoMsg {
     UpdateParams {
-        min_name_length: u32,
-        max_name_length: u32,
+        min_account_length: u32,
+        max_account_length: u32,
         base_price: Uint128,
     },
     UpdateAccountCollection {

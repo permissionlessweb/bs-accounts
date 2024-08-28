@@ -14,7 +14,7 @@ pub enum ContractError {
     #[error("{0}")]
     Admin(#[from] AdminError),
 
-    #[error("Name Minter: Unauthorized")]
+    #[error("Account Minter: Unauthorized")]
     Unauthorized {},
 
     #[error("MintingPaused")]
@@ -24,13 +24,13 @@ pub enum ContractError {
     InvalidReplyID {},
 
     #[error("Invalid name")]
-    InvalidName {},
+    InvalidAccount {},
 
-    #[error("Name too short")]
-    NameTooShort {},
+    #[error("Account too short")]
+    AccountTooShort {},
 
-    #[error("Name too long")]
-    NameTooLong {},
+    #[error("Account too long")]
+    AccountTooLong {},
 
     #[error("Incorrect payment, got: {got}, expected {expected}")]
     IncorrectPayment { got: u128, expected: u128 },

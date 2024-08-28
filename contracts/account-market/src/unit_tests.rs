@@ -8,8 +8,8 @@ use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
 use cosmwasm_std::{coins, Addr, Decimal, DepsMut, Timestamp, Uint128};
 
 const CREATOR: &str = "creator";
-const TOKEN_ID: &str = "name";
-const TOKEN_ID_NEXT: &str = "name2";
+const TOKEN_ID: &str = "account";
+const TOKEN_ID_NEXT: &str = "account2";
 
 // Governance parameters
 const TRADING_FEE_BASIS_POINTS: u64 = 200; // 2%
