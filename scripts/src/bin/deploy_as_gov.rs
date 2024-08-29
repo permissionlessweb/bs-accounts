@@ -1,7 +1,15 @@
 use clap::Parser;
-use cw_orch::prelude::ChainInfoOwned;
-use scripts::{assert_wallet_balance, networks::ping_grpc};
+use cosmwasm_std::Addr;
+use cw_orch::{
+    daemon::{DaemonBuilder, TxSender},
+    prelude::{ChainInfoOwned, Deploy},
+};
+use scripts::{assert_wallet_balance, networks::ping_grpc, BtsgAccountSuite};
 use tokio::runtime::Runtime;
+
+// todo: move to .env file
+pub const MNEMONIC: &str = "";
+pub const GOV_MODULE: &str = "";
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
@@ -42,6 +50,14 @@ fn deploy_as_gov(network: ChainInfoOwned) -> anyhow::Result<()> {
     for url in urls {
         rt.block_on(ping_grpc(&url))?;
     }
+
+    let mut chain = DaemonBuilder::new(network.clone())
+        .handle(rt.handle())
+        .mnemonic(std::env::var(MNEMONIC)?)
+        .build()?;
+    // send message under authorization of governance module
+    chain.authz_granter(GOV_MODULE);
+    BtsgAccountSuite::deploy_on(chain.clone(), Addr::unchecked(GOV_MODULE))?;
 
     Ok(())
 }

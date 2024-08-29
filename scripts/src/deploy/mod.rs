@@ -1,17 +1,16 @@
+// Library for various combinations (bundles) of contracts in a single `Deploy` trait implementation.
 pub mod account;
 pub mod networks;
 
-use crate::deploy::account::BtsgAccountSuite;
+pub use account::BtsgAccountSuite;
+
 use bs721_account_minter::msg::InstantiateMsg as AccountMinterInitMsg;
-use btsg_account::account::Bs721AccountsQueryMsgFns;
-use btsg_account::account::ExecuteMsgFns;
+use btsg_account::account::{Bs721AccountsQueryMsgFns, ExecuteMsgFns};
 use btsg_account::market::{
     ExecuteMsgFns as _, InstantiateMsg as AccountMarketInitMsg, QueryMsgFns,
 };
 use cosmwasm_std::{coins, Decimal, Uint128};
-use cw_orch::anyhow;
-use cw_orch::prelude::*;
-// Library for various combinations (bundles) of contracts in a single `Deploy` trait implementation.
+use cw_orch::{anyhow, prelude::*};
 
 const BASE_PRICE: u128 = 100_000_000;
 

@@ -1,4 +1,5 @@
 use bs721_account_minter::msg::{ExecuteMsgFns as _, InstantiateMsg as AccountMinterInitMsg};
+use btsg_account::account::Bs721AccountsQueryMsgFns as _;
 use btsg_account::market::{ExecuteMsgFns as _, InstantiateMsg as AccountMarketInitMsg};
 use btsg_account::Metadata;
 use btsg_cw_orch::*;
@@ -54,7 +55,7 @@ impl<Chain: CwEnv> cw_orch::contract::Deploy<Chain> for BtsgAccountSuite<Chain> 
         Ok(suite)
     }
 
-    fn deploy_on(chain: Chain, _data: Self::DeployData) -> Result<Self, Self::Error> {
+    fn deploy_on(chain: Chain, data: Self::DeployData) -> Result<Self, Self::Error> {
         // ########### Upload ##############
         let mut suite: BtsgAccountSuite<Chain> = BtsgAccountSuite::store_on(chain.clone())?;
 
@@ -62,7 +63,7 @@ impl<Chain: CwEnv> cw_orch::contract::Deploy<Chain> for BtsgAccountSuite<Chain> 
         // account marketplace
         suite.market.instantiate(
             &AccountMarketInitMsg {
-                trading_fee_bps: 0u64,
+                trading_fee_bps: 100u64,
                 min_price: 100u128.into(),
                 ask_interval: 30u64,
                 max_renewals_per_block: 10u32,
@@ -81,7 +82,7 @@ impl<Chain: CwEnv> cw_orch::contract::Deploy<Chain> for BtsgAccountSuite<Chain> 
             .minter
             .instantiate(
                 &AccountMinterInitMsg {
-                    admin: None,
+                    admin: Some(data.to_string()),
                     verifier: None,
                     collection_code_id: suite.account.code_id()?,
                     marketplace_addr: suite.market.addr_str()?,
@@ -89,7 +90,7 @@ impl<Chain: CwEnv> cw_orch::contract::Deploy<Chain> for BtsgAccountSuite<Chain> 
                     max_account_length: 128u32,
                     base_price: 10u128.into(),
                 },
-                None,
+                Some(&Addr::unchecked(data)),
                 None,
             )?
             .event_attr_value("wasm", "bs721_account_address")?;
@@ -105,6 +106,8 @@ impl<Chain: CwEnv> cw_orch::contract::Deploy<Chain> for BtsgAccountSuite<Chain> 
 
         // Mint governance owned name
         suite.minter.mint_and_list("Bitsong")?;
+
+        suite.account.nft_info("Bitsong")?;
         Ok(suite)
     }
 }
