@@ -1,9 +1,9 @@
 MSG=$(cat <<EOF
 {
   "update_text_record": {
-    "name": "$1",
+    "account": "$1",
     "record": {
-      "name": "twitter",
+      "account": "twitter",
       "value": "something"
     }
   }
@@ -11,7 +11,7 @@ MSG=$(cat <<EOF
 EOF
 )
 
-starsd tx wasm execute $COLLECTION "$MSG" \
-  --gas-prices 0.025ustars --gas auto --gas-adjustment 1.9 \
+bitsongd tx wasm execute $COLLECTION "$MSG" \
+  --gas-prices 0.025ubtsg --gas auto --gas-adjustment 1.9 \
   --from $USER -y -b block -o json | jq .
  

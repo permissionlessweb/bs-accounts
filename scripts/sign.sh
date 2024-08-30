@@ -1,6 +1,6 @@
-KEY=$(starsd keys show $USER | jq -r .name)
+KEY=$(bitsongd keys show $USER | jq -r .name)
 
-starsd tx sign unsignedTx.json \
+bitsongd tx sign unsignedTx.json \
     --multisig $ADMIN \
     --from $USER \
     --output-document $KEY.json \

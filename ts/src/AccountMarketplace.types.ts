@@ -44,26 +44,6 @@ export type ExecuteMsg = {
     token_id: string;
   };
 } | {
-  migrate_bids: {
-    limit: number;
-  };
-} | {
-  fund_renewal: {
-    token_id: string;
-  };
-} | {
-  refund_renewal: {
-    token_id: string;
-  };
-} | {
-  renew: {
-    token_id: string;
-  };
-} | {
-  process_renewals: {
-    limit: number;
-  };
-} | {
   setup: {
     collection: string;
     minter: string;
@@ -87,22 +67,6 @@ export type QueryMsg = {
     start_after?: string | null;
   };
 } | {
-  asks_by_renew_time: {
-    limit?: number | null;
-    max_time: Timestamp;
-    start_after?: Timestamp | null;
-  };
-} | {
-  ask_renew_price: {
-    current_time: Timestamp;
-    token_id: string;
-  };
-} | {
-  ask_renewal_prices: {
-    current_time: Timestamp;
-    token_ids: string[];
-  };
-} | {
   bid: {
     bidder: string;
     token_id: string;
@@ -118,11 +82,6 @@ export type QueryMsg = {
     limit?: number | null;
     start_after?: string | null;
     token_id: string;
-  };
-} | {
-  legacy_bids: {
-    limit?: number | null;
-    start_after?: BidOffset | null;
   };
 } | {
   bids_sorted_by_price: {
@@ -153,14 +112,8 @@ export type QueryMsg = {
 } | {
   params: {};
 } | {
-  renewal_queue: {
-    time: Timestamp;
-  };
-} | {
   config: {};
 };
-export type Timestamp = Uint64;
-export type Uint64 = string;
 export type Addr = string;
 export interface BidOffset {
   bidder: Addr;
@@ -168,6 +121,8 @@ export interface BidOffset {
   token_id: string;
 }
 export type NullableAsk = Ask | null;
+export type Timestamp = Uint64;
+export type Uint64 = string;
 export interface Ask {
   id: number;
   renewal_fund: Uint128;
@@ -178,26 +133,14 @@ export interface Ask {
 export interface HooksResponse {
   hooks: string[];
 }
-export type TupleOfNullable_CoinAndNullable_Bid = [Coin | null, Bid | null];
-export interface Coin {
-  amount: Uint128;
-  denom: string;
-  [k: string]: unknown;
-}
+export type ArrayOfAsk = Ask[];
+export type NullableBid = Bid | null;
 export interface Bid {
   amount: Uint128;
   bidder: Addr;
   created_time: Timestamp;
   token_id: string;
 }
-export type ArrayOfAskRenewPriceResponse = AskRenewPriceResponse[];
-export interface AskRenewPriceResponse {
-  bid?: Bid | null;
-  price: Coin;
-  token_id: string;
-}
-export type ArrayOfAsk = Ask[];
-export type NullableBid = Bid | null;
 export type ArrayOfBid = Bid[];
 export interface ConfigResponse {
   collection: Addr;

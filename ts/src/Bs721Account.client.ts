@@ -6,35 +6,35 @@
 
 import { CosmWasmClient, SigningCosmWasmClient, ExecuteResult } from "@cosmjs/cosmwasm-stargate";
 import { Coin, StdFee } from "@cosmjs/amino";
-import { Decimal, Timestamp, Uint64, InstantiateMsg, CollectionInfoForRoyaltyInfoResponse, RoyaltyInfoResponse, ExecuteMsg, Addr, Binary, Expiration, NFT, TextRecord, MintMsgForMetadata, Metadata, UpdateCollectionInfoMsgForRoyaltyInfoResponse, QueryMsg, AllNftInfoResponseForMetadata, OwnerOfResponse, Approval, NftInfoResponseForMetadata, OperatorsResponse, TokensResponse, ApprovalResponse, ApprovalsResponse, CollectionInfoResponse, ContractInfoResponse, NullableNFT, Boolean, MinterResponse, String, NumTokensResponse, SudoParams, ArrayOfTextRecord, NullableString } from "./Sg721Name.types";
-export interface Sg721NameReadOnlyInterface {
+import { Addr, InstantiateMsg, InstantiateMsg1, ExecuteMsg, Binary, Expiration, Timestamp, Uint64, NFT, TextRecord, Metadata, QueryMsg, String, AllNftInfoResponseForMetadata, OwnerOfResponse, Approval, NftInfoResponseForMetadata, OperatorsResponse, TokensResponse, ApprovalResponse, ApprovalsResponse, ContractInfoResponse, NullableNFT, Boolean, MinterResponse, NumTokensResponse, SudoParams, ArrayOfTextRecord, NullableString } from "./Bs721Account.types";
+export interface Bs721AccountReadOnlyInterface {
   contractAddress: string;
   params: () => Promise<SudoParams>;
-  name: ({
+  account: ({
     address
   }: {
     address: string;
   }) => Promise<String>;
-  nameMarketplace: () => Promise<Addr>;
+  accountMarketplace: () => Promise<Addr>;
   associatedAddress: ({
-    name
+    account
   }: {
-    name: string;
+    account: string;
   }) => Promise<Addr>;
   imageNFT: ({
-    name
+    account
   }: {
-    name: string;
+    account: string;
   }) => Promise<NullableNFT>;
   textRecords: ({
-    name
+    account
   }: {
-    name: string;
+    account: string;
   }) => Promise<ArrayOfTextRecord>;
   isTwitterVerified: ({
-    name
+    account
   }: {
-    name: string;
+    account: string;
   }) => Promise<Boolean>;
   verifier: () => Promise<NullableString>;
   ownerOf: ({
@@ -102,9 +102,8 @@ export interface Sg721NameReadOnlyInterface {
     startAfter?: string;
   }) => Promise<TokensResponse>;
   minter: () => Promise<MinterResponse>;
-  collectionInfo: () => Promise<CollectionInfoResponse>;
 }
-export class Sg721NameQueryClient implements Sg721NameReadOnlyInterface {
+export class Bs721AccountQueryClient implements Bs721AccountReadOnlyInterface {
   client: CosmWasmClient;
   contractAddress: string;
 
@@ -112,8 +111,8 @@ export class Sg721NameQueryClient implements Sg721NameReadOnlyInterface {
     this.client = client;
     this.contractAddress = contractAddress;
     this.params = this.params.bind(this);
-    this.name = this.name.bind(this);
-    this.nameMarketplace = this.nameMarketplace.bind(this);
+    this.account = this.account.bind(this);
+    this.accountMarketplace = this.accountMarketplace.bind(this);
     this.associatedAddress = this.associatedAddress.bind(this);
     this.imageNFT = this.imageNFT.bind(this);
     this.textRecords = this.textRecords.bind(this);
@@ -130,7 +129,6 @@ export class Sg721NameQueryClient implements Sg721NameReadOnlyInterface {
     this.tokens = this.tokens.bind(this);
     this.allTokens = this.allTokens.bind(this);
     this.minter = this.minter.bind(this);
-    this.collectionInfo = this.collectionInfo.bind(this);
   }
 
   params = async (): Promise<SudoParams> => {
@@ -138,63 +136,63 @@ export class Sg721NameQueryClient implements Sg721NameReadOnlyInterface {
       params: {}
     });
   };
-  name = async ({
+  account = async ({
     address
   }: {
     address: string;
   }): Promise<String> => {
     return this.client.queryContractSmart(this.contractAddress, {
-      name: {
+      account: {
         address
       }
     });
   };
-  nameMarketplace = async (): Promise<Addr> => {
+  accountMarketplace = async (): Promise<Addr> => {
     return this.client.queryContractSmart(this.contractAddress, {
-      name_marketplace: {}
+      account_marketplace: {}
     });
   };
   associatedAddress = async ({
-    name
+    account
   }: {
-    name: string;
+    account: string;
   }): Promise<Addr> => {
     return this.client.queryContractSmart(this.contractAddress, {
       associated_address: {
-        name
+        account
       }
     });
   };
   imageNFT = async ({
-    name
+    account
   }: {
-    name: string;
+    account: string;
   }): Promise<NullableNFT> => {
     return this.client.queryContractSmart(this.contractAddress, {
       image_n_f_t: {
-        name
+        account
       }
     });
   };
   textRecords = async ({
-    name
+    account
   }: {
-    name: string;
+    account: string;
   }): Promise<ArrayOfTextRecord> => {
     return this.client.queryContractSmart(this.contractAddress, {
       text_records: {
-        name
+        account
       }
     });
   };
   isTwitterVerified = async ({
-    name
+    account
   }: {
-    name: string;
+    account: string;
   }): Promise<Boolean> => {
     return this.client.queryContractSmart(this.contractAddress, {
       is_twitter_verified: {
-        name
+        account
       }
     });
   };
@@ -339,62 +337,57 @@ export class Sg721NameQueryClient implements Sg721NameReadOnlyInterface {
       minter: {}
     });
   };
-  collectionInfo = async (): Promise<CollectionInfoResponse> => {
-    return this.client.queryContractSmart(this.contractAddress, {
-      collection_info: {}
-    });
-  };
 }
-export interface Sg721NameInterface extends Sg721NameReadOnlyInterface {
+export interface Bs721AccountInterface extends Bs721AccountReadOnlyInterface {
   contractAddress: string;
   sender: string;
-  setNameMarketplace: ({
+  setMarketplace: ({
     address
   }: {
     address: string;
   }, fee?: number | StdFee | "auto", memo?: string, funds?: Coin[]) => Promise<ExecuteResult>;
   associateAddress: ({
-    address,
-    name
+    account,
+    address
   }: {
+    account: string;
     address?: string;
-    name: string;
   }, fee?: number | StdFee | "auto", memo?: string, funds?: Coin[]) => Promise<ExecuteResult>;
   updateImageNft: ({
-    name,
+    account,
     nft
   }: {
-    name: string;
+    account: string;
     nft?: NFT;
   }, fee?: number | StdFee | "auto", memo?: string, funds?: Coin[]) => Promise<ExecuteResult>;
   addTextRecord: ({
-    name,
+    account,
     record
   }: {
-    name: string;
+    account: string;
     record: TextRecord;
   }, fee?: number | StdFee | "auto", memo?: string, funds?: Coin[]) => Promise<ExecuteResult>;
   removeTextRecord: ({
-    name,
-    recordName
+    account,
+    recordAccount
   }: {
-    name: string;
-    recordName: string;
+    account: string;
+    recordAccount: string;
   }, fee?: number | StdFee | "auto", memo?: string, funds?: Coin[]) => Promise<ExecuteResult>;
   updateTextRecord: ({
-    name,
+    account,
     record
   }: {
-    name: string;
+    account: string;
     record: TextRecord;
   }, fee?: number | StdFee | "auto", memo?: string, funds?: Coin[]) => Promise<ExecuteResult>;
   verifyTextRecord: ({
-    name,
-    recordName,
+    account,
+    recordAccount,
     result
   }: {
-    name: string;
-    recordName: string;
+    account: string;
+    recordAccount: string;
     result: boolean;
   }, fee?: number | StdFee | "auto", memo?: string, funds?: Coin[]) => Promise<ExecuteResult>;
   updateVerifier: ({
@@ -449,11 +442,15 @@ export interface Sg721NameInterface extends Sg721NameReadOnlyInterface {
   mint: ({
     extension,
     owner,
+    paymentAddr,
+    sellerFeeBps,
     tokenId,
     tokenUri
   }: {
     extension: Metadata;
     owner: string;
+    paymentAddr?: string;
+    sellerFeeBps?: number;
     tokenId: string;
     tokenUri?: string;
   }, fee?: number | StdFee | "auto", memo?: string, funds?: Coin[]) => Promise<ExecuteResult>;
@@ -462,15 +459,9 @@ export interface Sg721NameInterface extends Sg721NameReadOnlyInterface {
   }: {
     tokenId: string;
   }, fee?: number | StdFee | "auto", memo?: string, funds?: Coin[]) => Promise<ExecuteResult>;
-  updateCollectionInfo: ({
-    collectionInfo
-  }: {
-    collectionInfo: UpdateCollectionInfoMsgForRoyaltyInfoResponse;
-  }, fee?: number | StdFee | "auto", memo?: string, funds?: Coin[]) => Promise<ExecuteResult>;
-  updateStartTradingTime: (fee?: number | StdFee | "auto", memo?: string, funds?: Coin[]) => Promise<ExecuteResult>;
   freezeCollectionInfo: (fee?: number | StdFee | "auto", memo?: string, funds?: Coin[]) => Promise<ExecuteResult>;
 }
-export class Sg721NameClient extends Sg721NameQueryClient implements Sg721NameInterface {
+export class Bs721AccountClient extends Bs721AccountQueryClient implements Bs721AccountInterface {
   client: SigningCosmWasmClient;
   sender: string;
   contractAddress: string;
@@ -480,7 +471,7 @@ export class Sg721NameClient extends Sg721NameQueryClient implements Sg721NameIn
     this.client = client;
     this.sender = sender;
     this.contractAddress = contractAddress;
-    this.setNameMarketplace = this.setNameMarketplace.bind(this);
+    this.setMarketplace = this.setMarketplace.bind(this);
     this.associateAddress = this.associateAddress.bind(this);
     this.updateImageNft = this.updateImageNft.bind(this);
     this.addTextRecord = this.addTextRecord.bind(this);
@@ -496,105 +487,103 @@ export class Sg721NameClient extends Sg721NameQueryClient implements Sg721NameIn
     this.revokeAll = this.revokeAll.bind(this);
     this.mint = this.mint.bind(this);
     this.burn = this.burn.bind(this);
-    this.updateCollectionInfo = this.updateCollectionInfo.bind(this);
-    this.updateStartTradingTime = this.updateStartTradingTime.bind(this);
     this.freezeCollectionInfo = this.freezeCollectionInfo.bind(this);
   }
 
-  setNameMarketplace = async ({
+  setMarketplace = async ({
     address
   }: {
     address: string;
   }, fee: number | StdFee | "auto" = "auto", memo?: string, funds?: Coin[]): Promise<ExecuteResult> => {
     return await this.client.execute(this.sender, this.contractAddress, {
-      set_name_marketplace: {
+      set_marketplace: {
         address
       }
     }, fee, memo, funds);
   };
   associateAddress = async ({
-    address,
-    name
+    account,
+    address
   }: {
+    account: string;
     address?: string;
-    name: string;
   }, fee: number | StdFee | "auto" = "auto", memo?: string, funds?: Coin[]): Promise<ExecuteResult> => {
     return await this.client.execute(this.sender, this.contractAddress, {
       associate_address: {
-        address,
-        name
+        account,
+        address
       }
     }, fee, memo, funds);
   };
   updateImageNft = async ({
-    name,
+    account,
     nft
   }: {
-    name: string;
+    account: string;
     nft?: NFT;
   }, fee: number | StdFee | "auto" = "auto", memo?: string, funds?: Coin[]): Promise<ExecuteResult> => {
     return await this.client.execute(this.sender, this.contractAddress, {
       update_image_nft: {
-        name,
+        account,
         nft
       }
     }, fee, memo, funds);
   };
   addTextRecord = async ({
-    name,
+    account,
     record
   }: {
-    name: string;
+    account: string;
     record: TextRecord;
   }, fee: number | StdFee | "auto" = "auto", memo?: string, funds?: Coin[]): Promise<ExecuteResult> => {
     return await this.client.execute(this.sender, this.contractAddress, {
       add_text_record: {
-        name,
+        account,
         record
       }
     }, fee, memo, funds);
   };
   removeTextRecord = async ({
-    name,
-    recordName
+    account,
+    recordAccount
   }: {
-    name: string;
-    recordName: string;
+    account: string;
+    recordAccount: string;
   }, fee: number | StdFee | "auto" = "auto", memo?: string, funds?: Coin[]): Promise<ExecuteResult> => {
     return await this.client.execute(this.sender, this.contractAddress, {
       remove_text_record: {
-        name,
-        record_name: recordName
+        account,
+        record_account: recordAccount
       }
     }, fee, memo, funds);
   };
   updateTextRecord = async ({
-    name,
+    account,
     record
   }: {
-    name: string;
+    account: string;
     record: TextRecord;
   }, fee: number | StdFee | "auto" = "auto", memo?: string, funds?: Coin[]): Promise<ExecuteResult> => {
     return await this.client.execute(this.sender, this.contractAddress, {
       update_text_record: {
-        name,
+        account,
         record
       }
     }, fee, memo, funds);
   };
   verifyTextRecord = async ({
-    name,
-    recordName,
+    account,
+    recordAccount,
     result
   }: {
-    name: string;
-    recordName: string;
+    account: string;
+    recordAccount: string;
     result: boolean;
   }, fee: number | StdFee | "auto" = "auto", memo?: string, funds?: Coin[]): Promise<ExecuteResult> => {
     return await this.client.execute(this.sender, this.contractAddress, {
       verify_text_record: {
-        name,
-        record_name: recordName,
+        account,
+        record_account: recordAccount,
         result
       }
     }, fee, memo, funds);
@@ -700,11 +689,15 @@ export class Sg721NameClient extends Sg721NameQueryClient implements Sg721NameIn
   mint = async ({
     extension,
     owner,
+    paymentAddr,
+    sellerFeeBps,
     tokenId,
     tokenUri
   }: {
     extension: Metadata;
     owner: string;
+    paymentAddr?: string;
+    sellerFeeBps?: number;
     tokenId: string;
     tokenUri?: string;
   }, fee: number | StdFee | "auto" = "auto", memo?: string, funds?: Coin[]): Promise<ExecuteResult> => {
@@ -712,6 +705,8 @@ export class Sg721NameClient extends Sg721NameQueryClient implements Sg721NameIn
       mint: {
         extension,
         owner,
+        payment_addr: paymentAddr,
+        seller_fee_bps: sellerFeeBps,
         token_id: tokenId,
         token_uri: tokenUri
       }
@@ -726,22 +721,6 @@ export class Sg721NameClient extends Sg721NameQueryClient implements Sg721NameIn
       burn: {
         token_id: tokenId
       }
-    }, fee, memo, funds);
-  };
-  updateCollectionInfo = async ({
-    collectionInfo
-  }: {
-    collectionInfo: UpdateCollectionInfoMsgForRoyaltyInfoResponse;
-  }, fee: number | StdFee | "auto" = "auto", memo?: string, funds?: Coin[]): Promise<ExecuteResult> => {
-    return await this.client.execute(this.sender, this.contractAddress, {
-      update_collection_info: {
-        collection_info: collectionInfo
-      }
-    }, fee, memo, funds);
-  };
-  updateStartTradingTime = async (fee: number | StdFee | "auto" = "auto", memo?: string, funds?: Coin[]): Promise<ExecuteResult> => {
-    return await this.client.execute(this.sender, this.contractAddress, {
-      update_start_trading_time: {}
     }, fee, memo, funds);
   };
   freezeCollectionInfo = async (fee: number | StdFee | "auto" = "auto", memo?: string, funds?: Coin[]): Promise<ExecuteResult> => {

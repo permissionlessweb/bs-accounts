@@ -7,8 +7,8 @@ MSG=$(cat <<EOF
 EOF
 )
 
-starsd tx wasm execute $MKT "$MSG" \
-  --amount 6000000ustars \
-  --gas-prices 0.025ustars --gas auto --gas-adjustment 1.9 \
+bitsongd tx wasm execute $MKT "$MSG" \
+  --amount 6000000ubtsg \
+  --gas-prices 0.025ubtsg --gas auto --gas-adjustment 1.9 \
   --from $BIDDER -y -b block -o json | jq .
  

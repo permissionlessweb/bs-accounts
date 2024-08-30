@@ -4,11 +4,12 @@
 * and run the @cosmwasm/ts-codegen generate command to regenerate this file.
 */
 
+import { Coin } from "@cosmjs/amino";
 import { MsgExecuteContractEncodeObject } from "cosmwasm";
 import { MsgExecuteContract } from "cosmjs-types/cosmwasm/wasm/v1/tx";
 import { toUtf8 } from "@cosmjs/encoding";
-import { Uint128, Decimal, InstantiateMsg, ExecuteMsg, QueryMsg, Timestamp, Uint64, Addr, BidOffset, NullableAsk, Ask, HooksResponse, TupleOfNullable_CoinAndNullable_Bid, Coin, Bid, ArrayOfAskRenewPriceResponse, AskRenewPriceResponse, ArrayOfAsk, NullableBid, ArrayOfBid, ConfigResponse, SudoParams } from "./NameMarketplace.types";
-export interface NameMarketplaceMessage {
+import { Uint128, Decimal, InstantiateMsg, ExecuteMsg, QueryMsg, Addr, BidOffset, NullableAsk, Timestamp, Uint64, Ask, HooksResponse, ArrayOfAsk, NullableBid, Bid, ArrayOfBid, ConfigResponse, SudoParams } from "./AccountMarketplace.types";
+export interface AccountMarketplaceMessage {
   contractAddress: string;
   sender: string;
   setAsk: ({
@@ -47,31 +48,6 @@ export interface NameMarketplaceMessage {
     bidder: string;
     tokenId: string;
   }, funds?: Coin[]) => MsgExecuteContractEncodeObject;
-  migrateBids: ({
-    limit
-  }: {
-    limit: number;
-  }, funds?: Coin[]) => MsgExecuteContractEncodeObject;
-  fundRenewal: ({
-    tokenId
-  }: {
-    tokenId: string;
-  }, funds?: Coin[]) => MsgExecuteContractEncodeObject;
-  refundRenewal: ({
-    tokenId
-  }: {
-    tokenId: string;
-  }, funds?: Coin[]) => MsgExecuteContractEncodeObject;
-  renew: ({
-    tokenId
-  }: {
-    tokenId: string;
-  }, funds?: Coin[]) => MsgExecuteContractEncodeObject;
-  processRenewals: ({
-    limit
-  }: {
-    limit: number;
-  }, funds?: Coin[]) => MsgExecuteContractEncodeObject;
   setup: ({
     collection,
     minter
@@ -80,7 +56,7 @@ export interface NameMarketplaceMessage {
     minter: string;
   }, funds?: Coin[]) => MsgExecuteContractEncodeObject;
 }
-export class NameMarketplaceMessageComposer implements NameMarketplaceMessage {
+export class AccountMarketplaceMessageComposer implements AccountMarketplaceMessage {
   sender: string;
   contractAddress: string;
 
@@ -93,11 +69,6 @@ export class NameMarketplaceMessageComposer implements NameMarketplaceMessage {
     this.setBid = this.setBid.bind(this);
     this.removeBid = this.removeBid.bind(this);
     this.acceptBid = this.acceptBid.bind(this);
-    this.migrateBids = this.migrateBids.bind(this);
-    this.fundRenewal = this.fundRenewal.bind(this);
-    this.refundRenewal = this.refundRenewal.bind(this);
-    this.renew = this.renew.bind(this);
-    this.processRenewals = this.processRenewals.bind(this);
     this.setup = this.setup.bind(this);
   }
 
@@ -218,101 +189,6 @@ export class NameMarketplaceMessageComposer implements NameMarketplaceMessage {
           accept_bid: {
             bidder,
             token_id: tokenId
-          }
-        })),
-        funds
-      })
-    };
-  };
-  migrateBids = ({
-    limit
-  }: {
-    limit: number;
-  }, funds?: Coin[]): MsgExecuteContractEncodeObject => {
-    return {
-      typeUrl: "/cosmwasm.wasm.v1.MsgExecuteContract",
-      value: MsgExecuteContract.fromPartial({
-        sender: this.sender,
-        contract: this.contractAddress,
-        msg: toUtf8(JSON.stringify({
-          migrate_bids: {
-            limit
-          }
-        })),
-        funds
-      })
-    };
-  };
-  fundRenewal = ({
-    tokenId
-  }: {
-    tokenId: string;
-  }, funds?: Coin[]): MsgExecuteContractEncodeObject => {
-    return {
-      typeUrl: "/cosmwasm.wasm.v1.MsgExecuteContract",
-      value: MsgExecuteContract.fromPartial({
-        sender: this.sender,
-        contract: this.contractAddress,
-        msg: toUtf8(JSON.stringify({
-          fund_renewal: {
-            token_id: tokenId
-          }
-        })),
-        funds
-      })
-    };
-  };
-  refundRenewal = ({
-    tokenId
-  }: {
-    tokenId: string;
-  }, funds?: Coin[]): MsgExecuteContractEncodeObject => {
-    return {
-      typeUrl: "/cosmwasm.wasm.v1.MsgExecuteContract",
-      value: MsgExecuteContract.fromPartial({
-        sender: this.sender,
-        contract: this.contractAddress,
-        msg: toUtf8(JSON.stringify({
-          refund_renewal: {
-            token_id: tokenId
-          }
-        })),
-        funds
-      })
-    };
-  };
-  renew = ({
-    tokenId
-  }: {
-    tokenId: string;
-  }, funds?: Coin[]): MsgExecuteContractEncodeObject => {
-    return {
-      typeUrl: "/cosmwasm.wasm.v1.MsgExecuteContract",
-      value: MsgExecuteContract.fromPartial({
-        sender: this.sender,
-        contract: this.contractAddress,
-        msg: toUtf8(JSON.stringify({
-          renew: {
-            token_id: tokenId
-          }
-        })),
-        funds
-      })
-    };
-  };
-  processRenewals = ({
-    limit
-  }: {
-    limit: number;
-  }, funds?: Coin[]): MsgExecuteContractEncodeObject => {
-    return {
-      typeUrl: "/cosmwasm.wasm.v1.MsgExecuteContract",
-      value: MsgExecuteContract.fromPartial({
-        sender: this.sender,
-        contract: this.contractAddress,
-        msg: toUtf8(JSON.stringify({
-          process_renewals: {
-            limit
           }
         })),
         funds

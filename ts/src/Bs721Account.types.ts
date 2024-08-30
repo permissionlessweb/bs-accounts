@@ -4,61 +4,51 @@
 * and run the @cosmwasm/ts-codegen generate command to regenerate this file.
 */
 
-export type Decimal = string;
-export type Timestamp = Uint64;
-export type Uint64 = string;
+export type Addr = string;
 export interface InstantiateMsg {
-  collection_info: CollectionInfoForRoyaltyInfoResponse;
+  base_init_msg: InstantiateMsg1;
+  marketplace: Addr;
+  verifier?: string | null;
+}
+export interface InstantiateMsg1 {
   minter: string;
   name: string;
   symbol: string;
-}
-export interface CollectionInfoForRoyaltyInfoResponse {
-  creator: string;
-  description: string;
-  explicit_content?: boolean | null;
-  external_link?: string | null;
-  image: string;
-  royalty_info?: RoyaltyInfoResponse | null;
-  start_trading_time?: Timestamp | null;
-}
-export interface RoyaltyInfoResponse {
-  payment_address: string;
-  share: Decimal;
+  uri?: string | null;
 }
 export type ExecuteMsg = {
-  set_name_marketplace: {
+  set_marketplace: {
     address: string;
   };
 } | {
   associate_address: {
+    account: string;
     address?: string | null;
-    name: string;
   };
 } | {
   update_image_nft: {
-    name: string;
+    account: string;
     nft?: NFT | null;
   };
 } | {
   add_text_record: {
-    name: string;
+    account: string;
     record: TextRecord;
   };
 } | {
   remove_text_record: {
-    name: string;
-    record_name: string;
+    account: string;
+    record_account: string;
   };
 } | {
   update_text_record: {
-    name: string;
+    account: string;
     record: TextRecord;
   };
 } | {
   verify_text_record: {
-    name: string;
-    record_name: string;
+    account: string;
+    record_account: string;
     result: boolean;
   };
 } | {
@@ -97,21 +87,21 @@ export type ExecuteMsg = {
     operator: string;
   };
 } | {
-  mint: MintMsgForMetadata;
+  mint: {
+    extension: Metadata;
+    owner: string;
+    payment_addr?: string | null;
+    seller_fee_bps?: number | null;
+    token_id: string;
+    token_uri?: string | null;
+  };
 } | {
   burn: {
     token_id: string;
   };
 } | {
-  update_collection_info: {
-    collection_info: UpdateCollectionInfoMsgForRoyaltyInfoResponse;
-  };
-} | {
-  update_start_trading_time: Timestamp | null;
-} | {
   freeze_collection_info: {};
 };
-export type Addr = string;
 export type Binary = string;
 export type Expiration = {
   at_height: number;
@@ -120,55 +110,44 @@ export type Expiration = {
 } | {
   never: {};
 };
+export type Timestamp = Uint64;
+export type Uint64 = string;
 export interface NFT {
   collection: Addr;
   token_id: string;
 }
 export interface TextRecord {
-  name: string;
+  account: string;
   value: string;
   verified?: boolean | null;
-}
-export interface MintMsgForMetadata {
-  extension: Metadata;
-  owner: string;
-  token_id: string;
-  token_uri?: string | null;
 }
 export interface Metadata {
   image_nft?: NFT | null;
   records: TextRecord[];
 }
-export interface UpdateCollectionInfoMsgForRoyaltyInfoResponse {
-  description?: string | null;
-  explicit_content?: boolean | null;
-  external_link?: string | null;
-  image?: string | null;
-  royalty_info?: (RoyaltyInfoResponse | null) | null;
-}
 export type QueryMsg = {
   params: {};
 } | {
-  name: {
+  account: {
     address: string;
   };
 } | {
-  name_marketplace: {};
+  account_marketplace: {};
 } | {
   associated_address: {
-    name: string;
+    account: string;
   };
 } | {
   image_n_f_t: {
-    name: string;
+    account: string;
   };
 } | {
   text_records: {
-    name: string;
+    account: string;
   };
 } | {
   is_twitter_verified: {
-    name: string;
+    account: string;
   };
 } | {
   verifier: {};
@@ -221,9 +200,8 @@ export type QueryMsg = {
   };
 } | {
   minter: {};
-} | {
-  collection_info: {};
 };
+export type String = string;
 export interface AllNftInfoResponseForMetadata {
   access: OwnerOfResponse;
   info: NftInfoResponseForMetadata;
@@ -238,6 +216,8 @@ export interface Approval {
 }
 export interface NftInfoResponseForMetadata {
   extension: Metadata;
+  payment_addr?: Addr | null;
+  seller_fee_bps?: number | null;
   token_uri?: string | null;
 }
 export interface OperatorsResponse {
@@ -252,25 +232,16 @@ export interface ApprovalResponse {
 export interface ApprovalsResponse {
   approvals: Approval[];
 }
-export interface CollectionInfoResponse {
-  creator: string;
-  description: string;
-  explicit_content?: boolean | null;
-  external_link?: string | null;
-  image: string;
-  royalty_info?: RoyaltyInfoResponse | null;
-  start_trading_time?: Timestamp | null;
-}
 export interface ContractInfoResponse {
   name: string;
   symbol: string;
+  uri?: string | null;
 }
 export type NullableNFT = NFT | null;
 export type Boolean = boolean;
 export interface MinterResponse {
   minter: string;
 }
-export type String = string;
 export interface NumTokensResponse {
   count: number;
 }

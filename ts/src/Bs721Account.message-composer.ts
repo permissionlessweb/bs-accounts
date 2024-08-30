@@ -8,57 +8,57 @@ import { Coin } from "@cosmjs/amino";
 import { MsgExecuteContractEncodeObject } from "cosmwasm";
 import { MsgExecuteContract } from "cosmjs-types/cosmwasm/wasm/v1/tx";
 import { toUtf8 } from "@cosmjs/encoding";
-import { Decimal, Timestamp, Uint64, InstantiateMsg, CollectionInfoForRoyaltyInfoResponse, RoyaltyInfoResponse, ExecuteMsg, Addr, Binary, Expiration, NFT, TextRecord, MintMsgForMetadata, Metadata, UpdateCollectionInfoMsgForRoyaltyInfoResponse, QueryMsg, AllNftInfoResponseForMetadata, OwnerOfResponse, Approval, NftInfoResponseForMetadata, OperatorsResponse, TokensResponse, ApprovalResponse, ApprovalsResponse, CollectionInfoResponse, ContractInfoResponse, NullableNFT, Boolean, MinterResponse, String, NumTokensResponse, SudoParams, ArrayOfTextRecord, NullableString } from "./Sg721Name.types";
-export interface Sg721NameMessage {
+import { Addr, InstantiateMsg, InstantiateMsg1, ExecuteMsg, Binary, Expiration, Timestamp, Uint64, NFT, TextRecord, Metadata, QueryMsg, String, AllNftInfoResponseForMetadata, OwnerOfResponse, Approval, NftInfoResponseForMetadata, OperatorsResponse, TokensResponse, ApprovalResponse, ApprovalsResponse, ContractInfoResponse, NullableNFT, Boolean, MinterResponse, NumTokensResponse, SudoParams, ArrayOfTextRecord, NullableString } from "./Bs721Account.types";
+export interface Bs721AccountMessage {
   contractAddress: string;
   sender: string;
-  setNameMarketplace: ({
+  setMarketplace: ({
     address
   }: {
     address: string;
   }, funds?: Coin[]) => MsgExecuteContractEncodeObject;
   associateAddress: ({
-    address,
-    name
+    account,
+    address
   }: {
+    account: string;
     address?: string;
-    name: string;
   }, funds?: Coin[]) => MsgExecuteContractEncodeObject;
   updateImageNft: ({
-    name,
+    account,
     nft
   }: {
-    name: string;
+    account: string;
     nft?: NFT;
   }, funds?: Coin[]) => MsgExecuteContractEncodeObject;
   addTextRecord: ({
-    name,
+    account,
     record
   }: {
-    name: string;
+    account: string;
     record: TextRecord;
   }, funds?: Coin[]) => MsgExecuteContractEncodeObject;
   removeTextRecord: ({
-    name,
-    recordName
+    account,
+    recordAccount
   }: {
-    name: string;
-    recordName: string;
+    account: string;
+    recordAccount: string;
   }, funds?: Coin[]) => MsgExecuteContractEncodeObject;
   updateTextRecord: ({
-    name,
+    account,
     record
   }: {
-    name: string;
+    account: string;
     record: TextRecord;
   }, funds?: Coin[]) => MsgExecuteContractEncodeObject;
   verifyTextRecord: ({
-    name,
-    recordName,
+    account,
+    recordAccount,
     result
   }: {
-    name: string;
-    recordName: string;
+    account: string;
+    recordAccount: string;
     result: boolean;
   }, funds?: Coin[]) => MsgExecuteContractEncodeObject;
   updateVerifier: ({
@@ -113,11 +113,15 @@ export interface Sg721NameMessage {
   mint: ({
     extension,
     owner,
+    paymentAddr,
+    sellerFeeBps,
     tokenId,
     tokenUri
   }: {
     extension: Metadata;
     owner: string;
+    paymentAddr?: string;
+    sellerFeeBps?: number;
     tokenId: string;
     tokenUri?: string;
   }, funds?: Coin[]) => MsgExecuteContractEncodeObject;
@@ -126,22 +130,16 @@ export interface Sg721NameMessage {
   }: {
     tokenId: string;
   }, funds?: Coin[]) => MsgExecuteContractEncodeObject;
-  updateCollectionInfo: ({
-    collectionInfo
-  }: {
-    collectionInfo: UpdateCollectionInfoMsgForRoyaltyInfoResponse;
-  }, funds?: Coin[]) => MsgExecuteContractEncodeObject;
-  updateStartTradingTime: (funds?: Coin[]) => MsgExecuteContractEncodeObject;
   freezeCollectionInfo: (funds?: Coin[]) => MsgExecuteContractEncodeObject;
 }
-export class Sg721NameMessageComposer implements Sg721NameMessage {
+export class Bs721AccountMessageComposer implements Bs721AccountMessage {
   sender: string;
   contractAddress: string;
 
   constructor(sender: string, contractAddress: string) {
     this.sender = sender;
     this.contractAddress = contractAddress;
-    this.setNameMarketplace = this.setNameMarketplace.bind(this);
+    this.setMarketplace = this.setMarketplace.bind(this);
     this.associateAddress = this.associateAddress.bind(this);
     this.updateImageNft = this.updateImageNft.bind(this);
     this.addTextRecord = this.addTextRecord.bind(this);
@@ -157,12 +155,10 @@ export class Sg721NameMessageComposer implements Sg721NameMessage {
     this.revokeAll = this.revokeAll.bind(this);
     this.mint = this.mint.bind(this);
     this.burn = this.burn.bind(this);
-    this.updateCollectionInfo = this.updateCollectionInfo.bind(this);
-    this.updateStartTradingTime = this.updateStartTradingTime.bind(this);
     this.freezeCollectionInfo = this.freezeCollectionInfo.bind(this);
   }
 
-  setNameMarketplace = ({
+  setMarketplace = ({
     address
   }: {
     address: string;
@@ -173,7 +169,7 @@ export class Sg721NameMessageComposer implements Sg721NameMessage {
         sender: this.sender,
         contract: this.contractAddress,
         msg: toUtf8(JSON.stringify({
-          set_name_marketplace: {
+          set_marketplace: {
             address
           }
         })),
@@ -182,11 +178,11 @@ export class Sg721NameMessageComposer implements Sg721NameMessage {
     };
   };
   associateAddress = ({
-    address,
-    name
+    account,
+    address
   }: {
+    account: string;
     address?: string;
-    name: string;
   }, funds?: Coin[]): MsgExecuteContractEncodeObject => {
     return {
       typeUrl: "/cosmwasm.wasm.v1.MsgExecuteContract",
@@ -195,8 +191,8 @@ export class Sg721NameMessageComposer implements Sg721NameMessage {
         contract: this.contractAddress,
         msg: toUtf8(JSON.stringify({
           associate_address: {
-            address,
-            name
+            account,
+            address
           }
         })),
         funds
@@ -204,10 +200,10 @@ export class Sg721NameMessageComposer implements Sg721NameMessage {
     };
   };
   updateImageNft = ({
-    name,
+    account,
     nft
   }: {
-    name: string;
+    account: string;
     nft?: NFT;
   }, funds?: Coin[]): MsgExecuteContractEncodeObject => {
     return {
@@ -217,7 +213,7 @@ export class Sg721NameMessageComposer implements Sg721NameMessage {
         contract: this.contractAddress,
         msg: toUtf8(JSON.stringify({
           update_image_nft: {
-            name,
+            account,
             nft
           }
         })),
@@ -226,10 +222,10 @@ export class Sg721NameMessageComposer implements Sg721NameMessage {
     };
   };
   addTextRecord = ({
-    name,
+    account,
     record
   }: {
-    name: string;
+    account: string;
     record: TextRecord;
   }, funds?: Coin[]): MsgExecuteContractEncodeObject => {
     return {
@@ -239,7 +235,7 @@ export class Sg721NameMessageComposer implements Sg721NameMessage {
         contract: this.contractAddress,
         msg: toUtf8(JSON.stringify({
           add_text_record: {
-            name,
+            account,
             record
           }
         })),
@@ -248,11 +244,11 @@ export class Sg721NameMessageComposer implements Sg721NameMessage {
     };
   };
   removeTextRecord = ({
-    name,
-    recordName
+    account,
+    recordAccount
   }: {
-    name: string;
-    recordName: string;
+    account: string;
+    recordAccount: string;
   }, funds?: Coin[]): MsgExecuteContractEncodeObject => {
     return {
       typeUrl: "/cosmwasm.wasm.v1.MsgExecuteContract",
@@ -261,8 +257,8 @@ export class Sg721NameMessageComposer implements Sg721NameMessage {
         contract: this.contractAddress,
         msg: toUtf8(JSON.stringify({
           remove_text_record: {
-            name,
-            record_name: recordName
+            account,
+            record_account: recordAccount
           }
         })),
         funds
@@ -270,10 +266,10 @@ export class Sg721NameMessageComposer implements Sg721NameMessage {
     };
   };
   updateTextRecord = ({
-    name,
+    account,
     record
   }: {
-    name: string;
+    account: string;
     record: TextRecord;
   }, funds?: Coin[]): MsgExecuteContractEncodeObject => {
     return {
@@ -283,7 +279,7 @@ export class Sg721NameMessageComposer implements Sg721NameMessage {
         contract: this.contractAddress,
         msg: toUtf8(JSON.stringify({
           update_text_record: {
-            name,
+            account,
             record
           }
         })),
@@ -292,12 +288,12 @@ export class Sg721NameMessageComposer implements Sg721NameMessage {
     };
   };
   verifyTextRecord = ({
-    name,
-    recordName,
+    account,
+    recordAccount,
     result
   }: {
-    name: string;
-    recordName: string;
+    account: string;
+    recordAccount: string;
     result: boolean;
   }, funds?: Coin[]): MsgExecuteContractEncodeObject => {
     return {
@@ -307,8 +303,8 @@ export class Sg721NameMessageComposer implements Sg721NameMessage {
         contract: this.contractAddress,
         msg: toUtf8(JSON.stringify({
           verify_text_record: {
-            name,
-            record_name: recordName,
+            account,
+            record_account: recordAccount,
             result
           }
         })),
@@ -473,11 +469,15 @@ export class Sg721NameMessageComposer implements Sg721NameMessage {
   mint = ({
     extension,
     owner,
+    paymentAddr,
+    sellerFeeBps,
     tokenId,
     tokenUri
   }: {
     extension: Metadata;
     owner: string;
+    paymentAddr?: string;
+    sellerFeeBps?: number;
     tokenId: string;
     tokenUri?: string;
   }, funds?: Coin[]): MsgExecuteContractEncodeObject => {
@@ -490,6 +490,8 @@ export class Sg721NameMessageComposer implements Sg721NameMessage {
           mint: {
             extension,
             owner,
+            payment_addr: paymentAddr,
+            seller_fee_bps: sellerFeeBps,
             token_id: tokenId,
             token_uri: tokenUri
           }
@@ -512,38 +514,6 @@ export class Sg721NameMessageComposer implements Sg721NameMessage {
           burn: {
             token_id: tokenId
           }
-        })),
-        funds
-      })
-    };
-  };
-  updateCollectionInfo = ({
-    collectionInfo
-  }: {
-    collectionInfo: UpdateCollectionInfoMsgForRoyaltyInfoResponse;
-  }, funds?: Coin[]): MsgExecuteContractEncodeObject => {
-    return {
-      typeUrl: "/cosmwasm.wasm.v1.MsgExecuteContract",
-      value: MsgExecuteContract.fromPartial({
-        sender: this.sender,
-        contract: this.contractAddress,
-        msg: toUtf8(JSON.stringify({
-          update_collection_info: {
-            collection_info: collectionInfo
-          }
-        })),
-        funds
-      })
-    };
-  };
-  updateStartTradingTime = (funds?: Coin[]): MsgExecuteContractEncodeObject => {
-    return {
-      typeUrl: "/cosmwasm.wasm.v1.MsgExecuteContract",
-      value: MsgExecuteContract.fromPartial({
-        sender: this.sender,
-        contract: this.contractAddress,
-        msg: toUtf8(JSON.stringify({
-          update_start_trading_time: {}
         })),
         funds
       })

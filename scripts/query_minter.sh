@@ -5,7 +5,7 @@ MSG=$(cat <<EOF
 EOF
 )
 
-starsd q wasm contract-state smart $MINTER "$MSG"
+bitsongd q wasm contract-state smart $MINTER "$MSG"
  
 
 MSG=$(cat <<EOF
@@ -15,7 +15,7 @@ MSG=$(cat <<EOF
 EOF
 )
 
-starsd q wasm contract-state smart $MINTER "$MSG"
+bitsongd q wasm contract-state smart $MINTER "$MSG"
 
 
 MSG=$(cat <<EOF
@@ -25,7 +25,7 @@ MSG=$(cat <<EOF
 EOF
 )
 
-starsd q wasm contract-state smart $MINTER "$MSG"
+bitsongd q wasm contract-state smart $MINTER "$MSG"
 
 MSG=$(cat <<EOF
 {
@@ -34,4 +34,4 @@ MSG=$(cat <<EOF
 EOF
 )
 
-starsd q wasm contract-state smart $MINTER "$MSG"
+bitsongd q wasm contract-state smart $MINTER "$MSG"

@@ -38,7 +38,7 @@ echo "make a bid";
 
 # accept bid
 echo "accept bid";
-bidder_addr=$(starsd keys show $BIDDER | jq -r '.address')
+bidder_addr=$(bitsongd keys show $BIDDER | jq -r '.address')
 ./exec_accept_bid.sh $name $bidder_addr
 
 # move public time to the future

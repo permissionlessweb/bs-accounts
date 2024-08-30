@@ -1,9 +1,9 @@
 MSG=$(cat <<EOF
 {
-  "name": { "address": "$USER" }
+  "account": { "address": "$USER" }
 }
 EOF
 )
 
-starsd q wasm contract-state smart $COLLECTION "$MSG"
+bitsongd q wasm contract-state smart $COLLECTION "$MSG"
  

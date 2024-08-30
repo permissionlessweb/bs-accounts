@@ -5,9 +5,9 @@
 */
 
 import { CosmWasmClient, SigningCosmWasmClient, ExecuteResult } from "@cosmjs/cosmwasm-stargate";
-import { StdFee } from "@cosmjs/amino";
-import { Uint128, Decimal, InstantiateMsg, ExecuteMsg, QueryMsg, Timestamp, Uint64, Addr, BidOffset, NullableAsk, Ask, HooksResponse, TupleOfNullable_CoinAndNullable_Bid, Coin, Bid, ArrayOfAskRenewPriceResponse, AskRenewPriceResponse, ArrayOfAsk, NullableBid, ArrayOfBid, ConfigResponse, SudoParams } from "./NameMarketplace.types";
-export interface NameMarketplaceReadOnlyInterface {
+import { Coin, StdFee } from "@cosmjs/amino";
+import { Uint128, Decimal, InstantiateMsg, ExecuteMsg, QueryMsg, Addr, BidOffset, NullableAsk, Timestamp, Uint64, Ask, HooksResponse, ArrayOfAsk, NullableBid, Bid, ArrayOfBid, ConfigResponse, SudoParams } from "./AccountMarketplace.types";
+export interface AccountMarketplaceReadOnlyInterface {
   contractAddress: string;
   ask: ({
     tokenId
@@ -31,29 +31,6 @@ export interface NameMarketplaceReadOnlyInterface {
     seller: string;
     startAfter?: string;
   }) => Promise<ArrayOfAsk>;
-  asksByRenewTime: ({
-    limit,
-    maxTime,
-    startAfter
-  }: {
-    limit?: number;
-    maxTime: Timestamp;
-    startAfter?: Timestamp;
-  }) => Promise<ArrayOfAsk>;
-  askRenewPrice: ({
-    currentTime,
-    tokenId
-  }: {
-    currentTime: Timestamp;
-    tokenId: string;
-  }) => Promise<TupleOfNullableCoinAndNullableBid>;
-  askRenewalPrices: ({
-    currentTime,
-    tokenIds
-  }: {
-    currentTime: Timestamp;
-    tokenIds: string[];
-  }) => Promise<ArrayOfAskRenewPriceResponse>;
   bid: ({
     bidder,
     tokenId
@@ -78,13 +55,6 @@ export interface NameMarketplaceReadOnlyInterface {
     limit?: number;
     startAfter?: string;
     tokenId: string;
-  }) => Promise<ArrayOfBid>;
-  legacyBids: ({
-    limit,
-    startAfter
-  }: {
-    limit?: number;
-    startAfter?: BidOffset;
   }) => Promise<ArrayOfBid>;
   bidsSortedByPrice: ({
     limit,
@@ -118,14 +88,9 @@ export interface NameMarketplaceReadOnlyInterface {
   bidHooks: () => Promise<HooksResponse>;
   saleHooks: () => Promise<HooksResponse>;
   params: () => Promise<SudoParams>;
-  renewalQueue: ({
-    time
-  }: {
-    time: Timestamp;
-  }) => Promise<ArrayOfAsk>;
   config: () => Promise<ConfigResponse>;
 }
-export class NameMarketplaceQueryClient implements NameMarketplaceReadOnlyInterface {
+export class AccountMarketplaceQueryClient implements AccountMarketplaceReadOnlyInterface {
   client: CosmWasmClient;
   contractAddress: string;
 
@@ -136,13 +101,9 @@ export class NameMarketplaceQueryClient implements NameMarketplaceReadOnlyInterf
     this.asks = this.asks.bind(this);
     this.askCount = this.askCount.bind(this);
     this.asksBySeller = this.asksBySeller.bind(this);
-    this.asksByRenewTime = this.asksByRenewTime.bind(this);
-    this.askRenewPrice = this.askRenewPrice.bind(this);
-    this.askRenewalPrices = this.askRenewalPrices.bind(this);
     this.bid = this.bid.bind(this);
     this.bidsByBidder = this.bidsByBidder.bind(this);
     this.bids = this.bids.bind(this);
-    this.legacyBids = this.legacyBids.bind(this);
     this.bidsSortedByPrice = this.bidsSortedByPrice.bind(this);
     this.reverseBidsSortedByPrice = this.reverseBidsSortedByPrice.bind(this);
     this.bidsForSeller = this.bidsForSeller.bind(this);
@@ -151,7 +112,6 @@ export class NameMarketplaceQueryClient implements NameMarketplaceReadOnlyInterf
     this.bidHooks = this.bidHooks.bind(this);
     this.saleHooks = this.saleHooks.bind(this);
     this.params = this.params.bind(this);
-    this.renewalQueue = this.renewalQueue.bind(this);
     this.config = this.config.bind(this);
   }
 
@@ -202,51 +162,6 @@ export class NameMarketplaceQueryClient implements NameMarketplaceReadOnlyInterf
       }
     });
   };
-  asksByRenewTime = async ({
-    limit,
-    maxTime,
-    startAfter
-  }: {
-    limit?: number;
-    maxTime: Timestamp;
-    startAfter?: Timestamp;
-  }): Promise<ArrayOfAsk> => {
-    return this.client.queryContractSmart(this.contractAddress, {
-      asks_by_renew_time: {
-        limit,
-        max_time: maxTime,
-        start_after: startAfter
-      }
-    });
-  };
-  askRenewPrice = async ({
-    currentTime,
-    tokenId
-  }: {
-    currentTime: Timestamp;
-    tokenId: string;
-  }): Promise<TupleOfNullableCoinAndNullableBid> => {
-    return this.client.queryContractSmart(this.contractAddress, {
-      ask_renew_price: {
-        current_time: currentTime,
-        token_id: tokenId
-      }
-    });
-  };
-  askRenewalPrices = async ({
-    currentTime,
-    tokenIds
-  }: {
-    currentTime: Timestamp;
-    tokenIds: string[];
-  }): Promise<ArrayOfAskRenewPriceResponse> => {
-    return this.client.queryContractSmart(this.contractAddress, {
-      ask_renewal_prices: {
-        current_time: currentTime,
-        token_ids: tokenIds
-      }
-    });
-  };
   bid = async ({
     bidder,
     tokenId
@@ -292,20 +207,6 @@ export class NameMarketplaceQueryClient implements NameMarketplaceReadOnlyInterf
         limit,
         start_after: startAfter,
         token_id: tokenId
-      }
-    });
-  };
-  legacyBids = async ({
-    limit,
-    startAfter
-  }: {
-    limit?: number;
-    startAfter?: BidOffset;
-  }): Promise<ArrayOfBid> => {
-    return this.client.queryContractSmart(this.contractAddress, {
-      legacy_bids: {
-        limit,
-        start_after: startAfter
       }
     });
   };
@@ -385,24 +286,13 @@ export class NameMarketplaceQueryClient implements NameMarketplaceReadOnlyInterf
       params: {}
     });
   };
-  renewalQueue = async ({
-    time
-  }: {
-    time: Timestamp;
-  }): Promise<ArrayOfAsk> => {
-    return this.client.queryContractSmart(this.contractAddress, {
-      renewal_queue: {
-        time
-      }
-    });
-  };
   config = async (): Promise<ConfigResponse> => {
     return this.client.queryContractSmart(this.contractAddress, {
       config: {}
     });
   };
 }
-export interface NameMarketplaceInterface extends NameMarketplaceReadOnlyInterface {
+export interface AccountMarketplaceInterface extends AccountMarketplaceReadOnlyInterface {
   contractAddress: string;
   sender: string;
   setAsk: ({
@@ -441,31 +331,6 @@ export interface NameMarketplaceInterface extends NameMarketplaceReadOnlyInterfa
     bidder: string;
     tokenId: string;
   }, fee?: number | StdFee | "auto", memo?: string, funds?: Coin[]) => Promise<ExecuteResult>;
-  migrateBids: ({
-    limit
-  }: {
-    limit: number;
-  }, fee?: number | StdFee | "auto", memo?: string, funds?: Coin[]) => Promise<ExecuteResult>;
-  fundRenewal: ({
-    tokenId
-  }: {
-    tokenId: string;
-  }, fee?: number | StdFee | "auto", memo?: string, funds?: Coin[]) => Promise<ExecuteResult>;
-  refundRenewal: ({
-    tokenId
-  }: {
-    tokenId: string;
-  }, fee?: number | StdFee | "auto", memo?: string, funds?: Coin[]) => Promise<ExecuteResult>;
-  renew: ({
-    tokenId
-  }: {
-    tokenId: string;
-  }, fee?: number | StdFee | "auto", memo?: string, funds?: Coin[]) => Promise<ExecuteResult>;
-  processRenewals: ({
-    limit
-  }: {
-    limit: number;
-  }, fee?: number | StdFee | "auto", memo?: string, funds?: Coin[]) => Promise<ExecuteResult>;
   setup: ({
     collection,
     minter
@@ -474,7 +339,7 @@ export interface NameMarketplaceInterface extends NameMarketplaceReadOnlyInterfa
     minter: string;
   }, fee?: number | StdFee | "auto", memo?: string, funds?: Coin[]) => Promise<ExecuteResult>;
 }
-export class NameMarketplaceClient extends NameMarketplaceQueryClient implements NameMarketplaceInterface {
+export class AccountMarketplaceClient extends AccountMarketplaceQueryClient implements AccountMarketplaceInterface {
   client: SigningCosmWasmClient;
   sender: string;
   contractAddress: string;
@@ -490,11 +355,6 @@ export class NameMarketplaceClient extends NameMarketplaceQueryClient implements
     this.setBid = this.setBid.bind(this);
     this.removeBid = this.removeBid.bind(this);
     this.acceptBid = this.acceptBid.bind(this);
-    this.migrateBids = this.migrateBids.bind(this);
-    this.fundRenewal = this.fundRenewal.bind(this);
-    this.refundRenewal = this.refundRenewal.bind(this);
-    this.renew = this.renew.bind(this);
-    this.processRenewals = this.processRenewals.bind(this);
     this.setup = this.setup.bind(this);
   }
 
@@ -570,61 +430,6 @@ export class NameMarketplaceClient extends NameMarketplaceQueryClient implements
       accept_bid: {
         bidder,
         token_id: tokenId
-      }
-    }, fee, memo, funds);
-  };
-  migrateBids = async ({
-    limit
-  }: {
-    limit: number;
-  }, fee: number | StdFee | "auto" = "auto", memo?: string, funds?: Coin[]): Promise<ExecuteResult> => {
-    return await this.client.execute(this.sender, this.contractAddress, {
-      migrate_bids: {
-        limit
-      }
-    }, fee, memo, funds);
-  };
-  fundRenewal = async ({
-    tokenId
-  }: {
-    tokenId: string;
-  }, fee: number | StdFee | "auto" = "auto", memo?: string, funds?: Coin[]): Promise<ExecuteResult> => {
-    return await this.client.execute(this.sender, this.contractAddress, {
-      fund_renewal: {
-        token_id: tokenId
-      }
-    }, fee, memo, funds);
-  };
-  refundRenewal = async ({
-    tokenId
-  }: {
-    tokenId: string;
-  }, fee: number | StdFee | "auto" = "auto", memo?: string, funds?: Coin[]): Promise<ExecuteResult> => {
-    return await this.client.execute(this.sender, this.contractAddress, {
-      refund_renewal: {
-        token_id: tokenId
-      }
-    }, fee, memo, funds);
-  };
-  renew = async ({
-    tokenId
-  }: {
-    tokenId: string;
-  }, fee: number | StdFee | "auto" = "auto", memo?: string, funds?: Coin[]): Promise<ExecuteResult> => {
-    return await this.client.execute(this.sender, this.contractAddress, {
-      renew: {
-        token_id: tokenId
-      }
-    }, fee, memo, funds);
-  };
-  processRenewals = async ({
-    limit
-  }: {
-    limit: number;
-  }, fee: number | StdFee | "auto" = "auto", memo?: string, funds?: Coin[]): Promise<ExecuteResult> => {
-    return await this.client.execute(this.sender, this.contractAddress, {
-      process_renewals: {
-        limit
       }
     }, fee, memo, funds);
   };

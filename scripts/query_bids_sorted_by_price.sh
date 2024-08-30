@@ -20,7 +20,7 @@ while : ; do
     })
 
     # Run the query
-    response=$(starsd q wasm contract-state smart $ADDR "$MSG" -o json)
+    response=$(bitsongd q wasm contract-state smart $ADDR "$MSG" -o json)
 
     # Check if the data array is empty
     if [ "$(echo $response | jq '.data | length')" -eq 0 ]; then

@@ -9,16 +9,14 @@ export interface InstantiateMsg {
   admin?: string | null;
   base_price: Uint128;
   collection_code_id: number;
-  fair_burn_bps: number;
   marketplace_addr: string;
   max_account_length: number;
   min_account_length: number;
   verifier?: string | null;
-  whitelists: string[];
 }
 export type ExecuteMsg = {
   mint_and_list: {
-    name: string;
+    account: string;
   };
 } | {
   update_admin: {
@@ -27,15 +25,6 @@ export type ExecuteMsg = {
 } | {
   pause: {
     pause: boolean;
-  };
-} | {
-  add_whitelist: {
-    address: string;
-    whitelist_type: string;
-  };
-} | {
-  remove_whitelist: {
-    address: string;
   };
 } | {
   update_config: {
@@ -50,8 +39,6 @@ export interface Config {
 export type QueryMsg = {
   admin: {};
 } | {
-  whitelists: {};
-} | {
   collection: {};
 } | {
   params: {};
@@ -62,11 +49,8 @@ export interface AdminResponse {
   admin?: string | null;
 }
 export type Addr = string;
-export type Decimal = string;
 export interface SudoParams {
   base_price: Uint128;
-  fair_burn_percent: Decimal;
   max_account_length: number;
   min_account_length: number;
 }
-export type ArrayOfAddr = Addr[];

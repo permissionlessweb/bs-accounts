@@ -8,56 +8,67 @@ import { Coin } from "@cosmjs/amino";
 import { MsgExecuteContractEncodeObject } from "cosmwasm";
 import { MsgExecuteContract } from "cosmjs-types/cosmwasm/wasm/v1/tx";
 import { toUtf8 } from "@cosmjs/encoding";
-import { InstantiateMsg, ExecuteMsg, QueryMsg, Uint64, AdminResponse, Addr, Config, Boolean, Decimal } from "./WhitelistUpdatable.types";
-export interface WhitelistUpdatableMessage {
+import { Uint128, InstantiateMsg, ExecuteMsg, Timestamp, Uint64, Config, QueryMsg, AdminResponse, Addr, SudoParams } from "./AccountMinter.types";
+export interface AccountMinterMessage {
   contractAddress: string;
   sender: string;
+  mintAndList: ({
+    account
+  }: {
+    account: string;
+  }, funds?: Coin[]) => MsgExecuteContractEncodeObject;
   updateAdmin: ({
-    newAdmin
+    admin
   }: {
-    newAdmin: string;
+    admin?: string;
   }, funds?: Coin[]) => MsgExecuteContractEncodeObject;
-  addAddresses: ({
-    addresses
+  pause: ({
+    pause
   }: {
-    addresses: string[];
+    pause: boolean;
   }, funds?: Coin[]) => MsgExecuteContractEncodeObject;
-  removeAddresses: ({
-    addresses
+  updateConfig: ({
+    config
   }: {
-    addresses: string[];
+    config: Config;
   }, funds?: Coin[]) => MsgExecuteContractEncodeObject;
-  processAddress: ({
-    address
-  }: {
-    address: string;
-  }, funds?: Coin[]) => MsgExecuteContractEncodeObject;
-  updatePerAddressLimit: ({
-    limit
-  }: {
-    limit: number;
-  }, funds?: Coin[]) => MsgExecuteContractEncodeObject;
-  purge: (funds?: Coin[]) => MsgExecuteContractEncodeObject;
 }
-export class WhitelistUpdatableMessageComposer implements WhitelistUpdatableMessage {
+export class AccountMinterMessageComposer implements AccountMinterMessage {
   sender: string;
   contractAddress: string;
 
   constructor(sender: string, contractAddress: string) {
     this.sender = sender;
     this.contractAddress = contractAddress;
+    this.mintAndList = this.mintAndList.bind(this);
     this.updateAdmin = this.updateAdmin.bind(this);
-    this.addAddresses = this.addAddresses.bind(this);
-    this.removeAddresses = this.removeAddresses.bind(this);
-    this.processAddress = this.processAddress.bind(this);
-    this.updatePerAddressLimit = this.updatePerAddressLimit.bind(this);
-    this.purge = this.purge.bind(this);
+    this.pause = this.pause.bind(this);
+    this.updateConfig = this.updateConfig.bind(this);
   }
 
-  updateAdmin = ({
-    newAdmin
+  mintAndList = ({
+    account
   }: {
-    newAdmin: string;
+    account: string;
+  }, funds?: Coin[]): MsgExecuteContractEncodeObject => {
+    return {
+      typeUrl: "/cosmwasm.wasm.v1.MsgExecuteContract",
+      value: MsgExecuteContract.fromPartial({
+        sender: this.sender,
+        contract: this.contractAddress,
+        msg: toUtf8(JSON.stringify({
+          mint_and_list: {
+            account
+          }
+        })),
+        funds
+      })
+    };
+  };
+  updateAdmin = ({
+    admin
+  }: {
+    admin?: string;
   }, funds?: Coin[]): MsgExecuteContractEncodeObject => {
     return {
       typeUrl: "/cosmwasm.wasm.v1.MsgExecuteContract",
@@ -66,17 +77,17 @@ export class WhitelistUpdatableMessageComposer implements WhitelistUpdatableMess
         contract: this.contractAddress,
         msg: toUtf8(JSON.stringify({
           update_admin: {
-            new_admin: newAdmin
+            admin
           }
         })),
         funds
       })
     };
   };
-  addAddresses = ({
-    addresses
+  pause = ({
+    pause
   }: {
-    addresses: string[];
+    pause: boolean;
   }, funds?: Coin[]): MsgExecuteContractEncodeObject => {
     return {
       typeUrl: "/cosmwasm.wasm.v1.MsgExecuteContract",
@@ -84,18 +95,18 @@ export class WhitelistUpdatableMessageComposer implements WhitelistUpdatableMess
         sender: this.sender,
         contract: this.contractAddress,
         msg: toUtf8(JSON.stringify({
-          add_addresses: {
-            addresses
+          pause: {
+            pause
           }
         })),
         funds
       })
     };
   };
-  removeAddresses = ({
-    addresses
+  updateConfig = ({
+    config
   }: {
-    addresses: string[];
+    config: Config;
   }, funds?: Coin[]): MsgExecuteContractEncodeObject => {
     return {
       typeUrl: "/cosmwasm.wasm.v1.MsgExecuteContract",
@@ -103,60 +114,9 @@ export class WhitelistUpdatableMessageComposer implements WhitelistUpdatableMess
         sender: this.sender,
         contract: this.contractAddress,
         msg: toUtf8(JSON.stringify({
-          remove_addresses: {
-            addresses
+          update_config: {
+            config
           }
-        })),
-        funds
-      })
-    };
-  };
-  processAddress = ({
-    address
-  }: {
-    address: string;
-  }, funds?: Coin[]): MsgExecuteContractEncodeObject => {
-    return {
-      typeUrl: "/cosmwasm.wasm.v1.MsgExecuteContract",
-      value: MsgExecuteContract.fromPartial({
-        sender: this.sender,
-        contract: this.contractAddress,
-        msg: toUtf8(JSON.stringify({
-          process_address: {
-            address
-          }
-        })),
-        funds
-      })
-    };
-  };
-  updatePerAddressLimit = ({
-    limit
-  }: {
-    limit: number;
-  }, funds?: Coin[]): MsgExecuteContractEncodeObject => {
-    return {
-      typeUrl: "/cosmwasm.wasm.v1.MsgExecuteContract",
-      value: MsgExecuteContract.fromPartial({
-        sender: this.sender,
-        contract: this.contractAddress,
-        msg: toUtf8(JSON.stringify({
-          update_per_address_limit: {
-            limit
-          }
-        })),
-        funds
-      })
-    };
-  };
-  purge = (funds?: Coin[]): MsgExecuteContractEncodeObject => {
-    return {
-      typeUrl: "/cosmwasm.wasm.v1.MsgExecuteContract",
-      value: MsgExecuteContract.fromPartial({
-        sender: this.sender,
-        contract: this.contractAddress,
-        msg: toUtf8(JSON.stringify({
-          purge: {}
         })),
         funds
       })

@@ -5,5 +5,5 @@ MSG=$(cat <<EOF
 EOF
 )
 
-starsd q wasm contract-state smart $MKT "$MSG"
+bitsongd q wasm contract-state smart $MKT "$MSG"
  
