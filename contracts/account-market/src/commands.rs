@@ -1,17 +1,15 @@
 use crate::helpers::{get_renewal_price_and_bid, renew_account};
+use crate::msg::{AskRenewPriceResponse, BidOffset, Bidder, ConfigResponse, HookAction};
 use crate::{
     error::ContractError,
     hooks::{prepare_ask_hook, prepare_bid_hook, prepare_sale_hook},
+    state::*,
 };
 use btsg_account::common::NATIVE_DENOM;
 use btsg_account::Metadata;
 use btsg_account::{
     common::{charge_fees, SECONDS_PER_YEAR},
     minter::SudoParams as BsProfileMinterSudoParams,
-};
-use btsg_account::{
-    market::{state::*, *},
-    minter::BsAccountMinterQueryMsg,
 };
 use cosmwasm_std::{
     coin, coins, ensure, to_json_binary, Addr, BankMsg, Coin, Decimal, Deps, DepsMut, Empty, Env,
@@ -402,7 +400,7 @@ pub fn execute_renew(
     let account_minter = ACCOUNT_MINTER.load(deps.storage)?;
     let account_minter_params = deps.querier.query_wasm_smart::<BsProfileMinterSudoParams>(
         account_minter,
-        &BsAccountMinterQueryMsg::Params {},
+        &crate::msg::QueryMsg::Params {},
     )?;
 
     let (renewal_price, _valid_bid) = get_renewal_price_and_bid(
@@ -541,7 +539,7 @@ pub fn query_renewal_queue(deps: Deps, time: Timestamp) -> StdResult<Vec<Ask>> {
 
 pub fn query_asks(
     deps: Deps,
-    start_after: Option<btsg_account::market::state::Id>,
+    start_after: Option<crate::state::Id>,
     limit: Option<u32>,
 ) -> StdResult<Vec<Ask>> {
     let limit = limit.unwrap_or(DEFAULT_QUERY_LIMIT).min(MAX_QUERY_LIMIT) as usize;
@@ -793,7 +791,7 @@ pub fn query_ask_renew_price(
     let account_minter = ACCOUNT_MINTER.load(deps.storage)?;
     let account_minter_params = deps.querier.query_wasm_smart::<BsProfileMinterSudoParams>(
         account_minter,
-        &(BsAccountMinterQueryMsg::Params {}),
+        &(crate::msg::QueryMsg::Params {}),
     )?;
 
     let (renewal_price, valid_bid) = get_renewal_price_and_bid(
@@ -846,7 +844,10 @@ pub fn sudo_update_params(
     Ok(Response::new().add_event(event))
 }
 
-pub fn sudo_update_account_minter(deps: DepsMut, collection: Addr) -> Result<Response, ContractError> {
+pub fn sudo_update_account_minter(
+    deps: DepsMut,
+    collection: Addr,
+) -> Result<Response, ContractError> {
     ACCOUNT_MINTER.save(deps.storage, &collection)?;
 
     let event = Event::new("update-account-minter").add_attribute("minter", collection);

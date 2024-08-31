@@ -22,13 +22,13 @@ library = []
 
 [dependencies]
 btsg-account    = { workspace = true }
+btsg-account-marketplace = { workspace = true }
 bs721           = { workspace = true }
 bs721-base      = { workspace = true, features = ["library"]}
 cosmwasm-schema = { workspace = true }
 cosmwasm-std    = { workspace = true }
 cw2             = { workspace = true }
 cw721           = { workspace = true }
-cw721-base      = { workspace = true, features = ["library"]}
 cw-controllers  = { workspace = true }
 cw-utils        = { workspace = true }
 cw-orch         = { workspace = true }

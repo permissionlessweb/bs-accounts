@@ -1,3 +1,5 @@
+use std::env;
+
 use clap::Parser;
 use cosmwasm_std::Addr;
 use cw_orch::{
@@ -7,23 +9,25 @@ use cw_orch::{
 use scripts::{assert_wallet_balance, networks::ping_grpc, BtsgAccountSuite};
 use tokio::runtime::Runtime;
 
-// todo: move to .env file
-pub const MNEMONIC: &str = "";
-pub const GOV_MODULE: &str = "";
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
 struct Args {
-    /// Network Id to deploy on
+    /// Network to deploy on: main, testnet, local
     #[clap(short, long)]
-    network_id: String,
-    #[arg(long)]
-    chain_id: String,
+    network: String,
 }
 
 fn main() {
+    let args = Args::parse();
+    
     println!("Deploying Headstash Framework As Governance Module...",);
-    let bitsong_chain = scripts::networks::BITSONG_MAINNET.to_owned();
+    let bitsong_chain = match args.network.as_str() {
+        "main" => scripts::networks::BITSONG_MAINNET.to_owned(),
+        "testnet" => scripts::networks::BITSONG_TESTNET.to_owned(),
+        "local" => scripts::networks::LOCAL_NETWORK1.to_owned(),
+        _ => panic!("Invalid network"),
+    };
 
     if let Err(ref err) = deploy_as_gov(bitsong_chain.into()) {
         log::error!("{}", err);
@@ -44,6 +48,9 @@ fn main() {
 fn deploy_as_gov(network: ChainInfoOwned) -> anyhow::Result<()> {
     let rt = Runtime::new()?;
 
+    let mnemonic = env::var("MNEMONIC")?;
+    let gov_module = env::var("GOV_MODULE").expect("GOV_MODULE must be set");
+
     rt.block_on(assert_wallet_balance(vec![network.clone()]));
 
     let urls = network.grpc_urls.to_vec();
@@ -53,11 +60,11 @@ fn deploy_as_gov(network: ChainInfoOwned) -> anyhow::Result<()> {
 
     let mut chain = DaemonBuilder::new(network.clone())
         .handle(rt.handle())
-        .mnemonic(std::env::var(MNEMONIC)?)
+        .mnemonic(std::env::var(mnemonic)?)
         .build()?;
     // send message under authorization of governance module
-    chain.authz_granter(GOV_MODULE);
-    BtsgAccountSuite::deploy_on(chain.clone(), Addr::unchecked(GOV_MODULE))?;
+    chain.authz_granter(gov_module.clone());
+    BtsgAccountSuite::deploy_on(chain.clone(), Addr::unchecked(gov_module))?;
 
     Ok(())
 }

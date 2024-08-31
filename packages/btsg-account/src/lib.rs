@@ -1,7 +1,6 @@
 use cosmwasm_std::{Addr, StdError};
 pub mod account;
 pub mod common;
-pub mod market;
 pub mod minter;
 
 pub type TokenId = String;
@@ -20,7 +19,7 @@ impl NFT {
 
 #[cosmwasm_schema::cw_serde]
 pub struct TextRecord {
-    pub account: String,           // "twitter"
+    pub account: String,        // "twitter"
     pub value: String,          // "shan3v"
     pub verified: Option<bool>, // can only be set by oracle
 }

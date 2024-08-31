@@ -3,6 +3,7 @@ use std::vec;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 
+use bs721_account::msg::InstantiateMsg as Bs721InstantiateMsg;
 use cosmwasm_std::{
     to_json_binary, Addr, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Reply, Response,
     StdError, StdResult, SubMsg, WasmMsg,
@@ -13,9 +14,6 @@ use cw_utils::{maybe_addr, parse_reply_instantiate_data};
 use semver::Version;
 
 use btsg_account::{
-    account::{
-        ExecuteMsg as BsAccountExecuteMsg, InstantiateMsg as BsAccountCollectionInstantiateMsg,
-    },
     minter::{Config, SudoParams},
     Metadata,
 };
@@ -66,15 +64,15 @@ pub fn instantiate(
     };
     CONFIG.save(deps.storage, &config)?;
 
-    let account_collection_init_msg = BsAccountCollectionInstantiateMsg {
+    let account_collection_init_msg = Bs721InstantiateMsg {
         verifier: msg.verifier,
+        marketplace,
         base_init_msg: bs721_base::InstantiateMsg {
             name: "Bitsong Account Tokens".to_string(),
             symbol: "ACCOUNTS".to_string(),
             minter: env.contract.address.to_string(),
             uri: None,
         },
-        marketplace,
     };
 
     let wasm_msg = WasmMsg::Instantiate {
@@ -142,7 +140,7 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractE
                 contract_addr: collection_address.to_string(),
                 funds: vec![],
                 msg: to_json_binary(
-                    &(BsAccountExecuteMsg::<Metadata>::SetMarketplace {
+                    &(bs721_account::msg::ExecuteMsg::<Metadata>::SetMarketplace {
                         address: ACCOUNT_MARKETPLACE.load(deps.storage)?.to_string(),
                     }),
                 )?,
@@ -196,7 +194,7 @@ pub fn sudo(deps: DepsMut, _env: Env, msg: SudoMsg) -> Result<Response, Contract
         } => sudo_update_params(
             deps,
             min_account_length,
-        max_account_length,
+            max_account_length,
             base_price,
             // fair_burn_bps,
         ),

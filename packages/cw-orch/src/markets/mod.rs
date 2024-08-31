@@ -1,3 +1,3 @@
-pub mod account_market;
+mod account_market;
 
 pub use account_market::BitsongAccountMarketplace;

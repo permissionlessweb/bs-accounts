@@ -1,6 +1,8 @@
+use bs721_account::msg::{Bs721AccountsQueryMsgFns as _, ExecuteMsgFns as _};
+use bs721_account_marketplace::msg::{
+    ExecuteMsgFns as _, InstantiateMsg as AccountMarketInitMsg, QueryMsgFns,
+};
 use bs721_account_minter::msg::{ExecuteMsgFns as _, InstantiateMsg as AccountMinterInitMsg};
-use btsg_account::account::Bs721AccountsQueryMsgFns as _;
-use btsg_account::market::{ExecuteMsgFns as _, InstantiateMsg as AccountMarketInitMsg};
 use btsg_account::Metadata;
 use btsg_cw_orch::*;
 use cosmwasm_std::Decimal;
@@ -23,9 +25,13 @@ impl<Chain: CwEnv> BtsgAccountSuite<Chain> {
     }
 
     pub fn upload(&self) -> Result<(), CwOrchError> {
-        self.account.upload()?;
-        self.market.upload()?;
-        self.minter.upload()?;
+        let acc = self.account.upload()?.uploaded_code_id()?;
+        let mark = self.market.upload()?.uploaded_code_id()?;
+        let minter = self.minter.upload()?.uploaded_code_id()?;
+
+        println!("account collection code-id: {}", acc);
+        println!("account market code-id: {}", mark);
+        println!("account minter code-id: {}", minter);
         Ok(())
     }
 }
@@ -47,7 +53,11 @@ impl<Chain: CwEnv> cw_orch::contract::Deploy<Chain> for BtsgAccountSuite<Chain> 
     }
 
     fn get_contracts_mut(&mut self) -> Vec<Box<&mut dyn ContractInstance<Chain>>> {
-        vec![Box::new(&mut self.account)]
+        vec![
+            Box::new(&mut self.account),
+            Box::new(&mut self.market),
+            Box::new(&mut self.minter),
+        ]
     }
 
     fn load_from(chain: Chain) -> Result<Self, Self::Error> {
@@ -61,27 +71,32 @@ impl<Chain: CwEnv> cw_orch::contract::Deploy<Chain> for BtsgAccountSuite<Chain> 
 
         // ########## Instantiate #############
         // account marketplace
-        suite.market.instantiate(
-            &AccountMarketInitMsg {
-                trading_fee_bps: 100u64,
-                min_price: 100u128.into(),
-                ask_interval: 30u64,
-                max_renewals_per_block: 10u32,
-                valid_bid_query_limit: 100u32,
-                renew_window: 1000u64,
-                renewal_bid_percentage: Decimal::one(),
-                operator: chain.sender_addr().to_string(),
-            },
-            None,
-            None,
-        )?;
+        let market = suite
+            .market
+            .instantiate(
+                &AccountMarketInitMsg {
+                    trading_fee_bps: 100u64,
+                    min_price: 100u128.into(),
+                    ask_interval: 30u64,
+                    max_renewals_per_block: 10u32,
+                    valid_bid_query_limit: 100u32,
+                    renew_window: 1000u64,
+                    renewal_bid_percentage: Decimal::one(),
+                    operator: chain.sender_addr().to_string(),
+                },
+                None,
+                None,
+            )?
+            .instantiated_contract_address()?;
+
+        println!("bs721-account marketplace contract: {}", market);
         // Account Minter
         // On instantitate, bs721-account contract is created by minter contract.
         // We grab this contract addr from response events, and set address in internal test suite state.
         let bs721_account = suite
             .minter
             .instantiate(
-                &AccountMinterInitMsg {
+                &bs721_account_minter::msg::InstantiateMsg {
                     admin: Some(data.to_string()),
                     verifier: None,
                     collection_code_id: suite.account.code_id()?,
@@ -95,6 +110,12 @@ impl<Chain: CwEnv> cw_orch::contract::Deploy<Chain> for BtsgAccountSuite<Chain> 
             )?
             .event_attr_value("wasm", "bs721_account_address")?;
 
+        println!(
+            "bs721-account minter contract: {}",
+            suite.minter.addr_str()?
+        );
+        println!("bs721-account collection contract: {}", bs721_account);
+
         suite
             .account
             .set_default_address(&Addr::unchecked(bs721_account));
@@ -103,11 +124,6 @@ impl<Chain: CwEnv> cw_orch::contract::Deploy<Chain> for BtsgAccountSuite<Chain> 
         suite
             .market
             .setup(suite.account.address()?, suite.minter.address()?)?;
-
-        // Mint governance owned name
-        suite.minter.mint_and_list("Bitsong")?;
-
-        suite.account.nft_info("Bitsong")?;
         Ok(suite)
     }
 }

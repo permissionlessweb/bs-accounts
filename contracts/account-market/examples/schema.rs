@@ -1,6 +1,6 @@
 use cosmwasm_schema::write_api;
 
-use btsg_account::market::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use bs721_account_marketplace::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
 fn main() {
     write_api! {

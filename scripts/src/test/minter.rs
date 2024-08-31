@@ -2,15 +2,19 @@ use btsg_account::common::SECONDS_PER_YEAR;
 use cw_orch::{anyhow, mock::MockBech32, prelude::*};
 
 use crate::deploy::account::BtsgAccountSuite;
+use bs721_account_marketplace::msg::{
+    ExecuteMsgFns as _, QueryMsgFns, SudoMsg as MarketplaceSudoMsg,
+};
 use bs721_account_minter::msg::QueryMsgFns as _;
-use btsg_account::market::{ExecuteMsgFns as _, QueryMsgFns, SudoMsg as MarketplaceSudoMsg};
 use btsg_account::minter::Config;
 use cosmwasm_std::{attr, coins, to_json_binary, Decimal};
 use cw_orch::mock::cw_multi_test::{SudoMsg, WasmSudo};
 
+use bs721_account::msg::{
+    Bs721AccountsQueryMsg, Bs721AccountsQueryMsgFns, ExecuteMsg, ExecuteMsgFns, InstantiateMsg,
+};
 use bs721_account_minter::msg::ExecuteMsgFns as _;
 use cosmwasm_std::Uint128;
-
 const USER: &str = "user";
 const USER2: &str = "user2";
 const USER3: &str = "user3";
@@ -44,8 +48,6 @@ pub fn init() -> anyhow::Result<()> {
 }
 
 mod execute {
-
-    use btsg_account::account::{Bs721AccountsQueryMsgFns, ExecuteMsgFns};
 
     use super::*;
 
@@ -343,10 +345,7 @@ mod admin {
     }
 }
 mod query {
-    use btsg_account::{
-        account::{Bs721AccountsQueryMsgFns, ExecuteMsgFns},
-        market::BidOffset,
-    };
+    use bs721_account_marketplace::{msg::BidOffset, state::Bid};
 
     use super::*;
 
@@ -449,7 +448,7 @@ mod query {
             token_id: token_id.into(),
             bidder: bidder1.clone(),
         };
-        let res: Vec<btsg_account::market::state::Bid> =
+        let res: Vec<Bid> =
             suite
                 .market
                 .bids_for_seller(admin.clone(), None, Some(filter.clone()))?;
@@ -588,10 +587,7 @@ mod query {
     // }
 }
 mod collection {
-    use btsg_account::{
-        account::{Bs721AccountsQueryMsgFns, ExecuteMsgFns},
-        TextRecord,
-    };
+    use btsg_account::TextRecord;
 
     use super::*;
     #[test]
@@ -838,7 +834,7 @@ mod collection {
         // run sudo msg
         mock.app.borrow_mut().sudo(SudoMsg::Wasm(WasmSudo {
             contract_addr: suite.account.address()?,
-            message: to_json_binary(&btsg_account::account::SudoMsg::UpdateParams {
+            message: to_json_binary(&bs721_account::msg::SudoMsg::UpdateParams {
                 max_record_count: max_record_count + 1,
             })?,
         }))?;
@@ -900,8 +896,6 @@ mod public_start_time {
 }
 
 mod associate_address {
-
-    use btsg_account::account::{Bs721AccountsQueryMsgFns, ExecuteMsgFns, InstantiateMsg};
 
     use super::*;
 

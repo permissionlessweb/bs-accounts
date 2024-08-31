@@ -1,10 +1,6 @@
-use btsg_account::{
-    account::{ExecuteMsg, InstantiateMsg},
-    Metadata,
-};
+use bs721_account::msg::{Bs721AccountsQueryMsg as QueryMsg, ExecuteMsg, InstantiateMsg};
+use btsg_account::Metadata;
 use cosmwasm_schema::write_api;
-
-use bs721_account::QueryMsg;
 
 fn main() {
     write_api! {

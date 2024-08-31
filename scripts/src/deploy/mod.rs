@@ -4,11 +4,11 @@ pub mod networks;
 
 pub use account::BtsgAccountSuite;
 
-use bs721_account_minter::msg::InstantiateMsg as AccountMinterInitMsg;
-use btsg_account::account::{Bs721AccountsQueryMsgFns, ExecuteMsgFns};
-use btsg_account::market::{
+use bs721_account::msg::{Bs721AccountsQueryMsgFns as _, ExecuteMsgFns as _};
+use bs721_account_marketplace::msg::{
     ExecuteMsgFns as _, InstantiateMsg as AccountMarketInitMsg, QueryMsgFns,
 };
+use bs721_account_minter::msg::InstantiateMsg as AccountMinterInitMsg;
 use cosmwasm_std::{coins, Decimal, Uint128};
 use cw_orch::{anyhow, prelude::*};
 
@@ -138,7 +138,7 @@ impl BtsgAccountSuite<MockBech32> {
         mock.add_balance(&bidder, bid_amnt.clone())?;
 
         self.market.call_as(&bidder).execute(
-            &btsg_account::market::ExecuteMsg::SetBid {
+            &bs721_account_marketplace::msg::ExecuteMsg::SetBid {
                 token_id: account.into(),
             },
             Some(&bid_amnt),

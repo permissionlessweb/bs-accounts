@@ -1,7 +1,7 @@
 use cw_orch::{interface, prelude::*};
 
 use bs721_account_marketplace::contract::{execute, instantiate, query, sudo};
-use btsg_account::market::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use bs721_account_marketplace::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
 #[interface(InstantiateMsg, ExecuteMsg, QueryMsg, Empty)]
 pub struct BitsongAccountMarketplace;

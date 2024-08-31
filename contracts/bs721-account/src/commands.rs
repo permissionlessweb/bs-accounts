@@ -1,7 +1,7 @@
 use crate::error::ContractError;
+use crate::msg::SudoParams;
 use crate::state::{ACCOUNT_MARKETPLACE, REVERSE_MAP, SUDO_PARAMS, VERIFIER};
 use crate::Bs721AccountsContract;
-use btsg_account::account::SudoParams;
 use cosmwasm_std::{
     ensure, to_json_binary, Addr, Binary, ContractInfoResponse, Deps, DepsMut, Empty, Env, Event,
     MessageInfo, Response, StdError, StdResult, WasmMsg,
@@ -19,6 +19,7 @@ use btsg_account::{common::MAX_TEXT_LENGTH, Metadata, TextRecord, NFT};
 
 use subtle_encoding::bech32;
 
+///
 pub fn execute_associate_address(
     deps: DepsMut,
     info: MessageInfo,
@@ -129,6 +130,7 @@ pub fn execute_mint(
         seller_fee_bps: None,
         payment_addr: None,
     };
+
     Bs721AccountsContract::default()
         .tokens
         .update(deps.storage, &token_id, |old| match old {
@@ -182,7 +184,7 @@ fn update_ask_on_marketplace(
     token_id: &str,
     recipient: Addr,
 ) -> Result<WasmMsg, ContractError> {
-    let msg = btsg_account::market::ExecuteMsg::UpdateAsk {
+    let msg = btsg_account_marketplace::BsAccountMarketplaceExecuteMsg::UpdateAsk {
         token_id: token_id.to_string(),
         seller: recipient.to_string(),
     };

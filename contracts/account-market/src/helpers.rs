@@ -1,9 +1,6 @@
 use std::cmp::max;
 
-use btsg_account::{
-    common::{charge_fees, SECONDS_PER_YEAR},
-    market::{state::*, ExecuteMsg, QueryMsg},
-};
+use btsg_account::common::{charge_fees, SECONDS_PER_YEAR};
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
     to_json_binary, Addr, CosmosMsg, Deps, DepsMut, Env, Event, Order, QuerierWrapper,
@@ -11,13 +8,18 @@ use cosmwasm_std::{
 };
 use cw_storage_plus::Bound;
 
-use crate::{commands::store_ask, ContractError};
+use crate::{
+    commands::store_ask,
+    msg::{ExecuteMsg, QueryMsg},
+    state::*,
+    ContractError,
+};
 
 /// MarketplaceContract is a wrapper around Addr that provides a lot of helpers
 #[cw_serde]
-pub struct ProfileMarketplaceContract(pub Addr);
+pub struct BitsongAccountMarketplaceContract(pub Addr);
 
-impl ProfileMarketplaceContract {
+impl BitsongAccountMarketplaceContract {
     pub fn addr(&self) -> Addr {
         self.0.clone()
     }

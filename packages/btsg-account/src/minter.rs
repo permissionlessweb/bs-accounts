@@ -1,5 +1,4 @@
-use cosmwasm_schema::QueryResponses;
-use cosmwasm_std::{Addr, Timestamp, Uint128};
+use cosmwasm_std::{Timestamp, Uint128};
 
 #[cosmwasm_schema::cw_serde]
 pub struct SudoParams {
@@ -16,35 +15,4 @@ pub struct SudoParams {
 #[cosmwasm_schema::cw_serde]
 pub struct Config {
     pub public_mint_start_time: Timestamp,
-}
-
-#[cosmwasm_schema::cw_serde]
-pub enum BsProfileMinterExecuteMsg {
-    /// Mint a account and list on Bitsong Account Marketplace
-    MintAndList { account: String },
-    /// Change the admin that manages the whitelist
-    /// Will be set to null after go-to-market
-    UpdateAdmin { admin: Option<String> },
-    /// Add a whiltelist address
-    AddWhitelist { address: String },
-    /// Remove a whitelist address
-    RemoveWhitelist { address: String },
-    /// Update config, only callable by admin
-    /// will not be callable after admin is removed
-    UpdateConfig { config: Config },
-}
-
-#[cosmwasm_schema::cw_serde]
-#[derive(QueryResponses)]
-pub enum BsAccountMinterQueryMsg {
-    #[returns(cw_controllers::AdminResponse)]
-    Admin {},
-    #[returns(Vec<Addr>)]
-    Whitelists {},
-    #[returns(Addr)]
-    Collection {},
-    #[returns(SudoParams)]
-    Params {},
-    #[returns(Config)]
-    Config {},
 }

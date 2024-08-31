@@ -1,9 +1,7 @@
 use bs721_account::ExecuteMsg;
 use btsg_account::common::NATIVE_DENOM;
 use btsg_account::minter::SudoParams;
-use btsg_account::{
-    common::charge_fees, market::ExecuteMsg as MarketplaceExecuteMsg, minter::Config, Metadata,
-};
+use btsg_account::{common::charge_fees, minter::Config, Metadata};
 use cosmwasm_std::{
     coin, Coin, Decimal, DepsMut, Env, Event, MessageInfo, Response, Uint128, WasmMsg,
 };
@@ -34,7 +32,11 @@ pub fn execute_mint_and_list(
         return Err(ContractError::MintingNotStarted {});
     }
 
-    validate_account(account, params.min_account_length, params.max_account_length)?;
+    validate_account(
+        account,
+        params.min_account_length,
+        params.max_account_length,
+    )?;
     let price = validate_payment(account.len(), &info, params.base_price.u128())?;
 
     let mut res = Response::new();
@@ -61,7 +63,7 @@ pub fn execute_mint_and_list(
         funds: vec![],
     };
 
-    let ask_msg = MarketplaceExecuteMsg::SetAsk {
+    let ask_msg = bs721_account_marketplace::msg::ExecuteMsg::SetAsk {
         token_id: account.to_string(),
         seller: sender.to_string(),
     };
@@ -133,7 +135,8 @@ pub fn validate_account(account: &str, min: u32, max: u32) -> Result<(), Contrac
         return Err(ContractError::AccountTooLong {});
     }
 
-    account.find(invalid_char)
+    account
+        .find(invalid_char)
         .map_or(Ok(()), |_| Err(ContractError::InvalidAccount {}))?;
 
     (if account.starts_with('-') || account.ends_with('-') {

@@ -61,3 +61,4 @@ pub enum QueryMsg {
     #[returns(Config)]
     Config {},
 }
+

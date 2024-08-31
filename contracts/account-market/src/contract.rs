@@ -1,5 +1,3 @@
-use btsg_account::market::{state::*, *};
-use btsg_account::market::{ExecuteMsg, InstantiateMsg};
 use cosmwasm_std::{
     to_json_binary, Binary, Decimal, Deps, DepsMut, Env, MessageInfo, Response, StdError,
     StdResult, Uint128,
@@ -7,7 +5,12 @@ use cosmwasm_std::{
 use cw2::set_contract_version;
 use semver::Version;
 
-use crate::{commands::*, ContractError};
+use crate::{
+    commands::*,
+    msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg, SudoMsg},
+    state::*,
+    ContractError,
+};
 
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;

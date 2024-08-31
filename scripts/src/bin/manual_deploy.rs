@@ -1,3 +1,5 @@
+use std::env;
+
 use clap::Parser;
 use cw_orch::{
     daemon::{DaemonBuilder, TxSender},
@@ -7,21 +9,30 @@ use scripts::{assert_wallet_balance, networks::ping_grpc, BtsgAccountSuite};
 use tokio::runtime::Runtime;
 
 // todo: move to .env file
-pub const MNEMONIC: &str = "";
+pub const MNEMONIC: &str =
+    "garage dial step tourist hint select patient eternal lesson raccoon shaft palace flee purpose vivid spend place year file life cliff winter race fox";
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
 struct Args {
-    /// Network Id to deploy on
+    /// Network to deploy on: main, testnet, local
     #[clap(short, long)]
-    network_id: String,
-    #[arg(long)]
-    chain_id: String,
+    network: String,
 }
 
 fn main() {
+    // parse cargo command arguments for network type
+    let args = Args::parse();
+    // logs any errors
+    env_logger::init();
+
     println!("Deploying Headstash Framework...");
-    let bitsong_chain = scripts::networks::BITSONG_MAINNET.to_owned();
+    let bitsong_chain = match args.network.as_str() {
+        "main" => scripts::networks::BITSONG_MAINNET.to_owned(),
+        "testnet" => scripts::networks::BITSONG_TESTNET.to_owned(),
+        "local" => scripts::networks::LOCAL_NETWORK1.to_owned(),
+        _ => panic!("Invalid network"),
+    };
 
     if let Err(ref err) = manual_deploy(bitsong_chain.into()) {
         log::error!("{}", err);
@@ -29,20 +40,13 @@ fn main() {
             .skip(1)
             .for_each(|cause| log::error!("because: {}", cause));
 
-        // The backtrace is not always generated. Try to run this example
-        // with `$env:RUST_BACKTRACE=1`.
-        //    if let Some(backtrace) = e.backtrace() {
-        //        log::debug!("backtrace: {:?}", backtrace);
-        //    }
-
         ::std::process::exit(1);
     }
 }
 
 fn manual_deploy(network: ChainInfoOwned) -> anyhow::Result<()> {
     let rt = Runtime::new()?;
-
-    rt.block_on(assert_wallet_balance(vec![network.clone()]));
+    // rt.block_on(assert_wallet_balance(vec![network.clone()]));
 
     let urls = network.grpc_urls.to_vec();
     for url in urls {
@@ -51,10 +55,11 @@ fn manual_deploy(network: ChainInfoOwned) -> anyhow::Result<()> {
 
     let chain = DaemonBuilder::new(network.clone())
         .handle(rt.handle())
-        .mnemonic(std::env::var(MNEMONIC)?)
+        .mnemonic(MNEMONIC)
         .build()?;
 
     let suite = BtsgAccountSuite::deploy_on(chain.clone(), chain.sender().address())?;
+    // query account for connected wallet
 
     Ok(())
 }

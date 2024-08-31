@@ -1,8 +1,8 @@
 use crate::deploy::account::BtsgAccountSuite;
 use ::bs721_account::{commands::transcode, ContractError};
+use bs721_account::msg::{Bs721AccountsQueryMsgFns as _, ExecuteMsgFns as _};
 use bs721_base::ContractError::Unauthorized;
-use btsg_account::account::{Bs721AccountsQueryMsgFns, ExecuteMsgFns};
-use btsg_account::{market::InstantiateMsg, Metadata};
+use btsg_account::Metadata;
 use btsg_account::{minter, TextRecord, NFT};
 use cosmwasm_std::{from_json, StdError};
 use cw_orch::prelude::CallAs;
