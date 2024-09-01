@@ -3,12 +3,11 @@ use std::env;
 use clap::Parser;
 use cosmwasm_std::Addr;
 use cw_orch::{
-    daemon::{DaemonBuilder, TxSender},
+    daemon::DaemonBuilder,
     prelude::{ChainInfoOwned, Deploy},
 };
 use scripts::{assert_wallet_balance, networks::ping_grpc, BtsgAccountSuite};
 use tokio::runtime::Runtime;
-
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
@@ -20,7 +19,7 @@ struct Args {
 
 fn main() {
     let args = Args::parse();
-    
+
     println!("Deploying Headstash Framework As Governance Module...",);
     let bitsong_chain = match args.network.as_str() {
         "main" => scripts::networks::BITSONG_MAINNET.to_owned(),

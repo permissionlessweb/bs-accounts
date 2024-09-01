@@ -141,25 +141,6 @@ pub enum QueryMsg {
         start_after: Option<TokenId>,
         limit: Option<u32>,
     },
-    /// Get all renewable Asks
-    // #[returns(Vec<Ask>)]
-    // AsksByRenewTime {
-    //     max_time: Timestamp,
-    //     start_after: Option<Timestamp>,
-    //     limit: Option<u32>,
-    // },
-    // /// Get the renewal price for a specific name
-    // #[returns((Option<Coin>, Option<Bid>))]
-    // AskRenewPrice {
-    //     current_time: Timestamp,
-    //     token_id: TokenId,
-    // },
-    // /// Get renewal price for multiple names
-    // #[returns(Vec<AskRenewPriceResponse>)]
-    // AskRenewalPrices {
-    //     current_time: Timestamp,
-    //     token_ids: Vec<TokenId>,
-    // },
     /// Get data for a specific bid
     #[returns(Option<Bid>)]
     Bid { token_id: TokenId, bidder: Bidder },
@@ -211,9 +192,6 @@ pub enum QueryMsg {
     /// Get the config for the contract
     #[returns(SudoParams)]
     Params {},
-    /// Get the renewal queue for a specific time
-    // #[returns(Vec<Ask>)]
-    // RenewalQueue { time: Timestamp },
     /// Get the minter and collection
     #[returns(ConfigResponse)]
     Config {},

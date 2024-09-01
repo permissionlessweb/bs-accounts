@@ -1,8 +1,4 @@
-use bs721_account::msg::{Bs721AccountsQueryMsgFns as _, ExecuteMsgFns as _};
-use bs721_account_marketplace::msg::{
-    ExecuteMsgFns as _, InstantiateMsg as AccountMarketInitMsg, QueryMsgFns,
-};
-use bs721_account_minter::msg::{ExecuteMsgFns as _, InstantiateMsg as AccountMinterInitMsg};
+use bs721_account_marketplace::msg::ExecuteMsgFns as _;
 use btsg_account::Metadata;
 use btsg_cw_orch::*;
 use cosmwasm_std::Decimal;
@@ -74,7 +70,7 @@ impl<Chain: CwEnv> cw_orch::contract::Deploy<Chain> for BtsgAccountSuite<Chain> 
         let market = suite
             .market
             .instantiate(
-                &AccountMarketInitMsg {
+                &bs721_account_marketplace::msg::InstantiateMsg {
                     trading_fee_bps: 100u64,
                     min_price: 100u128.into(),
                     ask_interval: 30u64,

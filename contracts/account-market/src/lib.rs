@@ -9,4 +9,3 @@ pub mod contract;
 mod unit_tests;
 
 pub use error::ContractError;
-pub use helpers::BitsongAccountMarketplaceContract;

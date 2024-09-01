@@ -12,13 +12,10 @@ use crate::{
     ContractError,
 };
 
-#[cfg(not(feature = "library"))]
-use cosmwasm_std::entry_point;
-
 pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 pub const ACCOUNT_MARKETPLACE: &str = "bs721_account_marketplace";
 
-#[cfg_attr(not(feature = "library"), entry_point)]
+#[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
 pub fn instantiate(
     deps: DepsMut,
     _env: Env,
@@ -46,7 +43,7 @@ pub fn instantiate(
     Ok(Response::new().add_attribute("action", "instantiate"))
 }
 
-#[cfg_attr(not(feature = "library"), entry_point)]
+#[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
 pub fn execute(
     deps: DepsMut,
     env: Env,
@@ -68,10 +65,6 @@ pub fn execute(
         ExecuteMsg::AcceptBid { token_id, bidder } => {
             execute_accept_bid(deps, env, info, &token_id, api.addr_validate(&bidder)?)
         }
-        // ExecuteMsg::FundRenewal { token_id } => execute_fund_renewal(deps, info, &token_id),
-        // ExecuteMsg::RefundRenewal { token_id } => execute_refund_renewal(deps, info, &token_id),
-        // ExecuteMsg::ProcessRenewals { time } => execute_process_renewal(deps, env, time),
-        // ExecuteMsg::Renew { token_id } => execute_renew(deps, env, info, &token_id),
         ExecuteMsg::Setup { minter, collection } => execute_setup(
             deps,
             api.addr_validate(&minter)?,
@@ -80,7 +73,7 @@ pub fn execute(
     }
 }
 
-#[cfg_attr(not(feature = "library"), entry_point)]
+#[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     let api = deps.api;
 
@@ -167,7 +160,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     }
 }
 
-#[cfg_attr(not(feature = "library"), entry_point)]
+#[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
 pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, ContractError> {
     let current_version = cw2::get_contract_version(deps.storage)?;
     if current_version.contract != ACCOUNT_MARKETPLACE {
@@ -194,7 +187,7 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, C
     Ok(Response::new())
 }
 
-#[cfg_attr(not(feature = "library"), entry_point)]
+#[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
 pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> Result<Response, ContractError> {
     let api = deps.api;
 

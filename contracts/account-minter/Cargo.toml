@@ -52,4 +52,4 @@ thiserror = { workspace = true }
 
 [dev-dependencies]
 bs721-base = { workspace = true }
-bs721-account-marketplace = { workspace = true }
+bs721-account-marketplace= { path = "../account-market" }

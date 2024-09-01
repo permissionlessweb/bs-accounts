@@ -1310,8 +1310,8 @@ dependencies = [
 
 [[package]]
 name = "bs721"
-version = "0.1.0-rc1"
-source = "git+https://github.com/permissionlessweb/bs-nfts?rev=68c0af1b5ffd483d5495d703dda51be3fbb5188c#68c0af1b5ffd483d5495d703dda51be3fbb5188c"
+version = "0.2.0"
+source = "git+https://github.com/permissionlessweb/bs-nfts?rev=b43c7f91adf74e458f120d91db2ddab24c441d98#b43c7f91adf74e458f120d91db2ddab24c441d98"
 dependencies = [
  "cosmwasm-schema 1.5.7",
  "cosmwasm-std 1.5.7",
@@ -1364,7 +1364,6 @@ dependencies = [
  "cw-storage-plus 1.2.0",
  "cw-utils 0.16.0",
  "cw2 1.1.2",
- "cw721 0.18.0",
  "schemars",
  "semver",
  "serde",
@@ -1397,8 +1396,8 @@ dependencies = [
 
 [[package]]
 name = "bs721-base"
-version = "0.1.0-rc1"
-source = "git+https://github.com/permissionlessweb/bs-nfts?rev=68c0af1b5ffd483d5495d703dda51be3fbb5188c#68c0af1b5ffd483d5495d703dda51be3fbb5188c"
+version = "0.2.0"
+source = "git+https://github.com/permissionlessweb/bs-nfts?rev=b43c7f91adf74e458f120d91db2ddab24c441d98#b43c7f91adf74e458f120d91db2ddab24c441d98"
 dependencies = [
  "bs721",
  "cosmwasm-schema 1.5.7",
@@ -7469,7 +7468,7 @@ version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf221c93e13a30d793f7645a0e7762c55d169dbb0a49671918a2319d289b10bb"
 dependencies = [
- "windows-sys 0.59.0",
+ "windows-sys 0.48.0",
 ]
 
 [[package]]

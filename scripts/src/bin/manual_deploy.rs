@@ -1,11 +1,9 @@
-use std::env;
-
 use clap::Parser;
 use cw_orch::{
     daemon::{DaemonBuilder, TxSender},
     prelude::*,
 };
-use scripts::{assert_wallet_balance, networks::ping_grpc, BtsgAccountSuite};
+use scripts::{networks::ping_grpc, BtsgAccountSuite};
 use tokio::runtime::Runtime;
 
 // todo: move to .env file
@@ -58,7 +56,7 @@ fn manual_deploy(network: ChainInfoOwned) -> anyhow::Result<()> {
         .mnemonic(MNEMONIC)
         .build()?;
 
-    let suite = BtsgAccountSuite::deploy_on(chain.clone(), chain.sender().address())?;
+    let _suite = BtsgAccountSuite::deploy_on(chain.clone(), chain.sender().address())?;
     // query account for connected wallet
 
     Ok(())

@@ -1,9 +1,6 @@
 use crate::deploy::account::BtsgAccountSuite;
 use ::bs721_account::{commands::transcode, ContractError};
-use bs721_account::msg::{Bs721AccountsQueryMsgFns as _, ExecuteMsgFns as _};
-use bs721_base::ContractError::Unauthorized;
-use btsg_account::Metadata;
-use btsg_account::{minter, TextRecord, NFT};
+use bs721_account::msg::{Bs721AccountsQueryMsgFns, ExecuteMsgFns};
 use cosmwasm_std::{from_json, StdError};
 use cw_orch::prelude::CallAs;
 use cw_orch::{anyhow, mock::MockBech32, prelude::*};
@@ -33,7 +30,7 @@ fn mint_and_update() -> anyhow::Result<()> {
     let token_id = "Enterprise";
 
     suite.account.call_as(&minter).mint(
-        Metadata::default(),
+        btsg_account::Metadata::default(),
         mock.sender,
         token_id,
         None,
@@ -45,10 +42,10 @@ fn mint_and_update() -> anyhow::Result<()> {
     let res = suite.account.nft_info(token_id)?;
 
     assert_eq!(res.token_uri, None);
-    assert_eq!(res.extension, Metadata::default());
+    assert_eq!(res.extension, btsg_account::Metadata::default());
 
     // update image
-    let new_nft = NFT {
+    let new_nft = btsg_account::NFT {
         collection: Addr::unchecked("contract"),
         token_id: "token_id".to_string(),
     };
@@ -57,11 +54,11 @@ fn mint_and_update() -> anyhow::Result<()> {
         .update_image_nft(token_id, Some(new_nft.clone()))?
         .event_attr_value("wasm-update_image_nft", "image_nft")?
         .into_bytes();
-    let nft: NFT = from_json(nft_value).unwrap();
+    let nft: btsg_account::NFT = from_json(nft_value).unwrap();
     assert_eq!(nft, new_nft);
 
     // add text record
-    let new_record = TextRecord {
+    let new_record = btsg_account::TextRecord {
         account: "test".to_string(),
         value: "test".to_string(),
         verified: None,
@@ -72,7 +69,7 @@ fn mint_and_update() -> anyhow::Result<()> {
         .event_attr_value("wasm-update-text-record", "record")?
         .into_bytes();
 
-    let record: TextRecord = from_json(record_value)?;
+    let record: btsg_account::TextRecord = from_json(record_value)?;
     assert_eq!(record, new_record);
     let records = suite.account.text_records(token_id)?;
     assert_eq!(records.len(), 1);
@@ -83,7 +80,7 @@ fn mint_and_update() -> anyhow::Result<()> {
 
     // trigger too many records error
     for i in 1..=(max_record_count) {
-        let new_record = TextRecord {
+        let new_record = btsg_account::TextRecord {
             account: format!("key{:?}", i),
             value: "value".to_string(),
             verified: None,
@@ -122,14 +119,14 @@ fn mint_and_update() -> anyhow::Result<()> {
         .unwrap_err();
     assert_eq!(
         err.root().to_string(),
-        ContractError::Base(Unauthorized {}).to_string()
+        ContractError::Base(bs721_base::ContractError::Unauthorized {}).to_string()
     );
     // passes
     suite.account.add_text_record(token_id, new_record)?;
     assert_eq!(suite.account.nft_info(token_id)?.extension.records.len(), 1);
 
     // add another txt record
-    let record = TextRecord {
+    let record = btsg_account::TextRecord {
         account: "twitter".to_string(),
         value: "jackdorsey".to_string(),
         verified: None,
@@ -138,7 +135,7 @@ fn mint_and_update() -> anyhow::Result<()> {
     assert_eq!(suite.account.nft_info(token_id)?.extension.records.len(), 2);
 
     // add duplicate record RecordAccountAlreadyExists
-    let record = TextRecord {
+    let record = btsg_account::TextRecord {
         account: "test".to_string(),
         value: "testtesttest".to_string(),
         verified: None,
