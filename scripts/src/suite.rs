@@ -6,7 +6,6 @@ use crate::deploy::{account::*, minter::BitsongAccountMinter};
 
 pub struct BtsgAccountSuite<Chain> {
     pub account: BitsongAccountCollection<Chain, Metadata>,
-    // pub market: BitsongAccountMarketplace<Chain>,
     pub minter: BitsongAccountMinter<Chain>,
 }
 
