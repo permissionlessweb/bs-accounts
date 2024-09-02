@@ -15,7 +15,7 @@ dependencies = [
  "cosmwasm-std 1.5.7",
  "cw-asset",
  "cw-controllers 1.1.2",
- "cw-ownable",
+ "cw-ownable 0.5.1",
  "cw-storage-plus 1.2.0",
  "cw2 1.1.2",
  "cw20 1.1.2",
@@ -38,7 +38,7 @@ dependencies = [
  "cosmwasm-std 1.5.7",
  "cw-asset",
  "cw-controllers 1.1.2",
- "cw-ownable",
+ "cw-ownable 0.5.1",
  "cw-storage-plus 1.2.0",
  "cw2 1.1.2",
  "semver",
@@ -60,7 +60,7 @@ dependencies = [
  "abstract-std",
  "cosmwasm-std 1.5.7",
  "cw-asset",
- "cw-orch",
+ "cw-orch 0.24.1",
  "cw-orch-interchain",
  "cw721 0.18.0",
  "rand",
@@ -129,7 +129,7 @@ dependencies = [
  "abstract-polytone-proxy",
  "abstract-polytone-voice",
  "cosmwasm-std 1.5.7",
- "cw-orch",
+ "cw-orch 0.24.1",
  "cw-orch-interchain",
 ]
 
@@ -149,7 +149,7 @@ dependencies = [
  "abstract-cw4-group",
  "abstract-cw4-stake",
  "cosmwasm-std 1.5.7",
- "cw-orch",
+ "cw-orch 0.24.1",
 ]
 
 [[package]]
@@ -175,7 +175,7 @@ dependencies = [
  "abstract-cw2",
  "cosmwasm-schema 1.5.7",
  "cosmwasm-std 1.5.7",
- "cw-orch",
+ "cw-orch 0.24.1",
  "cw-storage-plus 1.2.0",
  "cw-utils 1.0.3",
  "schemars",
@@ -194,7 +194,7 @@ dependencies = [
  "abstract-cw2",
  "cosmwasm-schema 1.5.7",
  "cosmwasm-std 1.5.7",
- "cw-orch",
+ "cw-orch 0.24.1",
  "cw-storage-plus 1.2.0",
  "cw-utils 1.0.3",
  "schemars",
@@ -224,7 +224,7 @@ checksum = "b38bb3554522b646cf94ab92a3730476e47faf1820f2eea610a3a2ec87f24e2e"
 dependencies = [
  "cosmwasm-schema 1.5.7",
  "cosmwasm-std 1.5.7",
- "cw-orch",
+ "cw-orch 0.24.1",
  "cw-utils 1.0.3",
  "schemars",
  "serde",
@@ -240,7 +240,7 @@ dependencies = [
  "abstract-cw20",
  "cosmwasm-schema 1.5.7",
  "cosmwasm-std 1.5.7",
- "cw-orch",
+ "cw-orch 0.24.1",
  "cw-storage-plus 1.2.0",
  "cw-utils 1.0.3",
  "schemars",
@@ -260,7 +260,7 @@ dependencies = [
  "cosmwasm-schema 1.5.7",
  "cosmwasm-std 1.5.7",
  "cw-controllers 1.1.2",
- "cw-orch",
+ "cw-orch 0.24.1",
  "cw-storage-plus 1.2.0",
  "cw-utils 1.0.3",
  "schemars",
@@ -294,7 +294,7 @@ dependencies = [
  "abstract-cw3",
  "cosmwasm-schema 1.5.7",
  "cosmwasm-std 1.5.7",
- "cw-orch",
+ "cw-orch 0.24.1",
  "cw-storage-plus 1.2.0",
  "cw-utils 1.0.3",
  "schemars",
@@ -315,7 +315,7 @@ dependencies = [
  "abstract-cw4",
  "cosmwasm-schema 1.5.7",
  "cosmwasm-std 1.5.7",
- "cw-orch",
+ "cw-orch 0.24.1",
  "cw-storage-plus 1.2.0",
  "cw-utils 1.0.3",
  "schemars",
@@ -347,7 +347,7 @@ dependencies = [
  "cosmwasm-schema 1.5.7",
  "cosmwasm-std 1.5.7",
  "cw-controllers 1.1.2",
- "cw-orch",
+ "cw-orch 0.24.1",
  "cw-storage-plus 1.2.0",
  "cw-utils 1.0.3",
  "schemars",
@@ -367,7 +367,7 @@ dependencies = [
  "cosmwasm-schema 1.5.7",
  "cosmwasm-std 1.5.7",
  "cw-controllers 1.1.2",
- "cw-orch",
+ "cw-orch 0.24.1",
  "cw-storage-plus 1.2.0",
  "cw-utils 1.0.3",
  "schemars",
@@ -387,7 +387,7 @@ dependencies = [
  "abstract-sdk",
  "abstract-std",
  "cosmwasm-std 1.5.7",
- "cw-ownable",
+ "cw-ownable 0.5.1",
  "cw-paginate",
  "cw-semver",
  "cw-storage-plus 1.2.0",
@@ -411,8 +411,8 @@ dependencies = [
  "cosmwasm-schema 1.5.7",
  "cosmwasm-std 1.5.7",
  "cw-controllers 1.1.2",
- "cw-orch",
- "cw-ownable",
+ "cw-orch 0.24.1",
+ "cw-ownable 0.5.1",
  "cw-paginate",
  "cw-semver",
  "cw-storage-plus 1.2.0",
@@ -442,10 +442,10 @@ dependencies = [
  "abstract-version-control",
  "cosmwasm-schema 1.5.7",
  "cosmwasm-std 1.5.7",
- "cw-address-like",
+ "cw-address-like 1.0.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "cw-asset",
  "cw-controllers 1.1.2",
- "cw-orch",
+ "cw-orch 0.24.1",
  "cw-orch-interchain",
  "cw-semver",
  "cw-storage-plus 1.2.0",
@@ -507,7 +507,7 @@ dependencies = [
  "cosmwasm-std 1.5.7",
  "cw-asset",
  "cw-controllers 1.1.2",
- "cw-ownable",
+ "cw-ownable 0.5.1",
  "cw-storage-plus 1.2.0",
  "cw2 1.1.2",
  "protobuf",
@@ -537,7 +537,7 @@ dependencies = [
  "abstract-polytone",
  "cosmwasm-schema 1.5.7",
  "cosmwasm-std 1.5.7",
- "cw-orch",
+ "cw-orch 0.24.1",
  "cw-storage-plus 1.2.0",
  "cw-utils 1.0.3",
  "cw2 1.1.2",
@@ -553,7 +553,7 @@ dependencies = [
  "abstract-polytone",
  "cosmwasm-schema 1.5.7",
  "cosmwasm-std 1.5.7",
- "cw-orch",
+ "cw-orch 0.24.1",
  "cw-storage-plus 1.2.0",
  "cw-utils 1.0.3",
  "cw2 1.1.2",
@@ -570,7 +570,7 @@ dependencies = [
  "abstract-polytone-proxy",
  "cosmwasm-schema 1.5.7",
  "cosmwasm-std 1.5.7",
- "cw-orch",
+ "cw-orch 0.24.1",
  "cw-storage-plus 1.2.0",
  "cw-utils 1.0.3",
  "cw2 1.1.2",
@@ -632,12 +632,12 @@ dependencies = [
  "abstract-polytone",
  "cosmwasm-schema 1.5.7",
  "cosmwasm-std 1.5.7",
- "cw-address-like",
+ "cw-address-like 1.0.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "cw-asset",
  "cw-clearable",
  "cw-controllers 1.1.2",
- "cw-orch",
- "cw-ownable",
+ "cw-orch 0.24.1",
+ "cw-ownable 0.5.1",
  "cw-semver",
  "cw-storage-plus 1.2.0",
  "cw-utils 1.0.3",
@@ -663,7 +663,7 @@ dependencies = [
  "abstract-std",
  "cosmwasm-schema 1.5.7",
  "cosmwasm-std 1.5.7",
- "cw-ownable",
+ "cw-ownable 0.5.1",
  "cw-semver",
  "cw-storage-plus 1.2.0",
  "cw2 1.1.2",
@@ -1287,19 +1287,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3e31ea183f6ee62ac8b8a8cf7feddd766317adfb13ff469de57ce033efd6a790"
 
 [[package]]
-name = "bs-controllers"
-version = "0.1.0-rc1"
-dependencies = [
- "cosmwasm-schema 1.5.7",
- "cosmwasm-std 1.5.7",
- "cw-storage-plus 1.2.0",
- "cw-utils 0.16.0",
- "schemars",
- "serde",
- "thiserror",
-]
-
-[[package]]
 name = "bs58"
 version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1309,105 +1296,43 @@ dependencies = [
 ]
 
 [[package]]
-name = "bs721"
-version = "0.2.0"
-source = "git+https://github.com/permissionlessweb/bs-nfts?rev=b43c7f91adf74e458f120d91db2ddab24c441d98#b43c7f91adf74e458f120d91db2ddab24c441d98"
-dependencies = [
- "cosmwasm-schema 1.5.7",
- "cosmwasm-std 1.5.7",
- "cw-utils 0.16.0",
- "cw721-base 0.18.0",
- "schemars",
- "serde",
-]
-
-[[package]]
 name = "bs721-account"
-version = "0.1.0-rc1"
+version = "0.1.0"
 dependencies = [
- "bs721",
- "bs721-base",
  "btsg-account",
- "btsg-account-marketplace",
- "btsg-cw-orch",
  "cosmwasm-schema 1.5.7",
  "cosmwasm-std 1.5.7",
  "cw-controllers 1.1.2",
- "cw-orch",
- "cw-ownable",
+ "cw-multi-test",
+ "cw-orch 0.25.0",
+ "cw-ownable 0.5.1",
  "cw-storage-plus 1.2.0",
- "cw-utils 0.16.0",
+ "cw-utils 1.0.3",
  "cw2 1.1.2",
  "cw721 0.18.0",
+ "cw721-base 0.18.0",
  "schemars",
- "semver",
  "serde",
  "subtle-encoding",
- "thiserror",
- "url",
-]
-
-[[package]]
-name = "bs721-account-marketplace"
-version = "0.1.0-rc1"
-dependencies = [
- "bs-controllers",
- "bs721",
- "bs721-base",
- "btsg-account",
- "cosmwasm-schema 1.5.7",
- "cosmwasm-std 1.5.7",
- "cw-multi-test",
- "cw-orch",
- "cw-ownable",
- "cw-storage-macro",
- "cw-storage-plus 1.2.0",
- "cw-utils 0.16.0",
- "cw2 1.1.2",
- "schemars",
- "semver",
- "serde",
  "thiserror",
 ]
 
 [[package]]
 name = "bs721-account-minter"
-version = "0.1.0-rc1"
+version = "0.1.0"
 dependencies = [
  "bs721-account",
- "bs721-account-marketplace",
- "bs721-base",
  "btsg-account",
  "cosmwasm-schema 1.5.7",
  "cosmwasm-std 1.5.7",
  "cw-controllers 1.1.2",
- "cw-orch",
- "cw-storage-macro",
+ "cw-multi-test",
+ "cw-orch 0.25.0",
+ "cw-ownable 0.5.1",
  "cw-storage-plus 1.2.0",
- "cw-utils 0.16.0",
+ "cw-utils 1.0.3",
  "cw2 1.1.2",
- "cw721 0.18.0",
  "cw721-base 0.18.0",
- "schemars",
- "semver",
- "serde",
- "thiserror",
-]
-
-[[package]]
-name = "bs721-base"
-version = "0.2.0"
-source = "git+https://github.com/permissionlessweb/bs-nfts?rev=b43c7f91adf74e458f120d91db2ddab24c441d98#b43c7f91adf74e458f120d91db2ddab24c441d98"
-dependencies = [
- "bs721",
- "cosmwasm-schema 1.5.7",
- "cosmwasm-std 1.5.7",
- "cw-orch",
- "cw-ownable",
- "cw-storage-plus 1.2.0",
- "cw-utils 0.16.0",
- "cw2 1.1.2",
- "cw721 0.18.0",
  "schemars",
  "serde",
  "thiserror",
@@ -1425,42 +1350,12 @@ dependencies = [
 
 [[package]]
 name = "btsg-account"
-version = "0.1.0-rc1"
-dependencies = [
- "bs-controllers",
- "bs721",
- "bs721-base",
- "cosmwasm-schema 1.5.7",
- "cosmwasm-std 1.5.7",
- "cw-controllers 1.1.2",
- "cw-orch",
- "cw-storage-macro",
- "cw-storage-plus 1.2.0",
- "schemars",
- "serde",
-]
-
-[[package]]
-name = "btsg-account-marketplace"
-version = "0.1.0-rc1"
+version = "0.1.0"
 dependencies = [
  "cosmwasm-schema 1.5.7",
  "cosmwasm-std 1.5.7",
- "schemars",
- "serde",
-]
-
-[[package]]
-name = "btsg-cw-orch"
-version = "0.1.0-rc1"
-dependencies = [
- "bs721-account",
- "bs721-account-marketplace",
- "bs721-account-minter",
- "btsg-account",
- "cosmwasm-std 1.5.7",
- "cw-orch",
- "serde",
+ "cw-orch 0.25.0",
+ "cw721 0.19.0",
 ]
 
 [[package]]
@@ -1586,7 +1481,7 @@ dependencies = [
  "cosmrs",
  "cosmwasm-std 1.5.7",
  "cosmwasm-vm",
- "cw-orch",
+ "cw-orch 0.24.1",
  "cw-storage-plus 1.2.0",
  "cw-utils 1.0.3",
  "derivative",
@@ -2151,6 +2046,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "cw-address-like"
+version = "1.0.4"
+source = "git+https://github.com/public-awesome/cw-plus-plus.git?rev=28c1a09bfc6b4f1942fefe3eb0b50faf9d3b1523#28c1a09bfc6b4f1942fefe3eb0b50faf9d3b1523"
+dependencies = [
+ "cosmwasm-std 1.5.7",
+]
+
+[[package]]
 name = "cw-asset"
 version = "3.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2158,7 +2061,7 @@ checksum = "c999a12f8cd8736f6f86e9a4ede5905530cb23cfdef946b9da1c506ad1b70799"
 dependencies = [
  "cosmwasm-schema 1.5.7",
  "cosmwasm-std 1.5.7",
- "cw-address-like",
+ "cw-address-like 1.0.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "cw-storage-plus 1.2.0",
  "cw20 1.1.2",
  "thiserror",
@@ -2206,18 +2109,18 @@ dependencies = [
 
 [[package]]
 name = "cw-multi-test"
-version = "1.2.0"
+version = "2.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "91fc33b1d65c102d72f46548c64dca423c337e528d6747d0c595316aa65f887b"
+checksum = "b0ae276e7a06ad1b7e7da78a3d68aba80634cde30ee7fe8259a94e653603fef8"
 dependencies = [
  "anyhow",
  "bech32 0.11.0",
- "cosmwasm-std 1.5.7",
- "cw-storage-plus 1.2.0",
- "cw-utils 1.0.3",
+ "cosmwasm-std 2.1.3",
+ "cw-storage-plus 2.0.0",
+ "cw-utils 2.0.0",
  "derivative",
  "itertools 0.13.0",
- "prost 0.12.6",
+ "prost 0.13.2",
  "schemars",
  "serde",
  "sha2 0.10.8",
@@ -2236,10 +2139,10 @@ dependencies = [
  "cw-orch-contract-derive",
  "cw-orch-core 1.2.4",
  "cw-orch-daemon",
- "cw-orch-fns-derive",
+ "cw-orch-fns-derive 0.22.0",
  "cw-orch-mock 0.23.2",
  "cw-orch-networks",
- "cw-orch-traits",
+ "cw-orch-traits 0.23.3",
  "cw-utils 1.0.3",
  "hex",
  "log",
@@ -2247,6 +2150,27 @@ dependencies = [
  "serde",
  "thiserror",
  "tokio",
+]
+
+[[package]]
+name = "cw-orch"
+version = "0.25.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2dd6f114ab0301b99ca0d8ba48036b87372ccc3ba0271dcd6f9533e4be578f65"
+dependencies = [
+ "anyhow",
+ "cosmwasm-std 2.1.3",
+ "cw-orch-contract-derive",
+ "cw-orch-core 2.0.0",
+ "cw-orch-fns-derive 0.23.0",
+ "cw-orch-mock 0.24.0",
+ "cw-orch-traits 0.24.0",
+ "cw-utils 2.0.0",
+ "hex",
+ "log",
+ "schemars",
+ "serde",
+ "thiserror",
 ]
 
 [[package]]
@@ -2337,7 +2261,7 @@ dependencies = [
  "cosmwasm-std 1.5.7",
  "cw-orch-core 1.2.4",
  "cw-orch-networks",
- "cw-orch-traits",
+ "cw-orch-traits 0.23.3",
  "dirs",
  "ed25519-dalek",
  "eyre",
@@ -2369,6 +2293,18 @@ name = "cw-orch-fns-derive"
 version = "0.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b9e21b23116a0702f540d7fa3f16e8276682d860b589fed56259220ad59d768e"
+dependencies = [
+ "convert_case",
+ "proc-macro2",
+ "quote",
+ "syn 1.0.109",
+]
+
+[[package]]
+name = "cw-orch-fns-derive"
+version = "0.23.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4438fbb77e1fd05b19d47287bdc5b7be73e3875b9acbbceffc9418acd000a8ad"
 dependencies = [
  "convert_case",
  "proc-macro2",
@@ -2559,6 +2495,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "cw-orch-traits"
+version = "0.24.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "be7b10c170797abe29170d58756fd988b260430a4466a56647c8ab8dafa8fa13"
+dependencies = [
+ "cw-orch-core 2.0.0",
+ "prost 0.13.2",
+ "prost-types 0.13.2",
+]
+
+[[package]]
 name = "cw-ownable"
 version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2566,8 +2513,22 @@ checksum = "093dfb4520c48b5848274dd88ea99e280a04bc08729603341c7fb0d758c74321"
 dependencies = [
  "cosmwasm-schema 1.5.7",
  "cosmwasm-std 1.5.7",
- "cw-address-like",
- "cw-ownable-derive",
+ "cw-address-like 1.0.4 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cw-ownable-derive 0.5.1",
+ "cw-storage-plus 1.2.0",
+ "cw-utils 1.0.3",
+ "thiserror",
+]
+
+[[package]]
+name = "cw-ownable"
+version = "0.6.0"
+source = "git+https://github.com/public-awesome/cw-plus-plus.git?rev=28c1a09bfc6b4f1942fefe3eb0b50faf9d3b1523#28c1a09bfc6b4f1942fefe3eb0b50faf9d3b1523"
+dependencies = [
+ "cosmwasm-schema 1.5.7",
+ "cosmwasm-std 1.5.7",
+ "cw-address-like 1.0.4 (git+https://github.com/public-awesome/cw-plus-plus.git?rev=28c1a09bfc6b4f1942fefe3eb0b50faf9d3b1523)",
+ "cw-ownable-derive 0.6.0",
  "cw-storage-plus 1.2.0",
  "cw-utils 1.0.3",
  "thiserror",
@@ -2578,6 +2539,16 @@ name = "cw-ownable-derive"
 version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a1d3bf2e0f341bb6cc100d7d441d31cf713fbd3ce0c511f91e79f14b40a889af"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 1.0.109",
+]
+
+[[package]]
+name = "cw-ownable-derive"
+version = "0.6.0"
+source = "git+https://github.com/public-awesome/cw-plus-plus.git?rev=28c1a09bfc6b4f1942fefe3eb0b50faf9d3b1523#28c1a09bfc6b4f1942fefe3eb0b50faf9d3b1523"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2596,21 +2567,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "cw-paginate-storage"
+version = "2.5.0"
+source = "git+https://github.com/DA0-DA0/dao-contracts.git#a417f9de15cf2e5d252c017feb67393eb1dfa4d1"
+dependencies = [
+ "cosmwasm-std 1.5.7",
+ "cw-storage-plus 1.2.0",
+ "serde",
+]
+
+[[package]]
 name = "cw-semver"
 version = "1.0.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "45fe7f7983e2e37363f440e68ae6e686d1e3f5c611ab5bb692410d88baffd3f6"
 dependencies = [
  "serde",
-]
-
-[[package]]
-name = "cw-storage-macro"
-version = "1.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "853c8ebf6d20542ea0dc57519ee458e7ee0caa3a1848beced2c603153d3f4dbe"
-dependencies = [
- "syn 1.0.109",
 ]
 
 [[package]]
@@ -2840,6 +2812,18 @@ dependencies = [
 
 [[package]]
 name = "cw721"
+version = "0.16.0"
+source = "git+https://github.com/CosmWasm/cw-nfts?tag=v0.16.0#2cad1d3e15e0a34d466a0b51e02c58b82ebe5ecd"
+dependencies = [
+ "cosmwasm-schema 1.5.7",
+ "cosmwasm-std 1.5.7",
+ "cw-utils 0.16.0",
+ "schemars",
+ "serde",
+]
+
+[[package]]
+name = "cw721"
 version = "0.18.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e3c4d286625ccadc957fe480dd3bdc54ada19e0e6b5b9325379db3130569e914"
@@ -2849,6 +2833,25 @@ dependencies = [
  "cw-utils 1.0.3",
  "schemars",
  "serde",
+]
+
+[[package]]
+name = "cw721"
+version = "0.19.0"
+source = "git+https://github.com/public-awesome/cw-nfts#a5abe476c1028b2563f995adab184b86e3fc03ff"
+dependencies = [
+ "cosmwasm-schema 1.5.7",
+ "cosmwasm-std 1.5.7",
+ "cw-ownable 0.6.0",
+ "cw-paginate-storage",
+ "cw-storage-plus 1.2.0",
+ "cw-utils 1.0.3",
+ "cw2 1.1.2",
+ "cw721 0.16.0 (git+https://github.com/CosmWasm/cw-nfts?tag=v0.16.0)",
+ "schemars",
+ "serde",
+ "thiserror",
+ "url",
 ]
 
 [[package]]
@@ -2862,7 +2865,7 @@ dependencies = [
  "cw-storage-plus 0.16.0",
  "cw-utils 0.16.0",
  "cw2 0.16.0",
- "cw721 0.16.0",
+ "cw721 0.16.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "schemars",
  "serde",
  "thiserror",
@@ -2876,7 +2879,7 @@ checksum = "da518d9f68bfda7d972cbaca2e8fcf04651d0edc3de72b04ae2bcd9289c81614"
 dependencies = [
  "cosmwasm-schema 1.5.7",
  "cosmwasm-std 1.5.7",
- "cw-ownable",
+ "cw-ownable 0.5.1",
  "cw-storage-plus 1.2.0",
  "cw-utils 1.0.3",
  "cw2 1.1.2",
@@ -5093,7 +5096,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "81bddcdb20abf9501610992b6759a4c888aef7d1a7247ef75e2404275ac24af1"
 dependencies = [
  "anyhow",
- "itertools 0.12.1",
+ "itertools 0.10.5",
  "proc-macro2",
  "quote",
  "syn 2.0.77",
@@ -5711,7 +5714,7 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 
 [[package]]
 name = "scripts"
-version = "0.1.0-rc1"
+version = "0.1.0"
 dependencies = [
  "abstract-client",
  "abstract-cw-orch-polytone",
@@ -5720,19 +5723,17 @@ dependencies = [
  "abstract-polytone-note",
  "abstract-std",
  "anyhow",
- "bs721",
  "bs721-account",
- "bs721-account-marketplace",
  "bs721-account-minter",
- "bs721-base",
  "btsg-account",
- "btsg-cw-orch",
  "clap",
  "cosmwasm-std 1.5.7",
- "cw-orch",
+ "cw-orch 0.24.1",
  "cw-orch-clone-testing",
  "cw-orch-interchain",
  "cw-orch-interchain-core 0.5.0",
+ "cw721 0.18.0",
+ "cw721-base 0.18.0",
  "dirs",
  "dotenv",
  "env_logger",

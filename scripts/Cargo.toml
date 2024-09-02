@@ -6,14 +6,17 @@ repository = "https://github.com/bitsongofficial/bs-accounts"
 version.workspace = true
 
 [dependencies]
-bs721.workspace = true
-bs721-account              = { path = "../contracts/bs721-account", version = "0.1.0-rc1" }
-bs721-base                 = {workspace = true}
-bs721-account-minter       = { path = "../contracts/account-minter", version = "0.1.0-rc1" }
-bs721-account-marketplace  = { path = "../contracts/account-market", version = "0.1.0-rc1" }
-btsg-account               = { path = "../packages/btsg-account", version = "0.1.0-rc1" }
-btsg-cw-orch               = { path = "../packages/cw-orch", version = "0.1.0-rc1" }
-cosmwasm-std.workspace     = true
+cw721  = "0.18.0"
+cw721-base =  { version = "0.18.0" }
+btsg-account               = { path = "../packages/btsg-account", version = "0.1.0" }
+bs721-account              = { path = "../contracts/bs721-account", version = "0.1.0" }
+bs721-account-minter       = { path = "../contracts/bs721-account-minter", version = "0.1.0" }
+cosmwasm-std = { version = "1.5.7", features = [
+  "cosmwasm_1_4",
+  # Enable this if you only deploy to chains that have CosmWasm 2.0 or higher
+  # "cosmwasm_2_0",
+] }
+
 dotenv                     = { version = "0.15.0" }
 
 # Abstract Framework and CW-Orchestrator Dependencies
@@ -43,7 +46,7 @@ cw-orch-interchain-core = "0.5.0"
 # Cargo CLI commands
 [[bin]]
 name = "deploy"
-path = "src/bin/manual_deploy.rs"
+path = "src/bin/test.rs"
 [[bin]]
 name = "deploy-as-gov"
 path = "src/bin/deploy_as_gov.rs"

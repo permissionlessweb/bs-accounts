@@ -1,1 +1,0 @@
-bitsongd q tx $1 | jq -r '.logs' | grep -A 1 _contract_address

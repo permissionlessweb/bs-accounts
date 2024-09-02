@@ -2,10 +2,13 @@ use cosmwasm_std::Addr;
 use cw_controllers::Admin;
 use cw_storage_plus::{Item, Map};
 
-use crate::msg::SudoParams;
-
 pub type TokenUri = Addr;
 pub type TokenId = String;
+
+#[cosmwasm_schema::cw_serde]
+pub struct SudoParams {
+    pub max_record_count: u32,
+}
 
 /// Address of the text record verification oracle
 pub const REVERSE_MAP: Map<&TokenUri, TokenId> = Map::new("rm");

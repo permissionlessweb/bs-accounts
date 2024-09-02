@@ -18,7 +18,7 @@ pub enum ContractError {
     Admin(#[from] AdminError),
 
     #[error("{0}")]
-    Base(#[from] bs721_base::ContractError),
+    Base(#[from] cw721_base::ContractError),
 
     #[error("AccountNotFound")]
     AccountNotFound {},
@@ -28,7 +28,7 @@ pub enum ContractError {
 
     #[error("InvalidAddress")]
     InvalidAddress {},
-    
+
     #[error("RecordAccountAlreadyExists")]
     RecordAccountAlreadyExists {},
 
