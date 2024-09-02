@@ -4,20 +4,20 @@ use crate::msg::Bs721AccountsQueryMsg;
 use crate::state::{SudoParams, ACCOUNT_MARKETPLACE, REVERSE_MAP, SUDO_PARAMS, VERIFIER};
 use crate::Bs721AccountContract;
 use cosmwasm_std::{
-    ensure, Addr, Binary, ContractInfoResponse, Deps, DepsMut, Empty, Env, Event, MessageInfo,
-    Response, StdError, StdResult,
+    ensure, Addr, Binary, ContractInfoResponse, Deps, DepsMut, Env, Event, MessageInfo, Response,
+    StdError, StdResult,
 };
 use cw_ownable::Ownership;
 use cw_utils::nonpayable;
 
+use bs721_base::msg::ExecuteMsg as Bs721ExecuteMsg;
 use btsg_account::{TextRecord, MAX_TEXT_LENGTH, NFT};
-use cw721_base::msg::ExecuteMsg as Bs721ExecuteMsg;
 
 use subtle_encoding::bech32;
 
 pub mod manifest {
+    use bs721_base::state::TokenInfo;
     use btsg_account::Metadata;
-    use cw721_base::state::TokenInfo;
 
     use super::*;
 
@@ -99,29 +99,25 @@ pub mod manifest {
     pub fn execute_mint(
         deps: DepsMut,
         info: MessageInfo,
-        msg: Bs721ExecuteMsg<Metadata, Empty>,
+        msg: Bs721ExecuteMsg<Metadata>,
     ) -> Result<Response, ContractError> {
         cw_ownable::assert_owner(deps.storage, &info.sender)?;
 
-        let (
-            token_id,
-            owner,
-            _token_uri,
-            extension,
-            // _seller_fee_bps, _payment_addr
-        ) = match msg {
+        let (token_id, owner, _token_uri, extension, _seller_fee_bps, _payment_addr) = match msg {
             Bs721ExecuteMsg::Mint {
                 token_id,
                 owner,
                 token_uri,
                 extension,
-                // seller_fee_bps,
-                // payment_addr,
+                seller_fee_bps,
+                payment_addr,
             } => (
-                token_id, owner, token_uri,
+                token_id,
+                owner,
+                token_uri,
                 extension,
-                // seller_fee_bps,
-                // payment_addr,
+                seller_fee_bps,
+                payment_addr,
             ),
             _ => return Err(ContractError::NotImplemented {}),
         };
@@ -132,15 +128,15 @@ pub mod manifest {
             approvals: vec![],
             token_uri: None,
             extension,
-            // seller_fee_bps: None,
-            // payment_addr: None,
+            seller_fee_bps: None,
+            payment_addr: None,
         };
 
         Bs721AccountContract::default().tokens.update(
             deps.storage,
             &token_id,
             |old| match old {
-                Some(_) => Err(ContractError::Base(cw721_base::ContractError::Claimed {})),
+                Some(_) => Err(ContractError::Base(bs721_base::ContractError::Claimed {})),
                 None => Ok(token),
             },
         )?;
@@ -250,7 +246,7 @@ pub mod manifest {
 
         reset_token_metadata_and_reverse_map(&mut deps, token_id)?;
 
-        let msg = cw721_base::ExecuteMsg::TransferNft {
+        let msg = bs721_base::ExecuteMsg::TransferNft {
             recipient: recipient.to_string(),
             token_id: token_id.to_string(),
         };
@@ -274,7 +270,7 @@ pub mod manifest {
 
         reset_token_metadata_and_reverse_map(&mut deps, &token_id)?;
 
-        let msg = cw721_base::ExecuteMsg::SendNft {
+        let msg = bs721_base::ExecuteMsg::SendNft {
             contract: contract_addr.to_string(),
             token_id: token_id.to_string(),
             msg,
@@ -500,12 +496,10 @@ pub mod manifest {
         nonpayable(&info)?;
 
         let minter = Bs721AccountContract::default().minter(deps.as_ref())?;
-        if let Some(m) = minter.minter {
-            if m != info.sender {
-                return Err(ContractError::OwnershipError(
-                    cw_ownable::OwnershipError::NotOwner,
-                ));
-            }
+        if info.sender != minter.minter {
+            return Err(ContractError::OwnershipError(
+                cw_ownable::OwnershipError::NotOwner,
+            ));
         }
 
         ACCOUNT_MARKETPLACE.save(deps.storage, &deps.api.addr_validate(&address)?)?;

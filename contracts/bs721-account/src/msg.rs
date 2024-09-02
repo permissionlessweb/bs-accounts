@@ -1,14 +1,14 @@
 use crate::{state::SudoParams, Metadata};
 use btsg_account::{TextRecord, NFT};
 use cosmwasm_schema::{cw_serde, QueryResponses};
-use cosmwasm_std::{Addr, Binary, CustomMsg, Empty};
+use cosmwasm_std::{Addr, Binary, CustomMsg};
 
-use cw721::{
+use bs721::{
     AllNftInfoResponse, ApprovalResponse, ApprovalsResponse, ContractInfoResponse, Expiration,
     NftInfoResponse, NumTokensResponse, OperatorsResponse, OwnerOfResponse, TokensResponse,
 };
-use cw721_base::msg::InstantiateMsg as Bs721InstantiateMsg;
-use cw721_base::msg::QueryMsg as Cw721QueryMsg;
+use bs721_base::msg::InstantiateMsg as Bs721InstantiateMsg;
+use bs721_base::msg::QueryMsg as Bs721QueryMsg;
 use cw_ownable::Ownership;
 #[cw_serde]
 pub struct InstantiateMsg {
@@ -86,9 +86,9 @@ pub enum ExecuteMsg<T> {
         /// Seller fee basis points, 0-10000
         /// 0 means no fee, 100 means 1%, 10000 means 100%
         /// This is the fee paid by the buyer to the original creator
-        // seller_fee_bps: Option<u16>,
-        // /// Payment address, is the address that will receive the payment
-        // payment_addr: Option<String>,
+        seller_fee_bps: Option<u16>,
+        /// Payment address, is the address that will receive the payment
+        payment_addr: Option<String>,
         /// Any custom extension used by this contract
         extension: T,
     },
@@ -98,13 +98,13 @@ pub enum ExecuteMsg<T> {
     FreezeCollectionInfo {},
 }
 
-impl<T> From<ExecuteMsg<T>> for cw721_base::msg::ExecuteMsg<T, Empty> {
-    fn from(msg: ExecuteMsg<T>) -> cw721_base::msg::ExecuteMsg<T, Empty> {
+impl<T> From<ExecuteMsg<T>> for bs721_base::msg::ExecuteMsg<T> {
+    fn from(msg: ExecuteMsg<T>) -> bs721_base::msg::ExecuteMsg<T> {
         match msg {
             ExecuteMsg::TransferNft {
                 recipient,
                 token_id,
-            } => cw721_base::msg::ExecuteMsg::TransferNft {
+            } => bs721_base::msg::ExecuteMsg::TransferNft {
                 recipient,
                 token_id,
             },
@@ -112,7 +112,7 @@ impl<T> From<ExecuteMsg<T>> for cw721_base::msg::ExecuteMsg<T, Empty> {
                 contract,
                 token_id,
                 msg,
-            } => cw721_base::msg::ExecuteMsg::SendNft {
+            } => bs721_base::msg::ExecuteMsg::SendNft {
                 contract,
                 token_id,
                 msg,
@@ -121,35 +121,35 @@ impl<T> From<ExecuteMsg<T>> for cw721_base::msg::ExecuteMsg<T, Empty> {
                 spender,
                 token_id,
                 expires,
-            } => cw721_base::msg::ExecuteMsg::Approve {
+            } => bs721_base::msg::ExecuteMsg::Approve {
                 spender,
                 token_id,
                 expires,
             },
             ExecuteMsg::ApproveAll { operator, expires } => {
-                cw721_base::msg::ExecuteMsg::ApproveAll { operator, expires }
+                bs721_base::msg::ExecuteMsg::ApproveAll { operator, expires }
             }
             ExecuteMsg::Revoke { spender, token_id } => {
-                cw721_base::msg::ExecuteMsg::Revoke { spender, token_id }
+                bs721_base::msg::ExecuteMsg::Revoke { spender, token_id }
             }
             ExecuteMsg::RevokeAll { operator } => {
-                cw721_base::msg::ExecuteMsg::RevokeAll { operator }
+                bs721_base::msg::ExecuteMsg::RevokeAll { operator }
             }
-            ExecuteMsg::Burn { token_id } => cw721_base::msg::ExecuteMsg::Burn { token_id },
+            ExecuteMsg::Burn { token_id } => bs721_base::msg::ExecuteMsg::Burn { token_id },
             ExecuteMsg::Mint {
                 token_id,
                 owner,
                 token_uri,
                 extension,
-                // seller_fee_bps,
-                // payment_addr,
-            } => cw721_base::msg::ExecuteMsg::Mint {
+                seller_fee_bps,
+                payment_addr,
+            } => bs721_base::msg::ExecuteMsg::Mint {
                 token_id,
                 owner,
                 token_uri,
                 extension,
-                // seller_fee_bps,
-                // payment_addr,
+                seller_fee_bps,
+                payment_addr,
             },
             _ => unreachable!("Invalid ExecuteMsg"),
         }
@@ -237,13 +237,13 @@ pub enum Bs721AccountsQueryMsg {
     // CollectionInfo {},
 }
 
-impl From<Bs721AccountsQueryMsg> for cw721_base::msg::QueryMsg<Bs721AccountsQueryMsg> {
-    fn from(msg: Bs721AccountsQueryMsg) -> cw721_base::msg::QueryMsg<Bs721AccountsQueryMsg> {
+impl From<Bs721AccountsQueryMsg> for bs721_base::msg::QueryMsg<Bs721AccountsQueryMsg> {
+    fn from(msg: Bs721AccountsQueryMsg) -> bs721_base::msg::QueryMsg<Bs721AccountsQueryMsg> {
         match msg {
             Bs721AccountsQueryMsg::OwnerOf {
                 token_id,
                 include_expired,
-            } => Cw721QueryMsg::OwnerOf {
+            } => Bs721QueryMsg::OwnerOf {
                 token_id,
                 include_expired,
             },
@@ -251,7 +251,7 @@ impl From<Bs721AccountsQueryMsg> for cw721_base::msg::QueryMsg<Bs721AccountsQuer
                 token_id,
                 spender,
                 include_expired,
-            } => Cw721QueryMsg::Approval {
+            } => Bs721QueryMsg::Approval {
                 token_id,
                 spender,
                 include_expired,
@@ -259,7 +259,7 @@ impl From<Bs721AccountsQueryMsg> for cw721_base::msg::QueryMsg<Bs721AccountsQuer
             Bs721AccountsQueryMsg::Approvals {
                 token_id,
                 include_expired,
-            } => Cw721QueryMsg::Approvals {
+            } => Bs721QueryMsg::Approvals {
                 token_id,
                 include_expired,
             },
@@ -268,19 +268,19 @@ impl From<Bs721AccountsQueryMsg> for cw721_base::msg::QueryMsg<Bs721AccountsQuer
                 include_expired,
                 start_after,
                 limit,
-            } => Cw721QueryMsg::AllOperators {
+            } => Bs721QueryMsg::AllOperators {
                 owner,
                 include_expired,
                 start_after,
                 limit,
             },
-            Bs721AccountsQueryMsg::NumTokens {} => Cw721QueryMsg::NumTokens {},
-            Bs721AccountsQueryMsg::ContractInfo {} => Cw721QueryMsg::ContractInfo {},
-            Bs721AccountsQueryMsg::NftInfo { token_id } => Cw721QueryMsg::NftInfo { token_id },
+            Bs721AccountsQueryMsg::NumTokens {} => Bs721QueryMsg::NumTokens {},
+            Bs721AccountsQueryMsg::ContractInfo {} => Bs721QueryMsg::ContractInfo {},
+            Bs721AccountsQueryMsg::NftInfo { token_id } => Bs721QueryMsg::NftInfo { token_id },
             Bs721AccountsQueryMsg::AllNftInfo {
                 token_id,
                 include_expired,
-            } => Cw721QueryMsg::AllNftInfo {
+            } => Bs721QueryMsg::AllNftInfo {
                 token_id,
                 include_expired,
             },
@@ -288,17 +288,17 @@ impl From<Bs721AccountsQueryMsg> for cw721_base::msg::QueryMsg<Bs721AccountsQuer
                 owner,
                 start_after,
                 limit,
-            } => Cw721QueryMsg::Tokens {
+            } => Bs721QueryMsg::Tokens {
                 owner,
                 start_after,
                 limit,
             },
             Bs721AccountsQueryMsg::AllTokens { start_after, limit } => {
-                Cw721QueryMsg::AllTokens { start_after, limit }
+                Bs721QueryMsg::AllTokens { start_after, limit }
             }
-            // Bs721AccountsQueryMsg::Minter {} => Cw721QueryMsg:: {},
+            // Bs721AccountsQueryMsg::Minter {} => Bs721QueryMsg:: {},
             // QueryMsg::CollectionInfo {} => cw721_base::QueryMsg::CollectionInfo {},
-            _ => unreachable!("cannot convert {:?} to Cw721QueryMsg", msg),
+            _ => unreachable!("cannot convert {:?} to Bs721QueryMsg", msg),
         }
     }
 }

@@ -18,7 +18,7 @@ pub enum ContractError {
     Admin(#[from] AdminError),
 
     #[error("{0}")]
-    Base(#[from] cw721_base::ContractError),
+    Base(#[from] bs721_base::ContractError),
 
     #[error("AccountNotFound")]
     AccountNotFound {},

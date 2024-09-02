@@ -1296,9 +1296,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "bs721"
+version = "0.2.0"
+source = "git+https://github.com/permissionlessweb/bs-nfts?rev=b43c7f91adf74e458f120d91db2ddab24c441d98#b43c7f91adf74e458f120d91db2ddab24c441d98"
+dependencies = [
+ "cosmwasm-schema 1.5.7",
+ "cosmwasm-std 1.5.7",
+ "cw-utils 0.16.0",
+ "cw721-base 0.18.0",
+ "schemars",
+ "serde",
+]
+
+[[package]]
 name = "bs721-account"
 version = "0.1.0"
 dependencies = [
+ "bs721",
+ "bs721-base",
  "btsg-account",
  "cosmwasm-schema 1.5.7",
  "cosmwasm-std 1.5.7",
@@ -1309,8 +1324,6 @@ dependencies = [
  "cw-storage-plus 1.2.0",
  "cw-utils 1.0.3",
  "cw2 1.1.2",
- "cw721 0.18.0",
- "cw721-base 0.18.0",
  "schemars",
  "serde",
  "subtle-encoding",
@@ -1321,7 +1334,9 @@ dependencies = [
 name = "bs721-account-minter"
 version = "0.1.0"
 dependencies = [
+ "bs721",
  "bs721-account",
+ "bs721-base",
  "btsg-account",
  "cosmwasm-schema 1.5.7",
  "cosmwasm-std 1.5.7",
@@ -1332,7 +1347,25 @@ dependencies = [
  "cw-storage-plus 1.2.0",
  "cw-utils 1.0.3",
  "cw2 1.1.2",
- "cw721-base 0.18.0",
+ "schemars",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
+name = "bs721-base"
+version = "0.2.0"
+source = "git+https://github.com/permissionlessweb/bs-nfts?rev=b43c7f91adf74e458f120d91db2ddab24c441d98#b43c7f91adf74e458f120d91db2ddab24c441d98"
+dependencies = [
+ "bs721",
+ "cosmwasm-schema 1.5.7",
+ "cosmwasm-std 1.5.7",
+ "cw-orch 0.24.1",
+ "cw-ownable 0.5.1",
+ "cw-storage-plus 1.2.0",
+ "cw-utils 0.16.0",
+ "cw2 1.1.2",
+ "cw721 0.18.0",
  "schemars",
  "serde",
  "thiserror",

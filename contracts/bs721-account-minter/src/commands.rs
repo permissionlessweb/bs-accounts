@@ -53,8 +53,8 @@ pub fn execute_mint_and_list(
         owner: sender.to_string(),
         token_uri: None,
         extension: Metadata::default(),
-        // seller_fee_bps: None,
-        // payment_addr: None,
+        seller_fee_bps: None,
+        payment_addr: None,
     };
     let mint_msg_exec = WasmMsg::Execute {
         contract_addr: collection.to_string(),

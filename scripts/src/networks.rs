@@ -23,9 +23,9 @@ pub fn bitsong_parse_networks(net_id: &str) -> Result<ChainInfo, String> {
 
 /// Bitsong: <https://github.com/cosmos/chain-registry/blob/master/bitsong/chain.json>
 pub const BITSONG_NETWORK: NetworkInfo = NetworkInfo {
-    chain_name: "Terp",
-    pub_address_prefix: "terp",
-    coin_type: 114u32,
+    chain_name: "Bitsong",
+    pub_address_prefix: "bitsong",
+    coin_type: 639u32,
 };
 
 pub const BITSONG_MAINNET: ChainInfo = ChainInfo {

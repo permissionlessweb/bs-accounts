@@ -18,7 +18,7 @@ const CONTRACT_NAME: &str = "crates.io:bs721-account";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub type Bs721AccountContract<'a> =
-    cw721_base::Cw721Contract<'a, Metadata, Empty, Empty, Bs721AccountsQueryMsg>;
+    bs721_base::Bs721Contract<'a, Metadata, Empty, Empty, Bs721AccountsQueryMsg>;
 pub type ExecuteMsg = crate::msg::ExecuteMsg<Metadata>;
 pub type QueryMsg = Bs721AccountsQueryMsg;
 
@@ -103,19 +103,19 @@ pub mod entry {
                 token_id,
                 owner,
                 token_uri,
-                // seller_fee_bps,
-                // payment_addr,
+                seller_fee_bps,
+                payment_addr,
                 extension,
             } => execute_mint(
                 deps,
                 info,
-                cw721_base::ExecuteMsg::Mint {
+                bs721_base::ExecuteMsg::Mint {
                     token_id,
                     owner,
                     token_uri,
                     extension,
-                    // seller_fee_bps,
-                    // payment_addr,
+                    seller_fee_bps,
+                    payment_addr,
                 },
             ),
             ExecuteMsg::Burn { token_id } => execute_burn(deps, env, info, token_id),

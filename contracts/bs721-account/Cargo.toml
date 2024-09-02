@@ -32,12 +32,13 @@ optimize = """docker run --rm -v "$(pwd)":/code \
 """
 
 [dependencies]
+bs721.workspace = true 
+bs721-base   = { workspace = true, features = ["library"]}
 btsg-account.workspace = true 
 cosmwasm-schema.workspace= true 
 cosmwasm-std.workspace = true 
 cw2.workspace = true 
-cw721.workspace = true 
-cw721-base =  { workspace = true, features = ["library"] }
+
 cw-controllers.workspace = true 
 cw-orch.workspace = true 
 cw-ownable.workspace = true 

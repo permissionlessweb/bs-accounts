@@ -27,6 +27,8 @@ authors = [
 edition = "2021"
 
 [workspace.dependencies]
+bs721                        = { git = "https://github.com/permissionlessweb/bs-nfts", rev = "b43c7f91adf74e458f120d91db2ddab24c441d98" }
+bs721-base                   = { git = "https://github.com/permissionlessweb/bs-nfts", rev = "b43c7f91adf74e458f120d91db2ddab24c441d98"}
 btsg-account = { path = "packages/btsg-account" }
 cosmwasm-schema = "1.5.7"
 cosmwasm-std = { version = "1.5.7", features = [

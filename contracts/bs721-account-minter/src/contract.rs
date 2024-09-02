@@ -52,11 +52,11 @@ pub fn instantiate(
 
     let account_collection_init_msg = bs721_account::msg::InstantiateMsg {
         verifier: msg.verifier,
-        base_init_msg: cw721_base::msg::InstantiateMsg {
+        base_init_msg: bs721_base::msg::InstantiateMsg {
             name: "Bitsong Account Tokens".to_string(),
             symbol: "ACCOUNTS".to_string(),
             minter: env.contract.address.to_string(),
-            // uri: None,
+            uri: None,
         },
     };
 
