@@ -11,7 +11,9 @@ use cw_utils::{maybe_addr, parse_reply_instantiate_data};
 use crate::commands::*;
 use crate::error::ContractError;
 use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg, SudoMsg};
-use crate::state::{Config, SudoParams, ACCOUNT_COLLECTION, ADMIN, CONFIG, PAUSED, SUDO_PARAMS};
+use crate::state::{
+    Config, SudoParams, ACCOUNT_COLLECTION, ACCOUNT_MARKETPLACE, ADMIN, CONFIG, PAUSED, SUDO_PARAMS,
+};
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:bs721-account-minter";
@@ -33,6 +35,9 @@ pub fn instantiate(
     )?;
 
     PAUSED.save(deps.storage, &false)?;
+
+    let marketplace = deps.api.addr_validate(&msg.marketplace_addr)?;
+    ACCOUNT_MARKETPLACE.save(deps.storage, &marketplace)?;
 
     SUDO_PARAMS.save(
         deps.storage,
@@ -159,9 +164,10 @@ pub fn sudo(deps: DepsMut, _env: Env, msg: SudoMsg) -> Result<Response, Contract
         ),
         SudoMsg::UpdateAccountCollection { collection } => {
             sudo_update_account_collection(deps, api.addr_validate(&collection)?)
-        } // SudoMsg::UpdateAccountMarketplace { marketplace } => {
-          //     sudo_update_account_marketplace(deps, api.addr_validate(&marketplace)?)
-          // }
+        }
+        SudoMsg::UpdateAccountMarketplace { marketplace } => {
+            sudo_update_account_marketplace(deps, api.addr_validate(&marketplace)?)
+        }
     }
 }
 

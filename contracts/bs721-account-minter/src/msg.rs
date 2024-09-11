@@ -11,6 +11,8 @@ pub struct InstantiateMsg {
     pub verifier: Option<String>,
     /// Code-id for BS721-Account. On Instantiate, minter will instantiate a new account collection.
     pub collection_code_id: u64,
+    /// bs721-account marketplace address
+    pub marketplace_addr: String,
     /// Minimum length an account id can be
     pub min_account_length: u32,
     /// Maximum length an account id can be
@@ -43,9 +45,9 @@ pub enum SudoMsg {
     UpdateAccountCollection {
         collection: String,
     },
-    // UpdateAccountMarketplace {
-    //     marketplace: String,
-    // },
+    UpdateAccountMarketplace {
+        marketplace: String,
+    },
 }
 
 #[cw_serde]

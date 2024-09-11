@@ -9,6 +9,7 @@ use cw_utils::must_pay;
 
 use crate::state::Config;
 use crate::state::SudoParams;
+use crate::state::ACCOUNT_MARKETPLACE;
 use crate::{
     state::{ACCOUNT_COLLECTION, ADMIN, CONFIG, PAUSED, SUDO_PARAMS},
     ContractError,
@@ -45,6 +46,7 @@ pub fn execute_mint_and_list(
         charge_fees(&mut res, price.clone().unwrap().amount);
     }
 
+    let marketplace = ACCOUNT_MARKETPLACE.load(deps.storage)?;
     let collection = ACCOUNT_COLLECTION.load(deps.storage)?;
 
     // mint token
@@ -62,6 +64,16 @@ pub fn execute_mint_and_list(
         funds: vec![],
     };
 
+    let ask_msg = btsg_account::marketplace::msgs::ExecuteMsg::SetAsk {
+        token_id: account.to_string(),
+        seller: sender.to_string(),
+    };
+    let list_msg_exec = WasmMsg::Execute {
+        contract_addr: marketplace.to_string(),
+        msg: to_json_binary(&ask_msg)?,
+        funds: vec![],
+    };
+
     let event = Event::new("mint-and-list")
         .add_attribute("account", account)
         .add_attribute("owner", sender)
@@ -72,7 +84,10 @@ pub fn execute_mint_and_list(
                 .amount
                 .to_string(),
         );
-    Ok(res.add_event(event).add_message(mint_msg_exec))
+    Ok(res
+        .add_event(event)
+        .add_message(mint_msg_exec)
+        .add_message(list_msg_exec))
 }
 
 /// Pause or unpause minting
@@ -221,12 +236,12 @@ pub fn sudo_update_account_collection(
     Ok(Response::new().add_event(event))
 }
 
-// pub fn sudo_update_account_marketplace(
-//     deps: DepsMut,
-//     marketplace: Addr,
-// ) -> Result<Response, ContractError> {
-//     ACCOUNT_MARKETPLACE.save(deps.storage, &marketplace)?;
+pub fn sudo_update_account_marketplace(
+    deps: DepsMut,
+    marketplace: Addr,
+) -> Result<Response, ContractError> {
+    ACCOUNT_MARKETPLACE.save(deps.storage, &marketplace)?;
 
-//     let event = Event::new("update-account-marketplace").add_attribute("marketplace", marketplace);
-//     Ok(Response::new().add_event(event))
-// }
+    let event = Event::new("update-account-marketplace").add_attribute("marketplace", marketplace);
+    Ok(Response::new().add_event(event))
+}

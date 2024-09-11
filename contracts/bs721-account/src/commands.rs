@@ -18,6 +18,7 @@ use subtle_encoding::bech32;
 pub mod manifest {
     use bs721_base::state::TokenInfo;
     use btsg_account::Metadata;
+    use cosmwasm_std::{to_json_binary, WasmMsg};
 
     use super::*;
 
@@ -163,7 +164,7 @@ pub mod manifest {
 
     pub fn execute_transfer_nft(
         deps: DepsMut,
-        _env: Env,
+        env: Env,
         info: MessageInfo,
         recipient: String,
         token_id: String,
@@ -171,35 +172,33 @@ pub mod manifest {
         nonpayable(&info)?;
         let recipient = deps.api.addr_validate(&recipient)?;
 
-        // let update_ask_msg = _transfer_nft(deps, env, &info, &recipient, &token_id)?;
+        let update_ask_msg = _transfer_nft(deps, env, &info, &recipient, &token_id)?;
 
         let event = Event::new("transfer")
             .add_attribute("sender", info.sender)
             .add_attribute("recipient", recipient)
             .add_attribute("token_id", token_id);
 
-        Ok(Response::new()
-            // .add_message(update_ask_msg)
-            .add_event(event))
+        Ok(Response::new().add_message(update_ask_msg).add_event(event))
     }
 
     // Update the ask on the marketplace
-    // fn update_ask_on_marketplace(
-    //     deps: Deps,
-    //     token_id: &str,
-    //     recipient: Addr,
-    // ) -> Result<WasmMsg, ContractError> {
-    //     let msg = bs721_account_marketplace::msg::ExecuteMsg::UpdateAsk {
-    //         token_id: token_id.to_string(),
-    //         seller: recipient.to_string(),
-    //     };
-    //     let update_ask_msg = WasmMsg::Execute {
-    //         contract_addr: ACCOUNT_MARKETPLACE.load(deps.storage)?.to_string(),
-    //         funds: vec![],
-    //         msg: to_json_binary(&msg)?,
-    //     };
-    //     Ok(update_ask_msg)
-    // }
+    fn update_ask_on_marketplace(
+        deps: Deps,
+        token_id: &str,
+        recipient: Addr,
+    ) -> Result<WasmMsg, ContractError> {
+        let msg = btsg_account::marketplace::msgs::ExecuteMsg::UpdateAsk {
+            token_id: token_id.to_string(),
+            seller: recipient.to_string(),
+        };
+        let update_ask_msg = WasmMsg::Execute {
+            contract_addr: ACCOUNT_MARKETPLACE.load(deps.storage)?.to_string(),
+            funds: vec![],
+            msg: to_json_binary(&msg)?,
+        };
+        Ok(update_ask_msg)
+    }
 
     fn reset_token_metadata_and_reverse_map(deps: &mut DepsMut, token_id: &str) -> StdResult<()> {
         let mut token = Bs721AccountContract::default()
@@ -241,8 +240,8 @@ pub mod manifest {
         info: &MessageInfo,
         recipient: &Addr,
         token_id: &str,
-    ) -> Result<Response, ContractError> {
-        // let update_ask_msg = update_ask_on_marketplace(deps.as_ref(), token_id, recipient.clone())?;
+    ) -> Result<WasmMsg, ContractError> {
+        let update_ask_msg = update_ask_on_marketplace(deps.as_ref(), token_id, recipient.clone())?;
 
         reset_token_metadata_and_reverse_map(&mut deps, token_id)?;
 
@@ -251,9 +250,9 @@ pub mod manifest {
             token_id: token_id.to_string(),
         };
 
-        let res = Bs721AccountContract::default().execute(deps, env, info.clone(), msg)?;
+        Bs721AccountContract::default().execute(deps, env, info.clone(), msg)?;
 
-        Ok(res)
+        Ok(update_ask_msg)
     }
 
     pub fn execute_send_nft(
@@ -265,8 +264,8 @@ pub mod manifest {
         msg: Binary,
     ) -> Result<Response, ContractError> {
         let contract_addr = deps.api.addr_validate(&contract)?;
-        // let update_ask_msg =
-        //     update_ask_on_marketplace(deps.as_ref(), &token_id, contract_addr.clone())?;
+        let update_ask_msg =
+            update_ask_on_marketplace(deps.as_ref(), &token_id, contract_addr.clone())?;
 
         reset_token_metadata_and_reverse_map(&mut deps, &token_id)?;
 
@@ -283,9 +282,7 @@ pub mod manifest {
             .add_attribute("contract", contract_addr.to_string())
             .add_attribute("token_id", token_id);
 
-        Ok(Response::new()
-            // .add_message(update_ask_msg)
-            .add_event(event))
+        Ok(Response::new().add_message(update_ask_msg).add_event(event))
     }
 
     pub fn update_image_nft(
@@ -554,9 +551,9 @@ pub mod queries {
 
     pub fn query_account(deps: Deps, address: String) -> StdResult<String> {
         if !address.starts_with("bitsong") {
+            return Err(StdError::generic_err("invalid address"));
             // todo: update to transcode if prefix is not one of the prefix we expect to have the same coin type as Bitsong (639)
             // address = transcode(&address)?;
-            return Err(StdError::generic_err("invalid address"));
         }
 
         REVERSE_MAP
