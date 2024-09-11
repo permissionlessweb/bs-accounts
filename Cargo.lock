@@ -1331,6 +1331,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "bs721-account-marketplace"
+version = "0.1.0"
+dependencies = [
+ "bs721",
+ "bs721-base",
+ "btsg-account",
+ "cosmwasm-schema 1.5.7",
+ "cosmwasm-std 1.5.7",
+ "cw-controllers 1.1.2",
+ "cw-multi-test",
+ "cw-orch 0.25.0",
+ "cw-ownable 0.5.1",
+ "cw-storage-macro",
+ "cw-storage-plus 1.2.0",
+ "cw-utils 1.0.3",
+ "cw2 1.1.2",
+ "schemars",
+ "semver",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
 name = "bs721-account-minter"
 version = "0.1.0"
 dependencies = [
@@ -2616,6 +2639,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "45fe7f7983e2e37363f440e68ae6e686d1e3f5c611ab5bb692410d88baffd3f6"
 dependencies = [
  "serde",
+]
+
+[[package]]
+name = "cw-storage-macro"
+version = "1.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "853c8ebf6d20542ea0dc57519ee458e7ee0caa3a1848beced2c603153d3f4dbe"
+dependencies = [
+ "syn 1.0.109",
 ]
 
 [[package]]
@@ -5129,7 +5161,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "81bddcdb20abf9501610992b6759a4c888aef7d1a7247ef75e2404275ac24af1"
 dependencies = [
  "anyhow",
- "itertools 0.10.5",
+ "itertools 0.12.1",
  "proc-macro2",
  "quote",
  "syn 2.0.77",
@@ -7502,7 +7534,7 @@ version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf221c93e13a30d793f7645a0e7762c55d169dbb0a49671918a2319d289b10bb"
 dependencies = [
- "windows-sys 0.48.0",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
