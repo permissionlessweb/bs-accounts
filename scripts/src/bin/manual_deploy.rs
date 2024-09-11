@@ -27,7 +27,7 @@ fn main() {
     // logs any errors
     env_logger::init();
 
-    println!("Deploying Headstash Framework...");
+    println!("Deploying Bitsong Accounts Framework...");
     let bitsong_chain = match args.network.as_str() {
         "main" => BITSONG_MAINNET.to_owned(),
         "testnet" => BITSONG_TESTNET.to_owned(),
@@ -58,9 +58,8 @@ fn manual_deploy(network: ChainInfoOwned) -> anyhow::Result<()> {
         .handle(rt.handle())
         .mnemonic(MNEMONIC)
         .build()?;
-
     let _suite = BtsgAccountSuite::deploy_on(chain.clone(), chain.sender().address())?;
-    // query account for connected wallet
+    // query account for connected wallet´
 
     Ok(())
 }

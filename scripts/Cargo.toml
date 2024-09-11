@@ -46,7 +46,4 @@ cw-orch-interchain-core = "0.5.0"
 # Cargo CLI commands
 [[bin]]
 name = "deploy"
-path = "src/bin/test.rs"
-[[bin]]
-name = "deploy-as-gov"
-path = "src/bin/deploy_as_gov.rs"
+path = "src/bin/manual_deploy.rs"

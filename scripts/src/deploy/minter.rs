@@ -3,6 +3,7 @@ use cw_orch::{interface, prelude::*};
 use bs721_account_minter::contract::{execute, instantiate, query, reply, sudo};
 use bs721_account_minter::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
+/// Uploadable trait for bs721_account_minter & use with cw-orchestrator library
 #[interface(InstantiateMsg, ExecuteMsg, QueryMsg, Empty)]
 pub struct BitsongAccountMinter;
 

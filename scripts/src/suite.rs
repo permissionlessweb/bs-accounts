@@ -66,6 +66,7 @@ impl<Chain: CwEnv> cw_orch::contract::Deploy<Chain> for BtsgAccountSuite<Chain> 
                     min_account_length: 3u32,
                     max_account_length: 128u32,
                     base_price: 10u128.into(),
+                    marketplace_addr: "todo!()".into(),
                 },
                 Some(&Addr::unchecked(data)),
                 None,

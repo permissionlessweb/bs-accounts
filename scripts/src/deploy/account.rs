@@ -4,6 +4,7 @@ use bs721_account::entry::{execute, instantiate, query, sudo};
 use bs721_account::msg::{Bs721AccountsQueryMsg as QueryMsg, ExecuteMsg, InstantiateMsg};
 use btsg_account::Metadata;
 
+/// Uploadable trait for bs721_account & use with cw-orchestrator library
 #[interface(InstantiateMsg, ExecuteMsg::<Metadata>, QueryMsg, Empty)]
 pub struct BitsongAccountCollection;
 
