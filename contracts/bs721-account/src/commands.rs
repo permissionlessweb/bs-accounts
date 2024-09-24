@@ -16,6 +16,7 @@ use btsg_account::{TextRecord, MAX_TEXT_LENGTH, NFT};
 use subtle_encoding::bech32;
 
 pub mod manifest {
+    use bs721::Expiration;
     use bs721_base::state::TokenInfo;
     use btsg_account::Metadata;
     use cosmwasm_std::{to_json_binary, WasmMsg};
@@ -172,7 +173,10 @@ pub mod manifest {
         nonpayable(&info)?;
         let recipient = deps.api.addr_validate(&recipient)?;
 
-        let update_ask_msg = _transfer_nft(deps, env, &info, &recipient, &token_id)?;
+        let names_marketplace = ACCOUNT_MARKETPLACE.load(deps.storage)?;
+
+        let update_ask_msg =
+            _transfer_nft(deps, env, &info, &recipient, &token_id, &names_marketplace)?;
 
         let event = Event::new("transfer")
             .add_attribute("sender", info.sender)
@@ -240,6 +244,7 @@ pub mod manifest {
         info: &MessageInfo,
         recipient: &Addr,
         token_id: &str,
+        names_marketplace: &Addr,
     ) -> Result<WasmMsg, ContractError> {
         let update_ask_msg = update_ask_on_marketplace(deps.as_ref(), token_id, recipient.clone())?;
 
@@ -250,7 +255,16 @@ pub mod manifest {
             token_id: token_id.to_string(),
         };
 
-        Bs721AccountContract::default().execute(deps, env, info.clone(), msg)?;
+        let bs721 = Bs721AccountContract::default();
+
+        // Force account marketplace address as operator
+        bs721.operators.save(
+            deps.storage,
+            (&info.sender, names_marketplace),
+            &Expiration::Never {},
+        )?;
+
+        bs721.execute(deps, env, info.clone(), msg)?;
 
         Ok(update_ask_msg)
     }

@@ -1,12 +1,14 @@
 use btsg_account::Metadata;
 
+use cosmwasm_std::Uint128;
 use cw_orch::prelude::*;
 
-use crate::deploy::{account::*, minter::BitsongAccountMinter};
-
+use crate::deploy::{account::*, market::BitsongAccountMarket, minter::BitsongAccountMinter};
+use bs721_account_marketplace::msgs::ExecuteMsgFns as _;
 pub struct BtsgAccountSuite<Chain> {
     pub account: BitsongAccountCollection<Chain, Metadata>,
     pub minter: BitsongAccountMinter<Chain>,
+    pub market: BitsongAccountMarket<Chain>,
 }
 
 impl<Chain: CwEnv> BtsgAccountSuite<Chain> {
@@ -14,15 +16,18 @@ impl<Chain: CwEnv> BtsgAccountSuite<Chain> {
         BtsgAccountSuite::<Chain> {
             account: BitsongAccountCollection::new("bs721_account", chain.clone()),
             minter: BitsongAccountMinter::new("bs721_account_minter", chain.clone()),
+            market: BitsongAccountMarket::new("bs721_account_market", chain.clone()),
         }
     }
 
     pub fn upload(&self) -> Result<(), CwOrchError> {
         let acc = self.account.upload()?.uploaded_code_id()?;
         let minter = self.minter.upload()?.uploaded_code_id()?;
+        let market = self.market.upload()?.uploaded_code_id()?;
 
         println!("account collection code-id: {}", acc);
         println!("account minter code-id: {}", minter);
+        println!("account minter code-id: {}", market);
         Ok(())
     }
 }
@@ -68,7 +73,7 @@ impl<Chain: CwEnv> cw_orch::contract::Deploy<Chain> for BtsgAccountSuite<Chain> 
                     base_price: 10u128.into(),
                     marketplace_addr: "todo!()".into(),
                 },
-                Some(&Addr::unchecked(data)),
+                Some(&Addr::unchecked(data.clone())),
                 None,
             )?
             .event_attr_value("wasm", "bs721_account_address")?;
@@ -83,10 +88,29 @@ impl<Chain: CwEnv> cw_orch::contract::Deploy<Chain> for BtsgAccountSuite<Chain> 
             .account
             .set_default_address(&Addr::unchecked(bs721_account));
 
+        suite.market.instantiate(
+            &bs721_account_marketplace::msgs::InstantiateMsg {
+                trading_fee_bps: 200,
+                min_price: Uint128::from(5000000u64),
+                ask_interval: 60,
+                valid_bid_query_limit: 30,
+            },
+            Some(&Addr::unchecked(data)),
+            None,
+        )?;
+
         // Provide marketplace with collection and minter contracts.
         // suite
         //     .market
         //     .setup(suite.account.address()?, suite.minter.address()?)?;
+
+        suite.market.execute(
+            &bs721_account_marketplace::msgs::ExecuteMsg::Setup {
+                minter: suite.minter.address()?.into(),
+                collection: suite.account.address()?.into(),
+            },
+            None,
+        )?;
         Ok(suite)
     }
 }

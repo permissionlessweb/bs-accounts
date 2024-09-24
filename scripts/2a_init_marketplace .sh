@@ -13,11 +13,7 @@ MSG=$(cat <<EOF
   "trading_fee_bps": 200,
   "min_price": "5000000",
   "ask_interval": 60,
-  "max_renewals_per_block": 1,
   "valid_bid_query_limit": 30,
-  "renew_window": 30,
-  "renewal_bid_percentage": "1000000000000000000",
-  "operator": "terp1n5x097nd7v8dv8ng4x4xeux5xdv6jas6ekwwkn"
 }
 EOF
 )

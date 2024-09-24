@@ -18,17 +18,8 @@ pub struct SudoParams {
     pub min_price: Uint128,
     /// Interval to rate limit setting asks (in seconds)
     pub ask_interval: u64,
-    /// The maximum number of renewals that can be processed in each block
-    pub max_renewals_per_block: u32,
     /// The number of bids to query to when searching for the highest bid
     pub valid_bid_query_limit: u32,
-    /// The number of seconds before the current block time that a
-    /// bid must have been created in order to be considered valid
-    pub renew_window: u64,
-    /// The percentage of the winning bid that must be paid to renew a name
-    pub renewal_bid_percentage: Decimal,
-    /// The address with permission to invoke process_renewals
-    pub operator: Addr,
 }
 
 pub struct ParamInfo {

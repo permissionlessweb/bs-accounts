@@ -8,9 +8,11 @@ version.workspace = true
 [dependencies]
 cw721  = "0.18.0"
 cw721-base =  { version = "0.18.0" }
+bs721-base                   = { git = "https://github.com/permissionlessweb/bs-nfts", rev = "b43c7f91adf74e458f120d91db2ddab24c441d98"}
 btsg-account               = { path = "../packages/btsg-account", version = "0.1.0" }
 bs721-account              = { path = "../contracts/bs721-account", version = "0.1.0" }
 bs721-account-minter       = { path = "../contracts/bs721-account-minter", version = "0.1.0" }
+bs721-account-marketplace       = { path = "../contracts/bs721-account-marketplace", version = "0.1.0" }
 cosmwasm-std = { version = "1.5.7", features = [
   "cosmwasm_1_4",
   # Enable this if you only deploy to chains that have CosmWasm 2.0 or higher

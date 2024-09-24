@@ -106,8 +106,5 @@ pub mod marketplace {
         }
     }
 
-    pub mod state {
-
-        use super::*;
-    }
+    pub mod state {}
 }

@@ -6,3 +6,6 @@ pub mod error;
 pub mod hooks;
 
 pub use error::ContractError;
+
+#[cfg(test)]
+pub mod unit_tests;

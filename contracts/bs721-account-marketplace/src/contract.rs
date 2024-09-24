@@ -33,11 +33,7 @@ pub fn instantiate(
         trading_fee_percent: Decimal::percent(msg.trading_fee_bps) / Uint128::from(100u128),
         min_price: msg.min_price,
         ask_interval: msg.ask_interval,
-        max_renewals_per_block: msg.max_renewals_per_block,
         valid_bid_query_limit: msg.valid_bid_query_limit,
-        renew_window: msg.renew_window,
-        renewal_bid_percentage: msg.renewal_bid_percentage,
-        operator: deps.api.addr_validate(&msg.operator)?,
     };
 
     SUDO_PARAMS.save(deps.storage, &params)?;

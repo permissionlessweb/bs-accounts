@@ -13,7 +13,7 @@ use cw_ownable::Ownership;
 #[cw_serde]
 pub struct InstantiateMsg {
     pub verifier: Option<String>,
-    // pub marketplace: Addr,
+    pub marketplace: Addr,
     pub base_init_msg: Bs721InstantiateMsg,
 }
 

@@ -1,7 +1,10 @@
 use crate::state::*;
 use cosmwasm_schema::QueryResponses;
-use cosmwasm_std::{to_json_binary, Addr, Binary, Coin, Decimal, StdResult, Uint128};
+use cosmwasm_std::{to_json_binary, Addr, Binary, Coin, StdResult, Uint128};
 use cw_controllers::HooksResponse;
+
+pub use btsg_account::marketplace::msgs::ExecuteMsg;
+pub use btsg_account::marketplace::msgs::ExecuteMsgFns;
 
 #[cosmwasm_schema::cw_serde]
 pub struct InstantiateMsg {
@@ -12,21 +15,9 @@ pub struct InstantiateMsg {
     pub min_price: Uint128,
     /// Interval to rate limit setting asks (in seconds)
     pub ask_interval: u64,
-    /// The maximum number of renewals that can be processed in each block
-    pub max_renewals_per_block: u32,
     /// The number of bids to query to when searching for the highest bid
     pub valid_bid_query_limit: u32,
-    /// The number of seconds before the current block time that a
-    /// bid must have been created in order to be considered valid.
-    /// Also, the number of seconds before an ask expires where it can be renewed.
-    pub renew_window: u64,
-    /// The percentage of the winning bid that must be paid to renew a name
-    pub renewal_bid_percentage: Decimal,
-    /// The address with permission to invoke process_renewals
-    pub operator: String,
 }
-
-
 
 #[cosmwasm_schema::cw_serde]
 pub enum SudoMsg {

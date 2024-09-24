@@ -63,6 +63,7 @@ pub fn instantiate(
             minter: env.contract.address.to_string(),
             uri: None,
         },
+        marketplace,
     };
 
     let wasm_msg = WasmMsg::Instantiate {
@@ -172,4 +173,84 @@ pub fn sudo(deps: DepsMut, _env: Env, msg: SudoMsg) -> Result<Response, Contract
 }
 
 #[cfg(test)]
-mod tests {}
+mod tests {
+    use cosmwasm_std::{coin, Addr, MessageInfo};
+
+    use crate::commands::{validate_account, validate_payment};
+
+    #[test]
+    fn check_validate_account() {
+        let min = 3;
+        let max = 63;
+        assert!(validate_account("bobo", min, max).is_ok());
+        assert!(validate_account("-bobo", min, max).is_err());
+        assert!(validate_account("bobo-", min, max).is_err());
+        assert!(validate_account("bo-bo", min, max).is_ok());
+        assert!(validate_account("bo--bo", min, max).is_err());
+        assert!(validate_account("bob--o", min, max).is_ok());
+        assert!(validate_account("bo", min, max).is_err());
+        assert!(validate_account("b", min, max).is_err());
+        assert!(validate_account("bob", min, max).is_ok());
+        assert!(validate_account(
+            "bobobobobobobobobobobobobobobobobobobobobobobobobobobobobobobo",
+            min,
+            max
+        )
+        .is_ok());
+        assert!(validate_account(
+            "bobobobobobobobobobobobobobobobobobobobobobobobobobobobobobobob",
+            min,
+            max
+        )
+        .is_err());
+        assert!(validate_account("0123456789", min, max).is_ok());
+        assert!(validate_account("😬", min, max).is_err());
+        assert!(validate_account("BOBO", min, max).is_err());
+        assert!(validate_account("b-o----b", min, max).is_ok());
+        assert!(validate_account("bobo.stars", min, max).is_err());
+    }
+
+    #[test]
+    fn check_validate_payment() {
+        let base_price = 100_000_000;
+
+        let info = MessageInfo {
+            sender: Addr::unchecked("sender"),
+            funds: vec![coin(base_price, "ubtsg")],
+        };
+        assert_eq!(
+            validate_payment(5, &info, base_price)
+                .unwrap()
+                .unwrap()
+                .amount
+                .u128(),
+            base_price
+        );
+
+        let info = MessageInfo {
+            sender: Addr::unchecked("sender"),
+            funds: vec![coin(base_price * 10, "ubtsg")],
+        };
+        assert_eq!(
+            validate_payment(4, &info, base_price)
+                .unwrap()
+                .unwrap()
+                .amount
+                .u128(),
+            base_price * 10
+        );
+
+        let info = MessageInfo {
+            sender: Addr::unchecked("sender"),
+            funds: vec![coin(base_price * 100, "ubtsg")],
+        };
+        assert_eq!(
+            validate_payment(3, &info, base_price)
+                .unwrap()
+                .unwrap()
+                .amount
+                .u128(),
+            base_price * 100
+        );
+    }
+}

@@ -32,6 +32,9 @@ pub mod entry {
     use commands::manifest::*;
     use commands::queries::*;
     use msg::SudoMsg;
+    use state::SudoParams;
+    use state::ACCOUNT_MARKETPLACE;
+    use state::SUDO_PARAMS;
     use state::VERIFIER;
 
     #[cfg_attr(not(feature = "library"), entry_point)]
@@ -43,13 +46,22 @@ pub mod entry {
     ) -> StdResult<Response> {
         cw2::set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
+        SUDO_PARAMS.save(
+            deps.storage,
+            &SudoParams {
+                max_record_count: 10,
+            },
+        )?;
+        let api = deps.api;
+        VERIFIER.set(deps.branch(), maybe_addr(api, msg.verifier)?)?;
+        ACCOUNT_MARKETPLACE.save(deps.storage, &msg.marketplace)?;
+
         let res = Bs721AccountContract::default().instantiate(
             deps.branch(),
             env.clone(),
             info,
             msg.base_init_msg,
         )?;
-
         Ok(res
             .add_attribute("action", "instantiate")
             .add_attribute("bs721_account_address", env.contract.address.to_string()))
