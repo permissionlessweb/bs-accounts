@@ -1417,19 +1417,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "btsg-cw-orch"
-version = "0.1.0"
-dependencies = [
- "bs721-account",
- "bs721-account-marketplace",
- "bs721-account-minter",
- "btsg-account",
- "cosmwasm-std 1.5.7",
- "cw-orch 0.24.1",
- "serde",
-]
-
-[[package]]
 name = "bumpalo"
 version = "3.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
