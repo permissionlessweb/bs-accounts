@@ -450,7 +450,7 @@ mod query {
 
         mock.wait_seconds(1)?;
         suite.mint_and_list(mock.clone(), &account, &admin)?;
-        
+
         suite.bid_w_funds(mock.clone(), account, bidder1, BID_AMOUNT * 3)?;
         suite.bid_w_funds(mock.clone(), account, bidder2, BID_AMOUNT * 2)?;
         let res = suite.market.bids_for_seller(admin, None, Some(filter))?;

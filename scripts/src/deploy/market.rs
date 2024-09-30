@@ -16,9 +16,6 @@ impl<Chain> Uploadable for BitsongAccountMarket<Chain> {
     }
     /// Returns a CosmWasm contract wrapper
     fn wrapper() -> Box<dyn MockContract<Empty>> {
-        Box::new(
-            ContractWrapper::new_with_empty(execute, instantiate, query)
-                .with_sudo(sudo),
-        )
+        Box::new(ContractWrapper::new_with_empty(execute, instantiate, query).with_sudo(sudo))
     }
 }
