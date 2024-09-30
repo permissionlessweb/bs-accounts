@@ -3,7 +3,7 @@ name = "scripts"
 edition = "2021"
 license = "BSD-3-Clause"
 repository = "https://github.com/bitsongofficial/bs-accounts"
-version.workspace = true
+version = "0.1.0"
 
 [dependencies]
 cw721  = "0.18.0"
