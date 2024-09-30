@@ -32,6 +32,7 @@ cw-orch-interchain = { version = "0.3.0",  features = ["daemon"] }
 cw-orch-clone-testing = { version = "0.6.4" }
 cw-orch   = { version = "0.24.1", features = ["daemon"] }
 dirs = "5.0.1"
+cw-ownable  = "0.5.1"
 env_logger = "0.10.0"
 log = "0.4.22"
 polytone = { package = "abstract-polytone", version = "1.0.5" }

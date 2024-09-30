@@ -192,7 +192,7 @@ pub mod manifest {
         token_id: &str,
         recipient: Addr,
     ) -> Result<WasmMsg, ContractError> {
-        let msg = btsg_account::marketplace::msgs::ExecuteMsg::UpdateAsk {
+        let msg = bs721_account_marketplace::msgs::ExecuteMsg::UpdateAsk {
             token_id: token_id.to_string(),
             seller: recipient.to_string(),
         };

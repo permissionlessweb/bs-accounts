@@ -11,7 +11,7 @@ use crate::state::Config;
 use crate::state::SudoParams;
 use crate::state::ACCOUNT_MARKETPLACE;
 use crate::{
-    state::{ACCOUNT_COLLECTION, ADMIN, CONFIG, PAUSED, SUDO_PARAMS},
+    state::{ACCOUNT_COLLECTION, CONFIG, PAUSED, SUDO_PARAMS},
     ContractError,
 };
 
@@ -64,10 +64,11 @@ pub fn execute_mint_and_list(
         funds: vec![],
     };
 
-    let ask_msg = btsg_account::marketplace::msgs::ExecuteMsg::SetAsk {
+    let ask_msg = bs721_account_marketplace::msgs::ExecuteMsg::SetAsk {
         token_id: account.to_string(),
         seller: sender.to_string(),
     };
+
     let list_msg_exec = WasmMsg::Execute {
         contract_addr: marketplace.to_string(),
         msg: to_json_binary(&ask_msg)?,
@@ -96,7 +97,7 @@ pub fn execute_pause(
     info: MessageInfo,
     pause: bool,
 ) -> Result<Response, ContractError> {
-    ADMIN.assert_admin(deps.as_ref(), &info.sender)?;
+    cw_ownable::assert_owner(deps.storage, &info.sender)?;
 
     PAUSED.save(deps.storage, &pause)?;
 
@@ -110,7 +111,8 @@ pub fn execute_update_config(
     env: Env,
     config: Config,
 ) -> Result<Response, ContractError> {
-    ADMIN.assert_admin(deps.as_ref(), &info.sender)?;
+    cw_ownable::assert_owner(deps.storage, &info.sender)?;
+
     let start_time = config.public_mint_start_time;
 
     // Can not set public mint time in the past
@@ -151,6 +153,16 @@ pub fn validate_account(account: &str, min: u32, max: u32) -> Result<(), Contrac
     }
 
     Ok(())
+}
+
+pub fn execute_update_owner(
+    deps: DepsMut,
+    info: MessageInfo,
+    env: Env,
+    action: cw_ownable::Action,
+) -> Result<Response, ContractError> {
+    let ownership = cw_ownable::update_ownership(deps, &env.block, &info.sender, action)?;
+    Ok(Response::default().add_attributes(ownership.into_attributes()))
 }
 
 pub enum Discount {

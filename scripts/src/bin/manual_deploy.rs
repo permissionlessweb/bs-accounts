@@ -19,6 +19,9 @@ struct Args {
     /// Network to deploy on: main, testnet, local
     #[clap(short, long)]
     network: String,
+    /// optional address to broadcast msg on behalf of. This address must have authorized the wallet calling these scripts
+    #[clap(short, long)]
+    authz: Option<String>,
 }
 
 fn main() {

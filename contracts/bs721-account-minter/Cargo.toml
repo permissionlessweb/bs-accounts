@@ -35,6 +35,7 @@ optimize = """docker run --rm -v "$(pwd)":/code \
 bs721.workspace = true 
 bs721-base   = { workspace = true, features = ["library"]}
 bs721-account = { path = "../bs721-account", features = ["library"] }
+bs721-account-marketplace = { path = "../bs721-account-marketplace", features = ["library"] }
 btsg-account.workspace = true
 cw-ownable.workspace = true
 cosmwasm-schema.workspace = true

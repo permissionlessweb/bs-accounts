@@ -1313,13 +1313,14 @@ name = "bs721-account"
 version = "0.1.0"
 dependencies = [
  "bs721",
+ "bs721-account-marketplace",
  "bs721-base",
  "btsg-account",
  "cosmwasm-schema 1.5.7",
  "cosmwasm-std 1.5.7",
  "cw-controllers 1.1.2",
  "cw-multi-test",
- "cw-orch 0.25.0",
+ "cw-orch 0.24.1",
  "cw-ownable 0.5.1",
  "cw-storage-plus 1.2.0",
  "cw-utils 1.0.3",
@@ -1341,7 +1342,7 @@ dependencies = [
  "cosmwasm-std 1.5.7",
  "cw-controllers 1.1.2",
  "cw-multi-test",
- "cw-orch 0.25.0",
+ "cw-orch 0.24.1",
  "cw-ownable 0.5.1",
  "cw-storage-macro",
  "cw-storage-plus 1.2.0",
@@ -1359,13 +1360,14 @@ version = "0.1.0"
 dependencies = [
  "bs721",
  "bs721-account",
+ "bs721-account-marketplace",
  "bs721-base",
  "btsg-account",
  "cosmwasm-schema 1.5.7",
  "cosmwasm-std 1.5.7",
  "cw-controllers 1.1.2",
  "cw-multi-test",
- "cw-orch 0.25.0",
+ "cw-orch 0.24.1",
  "cw-ownable 0.5.1",
  "cw-storage-plus 1.2.0",
  "cw-utils 1.0.3",
@@ -1412,6 +1414,19 @@ dependencies = [
  "cosmwasm-std 1.5.7",
  "cw-orch 0.25.0",
  "cw721 0.19.0",
+]
+
+[[package]]
+name = "btsg-cw-orch"
+version = "0.1.0"
+dependencies = [
+ "bs721-account",
+ "bs721-account-marketplace",
+ "bs721-account-minter",
+ "btsg-account",
+ "cosmwasm-std 1.5.7",
+ "cw-orch 0.24.1",
+ "serde",
 ]
 
 [[package]]
@@ -5799,6 +5814,7 @@ dependencies = [
  "cw-orch-clone-testing",
  "cw-orch-interchain",
  "cw-orch-interchain-core 0.5.0",
+ "cw-ownable 0.5.1",
  "cw721 0.18.0",
  "cw721-base 0.18.0",
  "dirs",

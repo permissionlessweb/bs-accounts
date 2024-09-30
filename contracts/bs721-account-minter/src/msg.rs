@@ -2,6 +2,7 @@ use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Addr, Uint128};
 
 use crate::state::{Config, SudoParams};
+use cw_ownable::cw_ownable_execute;
 
 #[cw_serde]
 pub struct InstantiateMsg {
@@ -21,14 +22,12 @@ pub struct InstantiateMsg {
     pub base_price: Uint128,
 }
 
+#[cw_ownable_execute]
 #[cw_serde]
 #[derive(cw_orch::ExecuteFns)]
 pub enum ExecuteMsg {
     /// Mint a account and list on Bitsong Account Marketplace
     MintAndList { account: String },
-    /// Change the admin that manages the whitelist
-    /// Will be set to null after go-to-market
-    UpdateAdmin { admin: Option<String> },
     /// Admin can pause minting during whitelist switching
     Pause { pause: bool },
     /// Update config, only callable by admin
@@ -53,8 +52,8 @@ pub enum SudoMsg {
 #[cw_serde]
 #[derive(QueryResponses, cw_orch::QueryFns)]
 pub enum QueryMsg {
-    #[returns(cw_controllers::AdminResponse)]
-    Admin {},
+    #[returns(::cw_ownable::Ownership::<::cosmwasm_std::Addr>)]
+    Ownership {},
     #[returns(Addr)]
     Collection {},
     #[returns(SudoParams)]

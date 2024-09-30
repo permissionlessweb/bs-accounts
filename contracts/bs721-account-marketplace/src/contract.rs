@@ -7,12 +7,10 @@ use semver::Version;
 
 use crate::{
     commands::*,
-    msgs::{InstantiateMsg, MigrateMsg, QueryMsg, SudoMsg},
+    msgs::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg, SudoMsg},
     state::*,
     ContractError,
 };
-
-use btsg_account::marketplace::msgs::ExecuteMsg;
 
 pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 pub const ACCOUNT_MARKETPLACE: &str = "bs721_account_marketplace";

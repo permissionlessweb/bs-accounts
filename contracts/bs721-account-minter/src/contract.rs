@@ -5,14 +5,14 @@ use cosmwasm_std::{
     SubMsg, WasmMsg,
 };
 use cw2::set_contract_version;
-use cw_utils::{maybe_addr, parse_reply_instantiate_data};
+use cw_utils::parse_reply_instantiate_data;
 // use cw2::set_contract_version;
 
 use crate::commands::*;
 use crate::error::ContractError;
 use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg, SudoMsg};
 use crate::state::{
-    Config, SudoParams, ACCOUNT_COLLECTION, ACCOUNT_MARKETPLACE, ADMIN, CONFIG, PAUSED, SUDO_PARAMS,
+    Config, SudoParams, ACCOUNT_COLLECTION, ACCOUNT_MARKETPLACE, CONFIG, PAUSED, SUDO_PARAMS,
 };
 
 // version info for migration info
@@ -88,15 +88,11 @@ pub fn execute(
     info: MessageInfo,
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
-    let api = deps.api;
-
     match msg {
         ExecuteMsg::MintAndList { account } => {
             execute_mint_and_list(deps, info, env, account.trim())
         }
-        ExecuteMsg::UpdateAdmin { admin } => {
-            Ok(ADMIN.execute_update_admin(deps, info, maybe_addr(api, admin)?)?)
-        }
+        ExecuteMsg::UpdateOwnership(action) => execute_update_owner(deps, info, env, action),
         ExecuteMsg::Pause { pause } => execute_pause(deps, info, pause),
         ExecuteMsg::UpdateConfig { config } => execute_update_config(deps, info, env, config),
     }
@@ -105,7 +101,7 @@ pub fn execute(
 #[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::Admin {} => to_json_binary(&ADMIN.query_admin(deps)?),
+        QueryMsg::Ownership {} => to_json_binary(&cw_ownable::get_ownership(deps.storage)?),
         QueryMsg::Collection {} => to_json_binary(&query_collection(deps)?),
         QueryMsg::Params {} => to_json_binary(&query_params(deps)?),
         QueryMsg::Config {} => to_json_binary(&query_config(deps)?),

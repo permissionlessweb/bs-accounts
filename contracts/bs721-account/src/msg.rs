@@ -157,7 +157,7 @@ impl<T> From<ExecuteMsg<T>> for bs721_base::msg::ExecuteMsg<T> {
 }
 
 impl CustomMsg for Bs721AccountsQueryMsg {}
-
+#[cw_ownable::cw_ownable_query]
 #[cw_serde]
 #[derive(QueryResponses, cw_orch::QueryFns)]
 pub enum Bs721AccountsQueryMsg {
@@ -296,7 +296,7 @@ impl From<Bs721AccountsQueryMsg> for bs721_base::msg::QueryMsg<Bs721AccountsQuer
             Bs721AccountsQueryMsg::AllTokens { start_after, limit } => {
                 Bs721QueryMsg::AllTokens { start_after, limit }
             }
-            // Bs721AccountsQueryMsg::Minter {} => Bs721QueryMsg:: {},
+            Bs721AccountsQueryMsg::Minter {} => Bs721QueryMsg::Minter {},
             // QueryMsg::CollectionInfo {} => cw721_base::QueryMsg::CollectionInfo {},
             _ => unreachable!("cannot convert {:?} to Bs721QueryMsg", msg),
         }

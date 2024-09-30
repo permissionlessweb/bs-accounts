@@ -154,6 +154,7 @@ pub mod entry {
             QueryMsg::IsTwitterVerified { account } => {
                 to_json_binary(&query_is_twitter_verified(deps, &account)?)
             }
+            QueryMsg::Minter {} => to_json_binary(&cw_ownable::get_ownership(deps.storage)?),
             _ => Bs721AccountContract::default().query(deps, env, msg.into()),
         }
     }

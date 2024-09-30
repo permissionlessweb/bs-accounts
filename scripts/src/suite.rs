@@ -61,6 +61,17 @@ impl<Chain: CwEnv> cw_orch::contract::Deploy<Chain> for BtsgAccountSuite<Chain> 
         // ########### Upload ##############
         let mut suite: BtsgAccountSuite<Chain> = BtsgAccountSuite::store_on(chain.clone())?;
 
+        suite.market.instantiate(
+            &bs721_account_marketplace::msgs::InstantiateMsg {
+                trading_fee_bps: 200,
+                min_price: Uint128::from(5000000u64),
+                ask_interval: 60,
+                valid_bid_query_limit: 30,
+            },
+            Some(&Addr::unchecked(data.to_string())),
+            None,
+        )?;
+
         let bs721_account = suite
             .minter
             .instantiate(
@@ -71,7 +82,7 @@ impl<Chain: CwEnv> cw_orch::contract::Deploy<Chain> for BtsgAccountSuite<Chain> 
                     min_account_length: 3u32,
                     max_account_length: 128u32,
                     base_price: 10u128.into(),
-                    marketplace_addr: "todo!()".into(),
+                    marketplace_addr: suite.market.addr_str()?,
                 },
                 Some(&Addr::unchecked(data.clone())),
                 None,
@@ -88,29 +99,11 @@ impl<Chain: CwEnv> cw_orch::contract::Deploy<Chain> for BtsgAccountSuite<Chain> 
             .account
             .set_default_address(&Addr::unchecked(bs721_account));
 
-        suite.market.instantiate(
-            &bs721_account_marketplace::msgs::InstantiateMsg {
-                trading_fee_bps: 200,
-                min_price: Uint128::from(5000000u64),
-                ask_interval: 60,
-                valid_bid_query_limit: 30,
-            },
-            Some(&Addr::unchecked(data)),
-            None,
-        )?;
-
         // Provide marketplace with collection and minter contracts.
-        // suite
-        //     .market
-        //     .setup(suite.account.address()?, suite.minter.address()?)?;
+        suite
+            .market
+            .setup(suite.account.address()?, suite.minter.address()?)?;
 
-        suite.market.execute(
-            &bs721_account_marketplace::msgs::ExecuteMsg::Setup {
-                minter: suite.minter.address()?.into(),
-                collection: suite.account.address()?.into(),
-            },
-            None,
-        )?;
         Ok(suite)
     }
 }
