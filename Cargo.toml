@@ -6,9 +6,9 @@ members = [
     "packages/*",
     "scripts",
     ]
-# exclude = [
-#   "scripts".
-# ]
+exclude = [
+  "scripts"
+]
 
 # Enable the version 2 feature resolver, which avoids unifying features for targets that are not being built
 #
