@@ -319,7 +319,7 @@ pub mod manifest {
             &token_id,
             |token| match token {
                 Some(mut token_info) => {
-                    token_info.extension.image_nft = nft.clone();
+                    token_info.extension.image_nft.clone_from(&nft);
                     Ok(token_info)
                 }
                 None => Err(ContractError::AccountNotFound {}),
@@ -527,7 +527,7 @@ pub mod manifest {
             .load(deps.storage, token_id)?
             .owner;
 
-        if &owner != sender {
+        if owner != sender {
             return Err(ContractError::OwnershipError(
                 cw_ownable::OwnershipError::NotOwner,
             ));
@@ -630,7 +630,7 @@ pub fn transcode(address: &str) -> StdResult<String> {
 
 fn validate_address(deps: Deps, sender: &Addr, addr: Addr) -> Result<Addr, ContractError> {
     // no need to validate if sender is address
-    if sender == &addr {
+    if sender == addr {
         return Ok(addr);
     }
 
@@ -658,7 +658,7 @@ fn validate_address(deps: Deps, sender: &Addr, addr: Addr) -> Result<Addr, Contr
         );
     } else {
         // If there is no admin and the creator is not the sender, check creator's admin
-        let creator_info = deps.querier.query_wasm_contract_info(&creator)?;
+        let creator_info = deps.querier.query_wasm_contract_info(creator)?;
         if creator_info.admin.map_or(true, |a| &a != sender) {
             return Err(ContractError::UnauthorizedCreatorOrAdmin {});
         }
