@@ -6,7 +6,7 @@
 
 import { CosmWasmClient, SigningCosmWasmClient, ExecuteResult } from "@cosmjs/cosmwasm-stargate";
 import { Coin, StdFee } from "@cosmjs/amino";
-import { Addr, InstantiateMsg, InstantiateMsg1, ExecuteMsg, Binary, Expiration, Timestamp, Uint64, NFT, TextRecord, Metadata, QueryMsg, String, AllNftInfoResponseForMetadata, OwnerOfResponse, Approval, NftInfoResponseForMetadata, OperatorsResponse, TokensResponse, ApprovalResponse, ApprovalsResponse, ContractInfoResponse, NullableNFT, Boolean, MinterResponse, NumTokensResponse, SudoParams, ArrayOfTextRecord, NullableString } from "./Bs721Account.types";
+import { InstantiateMsg, InstantiateMsg1, ExecuteMsg, Addr, Binary, Expiration, Timestamp, Uint64, NFT, TextRecord, Metadata, QueryMsg, String, AllNftInfoResponseForMetadata, OwnerOfResponse, Approval, NftInfoResponseForMetadata, OperatorsResponse, TokensResponse, ApprovalResponse, ApprovalsResponse, ContractInfoResponse, NullableNFT, Boolean, OwnershipForAddr, NumTokensResponse, SudoParams, ArrayOfTextRecord, NullableString } from "./Bs721Account.types";
 export interface Bs721AccountReadOnlyInterface {
   contractAddress: string;
   params: () => Promise<SudoParams>;
@@ -101,7 +101,7 @@ export interface Bs721AccountReadOnlyInterface {
     limit?: number;
     startAfter?: string;
   }) => Promise<TokensResponse>;
-  minter: () => Promise<MinterResponse>;
+  minter: () => Promise<OwnershipForAddr>;
 }
 export class Bs721AccountQueryClient implements Bs721AccountReadOnlyInterface {
   client: CosmWasmClient;
@@ -332,7 +332,7 @@ export class Bs721AccountQueryClient implements Bs721AccountReadOnlyInterface {
       }
     });
   };
-  minter = async (): Promise<MinterResponse> => {
+  minter = async (): Promise<OwnershipForAddr> => {
     return this.client.queryContractSmart(this.contractAddress, {
       minter: {}
     });
@@ -442,15 +442,11 @@ export interface Bs721AccountInterface extends Bs721AccountReadOnlyInterface {
   mint: ({
     extension,
     owner,
-    paymentAddr,
-    sellerFeeBps,
     tokenId,
     tokenUri
   }: {
     extension: Metadata;
     owner: string;
-    paymentAddr?: string;
-    sellerFeeBps?: number;
     tokenId: string;
     tokenUri?: string;
   }, fee?: number | StdFee | "auto", memo?: string, funds?: Coin[]) => Promise<ExecuteResult>;
@@ -689,15 +685,11 @@ export class Bs721AccountClient extends Bs721AccountQueryClient implements Bs721
   mint = async ({
     extension,
     owner,
-    paymentAddr,
-    sellerFeeBps,
     tokenId,
     tokenUri
   }: {
     extension: Metadata;
     owner: string;
-    paymentAddr?: string;
-    sellerFeeBps?: number;
     tokenId: string;
     tokenUri?: string;
   }, fee: number | StdFee | "auto" = "auto", memo?: string, funds?: Coin[]): Promise<ExecuteResult> => {
@@ -705,8 +697,6 @@ export class Bs721AccountClient extends Bs721AccountQueryClient implements Bs721
       mint: {
         extension,
         owner,
-        payment_addr: paymentAddr,
-        seller_fee_bps: sellerFeeBps,
         token_id: tokenId,
         token_uri: tokenUri
       }

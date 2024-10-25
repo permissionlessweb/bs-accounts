@@ -1,43 +1,16 @@
-use btsg_account::common::SECONDS_PER_YEAR;
 use cw_orch::{anyhow, mock::MockBech32, prelude::*};
 
-use crate::deploy::account::BtsgAccountSuite;
-use bs721_account_marketplace::msg::{
+use crate::BtsgAccountSuite;
+use bs721_account::msg::{Bs721AccountsQueryMsgFns, ExecuteMsgFns, InstantiateMsg};
+use bs721_account_marketplace::msgs::{
     ExecuteMsgFns as _, QueryMsgFns, SudoMsg as MarketplaceSudoMsg,
 };
-use bs721_account_minter::msg::QueryMsgFns as _;
-use btsg_account::minter::Config;
-use cosmwasm_std::{attr, coins, to_json_binary, Decimal};
+use bs721_account_minter::msg::{ExecuteMsgFns as _, QueryMsgFns as _};
+use cosmwasm_std::Uint128;
+use cosmwasm_std::{coins, to_json_binary, Decimal};
 use cw_orch::mock::cw_multi_test::{SudoMsg, WasmSudo};
 
-use bs721_account::msg::{
-    Bs721AccountsQueryMsg, Bs721AccountsQueryMsgFns, ExecuteMsg, ExecuteMsgFns, InstantiateMsg,
-};
-use bs721_account_minter::msg::ExecuteMsgFns as _;
-use cosmwasm_std::Uint128;
-const USER: &str = "user";
-const USER2: &str = "user2";
-const USER3: &str = "user3";
-const USER4: &str = "user4";
-const BIDDER: &str = "bidder";
-const BIDDER2: &str = "bidder2";
-const ADMIN: &str = "admin";
-const ADMIN2: &str = "admin2";
-const NAME: &str = "bobo";
-const NAME2: &str = "mccool";
-const VERIFIER: &str = "verifier";
-const OPERATOR: &str = "operator";
-const TRADING_START_TIME_OFFSET_IN_SECONDS: u64 = 2 * SECONDS_PER_YEAR;
-const TRADING_FEE_BPS: u64 = 200; // 2%
-
 const BID_AMOUNT: u128 = 1_000_000_000;
-const PER_ADDRESS_LIMIT: u32 = 2;
-
-const MKT: &str = "contract0";
-const MINTER: &str = "contract1";
-const COLLECTION: &str = "contract2";
-const WHITELIST: &str = "contract3";
-
 #[test]
 pub fn init() -> anyhow::Result<()> {
     // new mock Bech32 chain environment
@@ -119,8 +92,6 @@ mod execute {
         suite.default_setup(mock.clone(), None, None)?;
         let owner = mock.sender.clone();
         let bidder = mock.addr_make("bidder");
-        let token_id = "bobo";
-
         let token_id = "bobo";
 
         mock.wait_seconds(1)?;
@@ -228,6 +199,7 @@ mod execute {
     fn test_reverse_map_contract_address() -> anyhow::Result<()> {
         Ok(())
     }
+
     #[test]
     fn test_reverse_map_not_contract_address_admin() -> anyhow::Result<()> {
         let mock = MockBech32::new("bitsong");
@@ -254,7 +226,6 @@ mod execute {
         suite.default_setup(mock.clone(), None, None)?;
         let token_id = "bobo";
         let admin2 = mock.addr_make("admin2");
-        let admin = mock.sender.clone();
 
         mock.wait_seconds(1)?;
         suite.mint_and_list(mock.clone(), &token_id, &admin2)?;
@@ -270,6 +241,7 @@ mod execute {
         let mock = MockBech32::new("bitsong");
         let mut suite = BtsgAccountSuite::new(mock.clone());
         suite.default_setup(mock.clone(), None, Some(mock.sender.clone()))?;
+
         let token_id = "bobo";
         let admin2 = mock.addr_make("admin2");
 
@@ -330,22 +302,37 @@ mod admin {
         suite
             .minter
             .call_as(&admin2)
-            .update_admin(None)
+            .update_ownership(cw_ownable::Action::RenounceOwnership)
             .unwrap_err();
         // admin updates admin
-        suite.minter.update_admin(Some(admin2.to_string()))?;
+        suite
+            .minter
+            .update_ownership(cw_ownable::Action::TransferOwnership {
+                new_owner: admin2.to_string(),
+                expiry: None,
+            })?;
         // new admin updates to have no admin
-        suite.minter.call_as(&admin2).update_admin(None)?;
+        suite
+            .minter
+            .call_as(&admin2)
+            .update_ownership(cw_ownable::Action::AcceptOwnership)?;
+        suite
+            .minter
+            .call_as(&admin2)
+            .update_ownership(cw_ownable::Action::RenounceOwnership)?;
         // cannot update without admin
         suite
             .minter
-            .update_admin(Some(admin2.to_string()))
+            .update_ownership(cw_ownable::Action::TransferOwnership {
+                new_owner: admin2.to_string(),
+                expiry: None,
+            })
             .unwrap_err();
         Ok(())
     }
 }
 mod query {
-    use bs721_account_marketplace::{msg::BidOffset, state::Bid};
+    use bs721_account_marketplace::{msgs::BidOffset, state::Bid};
 
     use super::*;
 
@@ -427,7 +414,6 @@ mod query {
         let mut suite = BtsgAccountSuite::new(mock.clone());
         suite.default_setup(mock.clone(), None, Some(mock.sender.clone()))?;
         let admin = mock.sender.clone();
-        let admin2 = mock.addr_make("admin2");
         let bidder1 = mock.addr_make("bidder1");
         let bidder2 = mock.addr_make("bidder2");
         let token_id = "bobo";
@@ -460,8 +446,11 @@ mod query {
         mock.wait_seconds(60)?;
 
         // test pagination with multiple accounts and bids
-        let account = "jump";
-        let res = suite.mint_and_list(mock.clone(), account, &admin)?;
+        let account: &str = "jump";
+
+        mock.wait_seconds(1)?;
+        suite.mint_and_list(mock.clone(), &account, &admin)?;
+
         suite.bid_w_funds(mock.clone(), account, bidder1, BID_AMOUNT * 3)?;
         suite.bid_w_funds(mock.clone(), account, bidder2, BID_AMOUNT * 2)?;
         let res = suite.market.bids_for_seller(admin, None, Some(filter))?;
@@ -476,7 +465,6 @@ mod query {
         let mut suite = BtsgAccountSuite::new(mock.clone());
         suite.default_setup(mock.clone(), None, Some(mock.sender.clone()))?;
         let admin = mock.sender.clone();
-        let admin2 = mock.addr_make("admin2");
         let bidder1 = mock.addr_make("bidder1");
         let bidder2 = mock.addr_make("bidder2");
         let token_id = "bobo";
@@ -558,7 +546,6 @@ mod query {
         let mut suite = BtsgAccountSuite::new(mock.clone());
         suite.default_setup(mock.clone(), None, Some(mock.sender.clone()))?;
         let admin = mock.sender.clone();
-        let user1 = mock.addr_make("user1");
         let token_id = "bobo";
 
         mock.wait_seconds(1)?;
@@ -788,7 +775,6 @@ mod collection {
 
         let user = mock.addr_make("user");
         let user2 = mock.addr_make("user2");
-        let admin_user = mock.sender.clone();
         let token_id = "bobo";
 
         mock.wait_seconds(1)?;
@@ -848,6 +834,8 @@ mod collection {
     }
 }
 mod public_start_time {
+
+    use bs721_account_minter::state::Config;
 
     use super::*;
 

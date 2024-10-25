@@ -3,7 +3,10 @@ use cw_orch::{
     daemon::{DaemonBuilder, TxSender},
     prelude::*,
 };
-use scripts::{networks::ping_grpc, BtsgAccountSuite};
+use scripts::{
+    networks::{ping_grpc, BITSONG_MAINNET, BITSONG_TESTNET, LOCAL_NETWORK1},
+    BtsgAccountSuite,
+};
 use tokio::runtime::Runtime;
 
 // todo: move to .env file
@@ -16,6 +19,9 @@ struct Args {
     /// Network to deploy on: main, testnet, local
     #[clap(short, long)]
     network: String,
+    /// optional address to broadcast msg on behalf of. This address must have authorized the wallet calling these scripts
+    #[clap(short, long)]
+    authz: Option<String>,
 }
 
 fn main() {
@@ -24,11 +30,11 @@ fn main() {
     // logs any errors
     env_logger::init();
 
-    println!("Deploying Headstash Framework...");
+    println!("Deploying Bitsong Accounts Framework...");
     let bitsong_chain = match args.network.as_str() {
-        "main" => scripts::networks::BITSONG_MAINNET.to_owned(),
-        "testnet" => scripts::networks::BITSONG_TESTNET.to_owned(),
-        "local" => scripts::networks::LOCAL_NETWORK1.to_owned(),
+        "main" => BITSONG_MAINNET.to_owned(),
+        "testnet" => BITSONG_TESTNET.to_owned(),
+        "local" => LOCAL_NETWORK1.to_owned(),
         _ => panic!("Invalid network"),
     };
 
@@ -55,9 +61,8 @@ fn manual_deploy(network: ChainInfoOwned) -> anyhow::Result<()> {
         .handle(rt.handle())
         .mnemonic(MNEMONIC)
         .build()?;
-
     let _suite = BtsgAccountSuite::deploy_on(chain.clone(), chain.sender().address())?;
-    // query account for connected wallet
+    // query account for connected wallet´
 
     Ok(())
 }

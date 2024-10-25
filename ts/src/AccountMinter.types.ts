@@ -9,7 +9,6 @@ export interface InstantiateMsg {
   admin?: string | null;
   base_price: Uint128;
   collection_code_id: number;
-  marketplace_addr: string;
   max_account_length: number;
   min_account_length: number;
   verifier?: string | null;

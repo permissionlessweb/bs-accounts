@@ -71,9 +71,14 @@ Accounts are designed to be as flexible as possible, allowing generic `TextRecor
 
 Account minter is responsible for minting, validating, and updating accounts and their metadata.
 
-### [Account Marketplace](./contracts/account-market/README.md)
+### Compile the contracts 
+```sh
+make optimize
+```
 
-The secondary marketplace for accounts. Accounts are automatically listed here once they are minted.
+<!-- ### [Account Marketplace](./contracts/account-market/README.md)
+
+The secondary marketplace for accounts. Accounts are automatically listed here once they are minted. -->
 
 <!-- ### [Whitelist](./contracts/whitelist-updatable/README.md)
 

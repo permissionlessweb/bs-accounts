@@ -2,11 +2,7 @@
 name = "btsg-account"
 authors = ["Shane Vitarana <s@noreply.publicawesome.com>",]
 description = "Rust definition of name service metadata, used by Bitsong Accounts."
-version     = { workspace = true }
-edition     = { workspace = true }
-homepage    = { workspace = true }
-repository  = { workspace = true }
-license     = { workspace = true }
+version = "0.1.0"
 
 exclude = [
   # Those files are rust-optimizer artifacts. You might want to commit them for convenience but they should not be part of the source code publication.
@@ -20,14 +16,10 @@ exclude = [
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-cw-orch =  { workspace = true }
-cosmwasm-schema = { workspace = true }
-cw-controllers  = { workspace = true }
-cw-storage-macro  = { workspace = true }
-cw-storage-plus  = { workspace = true }
-bs-controllers  = { workspace = true }
-bs721  = { workspace = true }
-bs721-base  = { workspace = true }
-cosmwasm-std = { workspace = true }
-schemars = { workspace = true }
-serde = { workspace = true }
+cosmwasm-std = { version = "1.5.7", features = [
+  "cosmwasm_1_4",
+  # Enable this if you only deploy to chains that have CosmWasm 2.0 or higher
+  # "cosmwasm_2_0",
+] }
+cosmwasm-schema = "1.5.7"
+cw-orch = "0.25.0"

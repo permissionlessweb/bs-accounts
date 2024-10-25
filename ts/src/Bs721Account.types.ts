@@ -4,17 +4,14 @@
 * and run the @cosmwasm/ts-codegen generate command to regenerate this file.
 */
 
-export type Addr = string;
 export interface InstantiateMsg {
   base_init_msg: InstantiateMsg1;
-  marketplace: Addr;
   verifier?: string | null;
 }
 export interface InstantiateMsg1 {
   minter: string;
   name: string;
   symbol: string;
-  uri?: string | null;
 }
 export type ExecuteMsg = {
   set_marketplace: {
@@ -90,8 +87,6 @@ export type ExecuteMsg = {
   mint: {
     extension: Metadata;
     owner: string;
-    payment_addr?: string | null;
-    seller_fee_bps?: number | null;
     token_id: string;
     token_uri?: string | null;
   };
@@ -102,6 +97,7 @@ export type ExecuteMsg = {
 } | {
   freeze_collection_info: {};
 };
+export type Addr = string;
 export type Binary = string;
 export type Expiration = {
   at_height: number;
@@ -216,8 +212,6 @@ export interface Approval {
 }
 export interface NftInfoResponseForMetadata {
   extension: Metadata;
-  payment_addr?: Addr | null;
-  seller_fee_bps?: number | null;
   token_uri?: string | null;
 }
 export interface OperatorsResponse {
@@ -235,12 +229,13 @@ export interface ApprovalsResponse {
 export interface ContractInfoResponse {
   name: string;
   symbol: string;
-  uri?: string | null;
 }
 export type NullableNFT = NFT | null;
 export type Boolean = boolean;
-export interface MinterResponse {
-  minter: string;
+export interface OwnershipForAddr {
+  owner?: Addr | null;
+  pending_expiry?: Expiration | null;
+  pending_owner?: Addr | null;
 }
 export interface NumTokensResponse {
   count: number;

@@ -2,13 +2,13 @@ import codegen from "@cosmwasm/ts-codegen";
 
 codegen({
   contracts: [
-    {
-      name: "AccountMarketplace",
-      dir: "../contracts/account-market/schema",
-    },
+    // {
+    //   name: "AccountMarketplace",
+    //   dir: "../contracts/account-market/schema",
+    // },
     {
       name: "AccountMinter",
-      dir: "../contracts/account-minter/schema",
+      dir: "../contracts/bs721-account-minter/schema",
     },
     {
       name: "Bs721Account",

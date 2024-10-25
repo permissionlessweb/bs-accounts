@@ -22,18 +22,19 @@ This library contains both Rust & Bash scripts for the BS-NFT repository.
 | Command | Description |
 |----------|----------|
 | `cargo test` | Run all test in codebase |
-| `cargo run -- --bin deploy` | Deploy workflow for all contracts needed for bs-accounts. |
+| `cargo run --bin deploy -- --network [<testnet>,<mainnet>,<local>] ` | Deploy workflow for all contracts needed for bs-accounts. |
 | `cargo run -- --bin deploy` | Same as `deploy`, but with authz wrapper for msgs. |
 
 
 ## Bash Commands 
+before running, copy `.env.testnet` to `.env`.
 | Command | Description |
 |----------|----------|
-| `sh 01-store.sh` | store wasm code |
-| `sh 02-init_mkt.sh` | instantiate marketplace |
-| `sh 03-init_minter.sh` | instantiate minter |
-| `sh 04-exec_mkt_setup.sh` | setup marketplace |
-| `sh broadcast.sh` | Broadcast a transaction or a message to the network or chain |
+| `./1_upload` | store wasm code |
+| `./2a_init_marketplace.sh` | instantiate marketplace, make sure you have updated `.env` with code-ids. |
+| `./2b_init_minter.sh` | instantiate minter. make sure you have updated `.env` with Marketplace address (MKT). |
+| `./3_setup_minter` | setup marketplace . Update .env with both the minter and collection addresses (MINTER and COLLECTION).|
+<!-- | `sh broadcast.sh` | Broadcast a transaction or a message to the network or chain |
 | `sh exec_accept_bid.sh` | accept bid as account owner|
 | `sh exec_add_text.sh` | add text records to an account token |
 | `sh exec_assoc.sh` | associate a smart contract or address with a given account token |
@@ -56,4 +57,4 @@ This library contains both Rust & Bash scripts for the BS-NFT repository.
 | `sh query_mkt_params.sh` | Query market parameters, retrieving configuration settings and rules governing the market |
 | `sh query_token_info.sh` | Query token information, retrieving details and attributes associated with a specific token |
 | `sh query_tokens.sh` | Query tokens, retrieving a list of available tokens on the chain or in a specific collection |
-| `sh query_tx.sh` | Query transaction information, retrieving details about a specific transaction or set of transactions |
+| `sh query_tx.sh` | Query transaction information, retrieving details about a specific transaction or set of transactions | -->

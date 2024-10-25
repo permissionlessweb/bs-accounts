@@ -1,5 +1,5 @@
-use bs721_base::{msg::ExecuteMsg as Bs721ExecuteMsg, InstantiateMsg as Bs721InstantiateMsg};
-use btsg_account::{Metadata, TextRecord, NFT};
+use crate::{state::SudoParams, Metadata};
+use btsg_account::{TextRecord, NFT};
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Addr, Binary, CustomMsg};
 
@@ -7,8 +7,9 @@ use bs721::{
     AllNftInfoResponse, ApprovalResponse, ApprovalsResponse, ContractInfoResponse, Expiration,
     NftInfoResponse, NumTokensResponse, OperatorsResponse, OwnerOfResponse, TokensResponse,
 };
-use bs721_base::{MinterResponse, QueryMsg as Bs721QueryMsg};
-
+use bs721_base::msg::InstantiateMsg as Bs721InstantiateMsg;
+use bs721_base::msg::QueryMsg as Bs721QueryMsg;
+use cw_ownable::Ownership;
 #[cw_serde]
 pub struct InstantiateMsg {
     pub verifier: Option<String>,
@@ -16,26 +17,6 @@ pub struct InstantiateMsg {
     pub base_init_msg: Bs721InstantiateMsg,
 }
 
-#[cw_serde]
-pub enum SudoMsg {
-    UpdateParams { max_record_count: u32 },
-}
-
-// impl Default for Bs721AccountsQueryMsg {
-//     fn default() -> Self {
-//         Bs721AccountsQueryMsg::CheckRoyalties {}
-//     }
-// }
-
-impl CustomMsg for Bs721AccountsQueryMsg {}
-
-#[cosmwasm_schema::cw_serde]
-pub struct SudoParams {
-    pub max_record_count: u32,
-}
-
-// Add execute msgs related to metadata, image, text records
-// The rest are inherited from sg721 and impl to properly convert the msgs.
 #[cw_serde]
 #[derive(cw_orch::ExecuteFns)]
 pub enum ExecuteMsg<T> {
@@ -117,13 +98,13 @@ pub enum ExecuteMsg<T> {
     FreezeCollectionInfo {},
 }
 
-impl<T> From<ExecuteMsg<T>> for Bs721ExecuteMsg<T> {
-    fn from(msg: ExecuteMsg<T>) -> Bs721ExecuteMsg<T> {
+impl<T> From<ExecuteMsg<T>> for bs721_base::msg::ExecuteMsg<T> {
+    fn from(msg: ExecuteMsg<T>) -> bs721_base::msg::ExecuteMsg<T> {
         match msg {
             ExecuteMsg::TransferNft {
                 recipient,
                 token_id,
-            } => Bs721ExecuteMsg::TransferNft {
+            } => bs721_base::msg::ExecuteMsg::TransferNft {
                 recipient,
                 token_id,
             },
@@ -131,7 +112,7 @@ impl<T> From<ExecuteMsg<T>> for Bs721ExecuteMsg<T> {
                 contract,
                 token_id,
                 msg,
-            } => Bs721ExecuteMsg::SendNft {
+            } => bs721_base::msg::ExecuteMsg::SendNft {
                 contract,
                 token_id,
                 msg,
@@ -140,19 +121,21 @@ impl<T> From<ExecuteMsg<T>> for Bs721ExecuteMsg<T> {
                 spender,
                 token_id,
                 expires,
-            } => Bs721ExecuteMsg::Approve {
+            } => bs721_base::msg::ExecuteMsg::Approve {
                 spender,
                 token_id,
                 expires,
             },
             ExecuteMsg::ApproveAll { operator, expires } => {
-                Bs721ExecuteMsg::ApproveAll { operator, expires }
+                bs721_base::msg::ExecuteMsg::ApproveAll { operator, expires }
             }
             ExecuteMsg::Revoke { spender, token_id } => {
-                Bs721ExecuteMsg::Revoke { spender, token_id }
+                bs721_base::msg::ExecuteMsg::Revoke { spender, token_id }
             }
-            ExecuteMsg::RevokeAll { operator } => Bs721ExecuteMsg::RevokeAll { operator },
-            ExecuteMsg::Burn { token_id } => Bs721ExecuteMsg::Burn { token_id },
+            ExecuteMsg::RevokeAll { operator } => {
+                bs721_base::msg::ExecuteMsg::RevokeAll { operator }
+            }
+            ExecuteMsg::Burn { token_id } => bs721_base::msg::ExecuteMsg::Burn { token_id },
             ExecuteMsg::Mint {
                 token_id,
                 owner,
@@ -160,7 +143,7 @@ impl<T> From<ExecuteMsg<T>> for Bs721ExecuteMsg<T> {
                 extension,
                 seller_fee_bps,
                 payment_addr,
-            } => Bs721ExecuteMsg::Mint {
+            } => bs721_base::msg::ExecuteMsg::Mint {
                 token_id,
                 owner,
                 token_uri,
@@ -173,6 +156,8 @@ impl<T> From<ExecuteMsg<T>> for Bs721ExecuteMsg<T> {
     }
 }
 
+impl CustomMsg for Bs721AccountsQueryMsg {}
+#[cw_ownable::cw_ownable_query]
 #[cw_serde]
 #[derive(QueryResponses, cw_orch::QueryFns)]
 pub enum Bs721AccountsQueryMsg {
@@ -246,14 +231,14 @@ pub enum Bs721AccountsQueryMsg {
         start_after: Option<String>,
         limit: Option<u32>,
     },
-    #[returns(MinterResponse)]
+    #[returns(Ownership<Addr>)]
     Minter {},
     // #[returns(CollectionInfoResponse)]
     // CollectionInfo {},
 }
 
-impl From<Bs721AccountsQueryMsg> for Bs721QueryMsg<Bs721AccountsQueryMsg> {
-    fn from(msg: Bs721AccountsQueryMsg) -> Bs721QueryMsg<Bs721AccountsQueryMsg> {
+impl From<Bs721AccountsQueryMsg> for bs721_base::msg::QueryMsg<Bs721AccountsQueryMsg> {
+    fn from(msg: Bs721AccountsQueryMsg) -> bs721_base::msg::QueryMsg<Bs721AccountsQueryMsg> {
         match msg {
             Bs721AccountsQueryMsg::OwnerOf {
                 token_id,
@@ -312,8 +297,13 @@ impl From<Bs721AccountsQueryMsg> for Bs721QueryMsg<Bs721AccountsQueryMsg> {
                 Bs721QueryMsg::AllTokens { start_after, limit }
             }
             Bs721AccountsQueryMsg::Minter {} => Bs721QueryMsg::Minter {},
-            // QueryMsg::CollectionInfo {} => Bs721QueryMsg::CollectionInfo {},
-            _ => unreachable!("cannot convert {:?} to Cw721QueryMsg", msg),
+            // QueryMsg::CollectionInfo {} => cw721_base::QueryMsg::CollectionInfo {},
+            _ => unreachable!("cannot convert {:?} to Bs721QueryMsg", msg),
         }
     }
+}
+
+#[cw_serde]
+pub enum SudoMsg {
+    UpdateParams { max_record_count: u32 },
 }

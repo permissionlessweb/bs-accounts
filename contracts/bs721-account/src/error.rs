@@ -11,6 +11,7 @@ pub enum ContractError {
 
     #[error("{0}")]
     OwnershipError(#[from] OwnershipError),
+
     #[error("{0}")]
     Payment(#[from] PaymentError),
 
@@ -28,7 +29,7 @@ pub enum ContractError {
 
     #[error("InvalidAddress")]
     InvalidAddress {},
-    
+
     #[error("RecordAccountAlreadyExists")]
     RecordAccountAlreadyExists {},
 

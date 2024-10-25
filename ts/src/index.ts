@@ -4,26 +4,19 @@
 * and run the @cosmwasm/ts-codegen generate command to regenerate this file.
 */
 
-import * as _0 from "./AccountMarketplace.types";
-import * as _1 from "./AccountMarketplace.client";
-import * as _2 from "./AccountMarketplace.message-composer";
-import * as _3 from "./AccountMinter.types";
-import * as _4 from "./AccountMinter.client";
-import * as _5 from "./AccountMinter.message-composer";
-import * as _6 from "./Bs721Account.types";
-import * as _7 from "./Bs721Account.client";
-import * as _8 from "./Bs721Account.message-composer";
+import * as _0 from "./AccountMinter.types";
+import * as _1 from "./AccountMinter.client";
+import * as _2 from "./AccountMinter.message-composer";
+import * as _3 from "./Bs721Account.types";
+import * as _4 from "./Bs721Account.client";
+import * as _5 from "./Bs721Account.message-composer";
 export namespace contracts {
-  export const AccountMarketplace = { ..._0,
+  export const AccountMinter = { ..._0,
     ..._1,
     ..._2
   };
-  export const AccountMinter = { ..._3,
+  export const Bs721Account = { ..._3,
     ..._4,
     ..._5
-  };
-  export const Bs721Account = { ..._6,
-    ..._7,
-    ..._8
   };
 }

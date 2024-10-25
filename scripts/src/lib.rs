@@ -1,5 +1,7 @@
-mod deploy;
-mod test;
+pub mod deploy;
+pub mod suite;
+pub use suite::BtsgAccountSuite;
+pub mod networks;
 
-// pub use btsg_account::*;
-pub use deploy::*;
+#[cfg(test)]
+pub mod test;

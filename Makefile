@@ -6,11 +6,11 @@ lint:
 optimize:
 	sh scripts/optimize.sh
 
-publish:
-	sh scripts/publish.sh
+# publish:
+# 	sh scripts/publish.sh
 
-schema:
-	sh scripts/schema.sh
+# schema:
+# 	sh scripts/schema.sh
 
-coverage:
-	cargo tarpaulin --verbose --workspace --timeout 120 --out Html --avoid-cfg-tarpaulin
+# coverage:
+# 	cargo tarpaulin --verbose --workspace --timeout 120 --out Html --avoid-cfg-tarpaulin

@@ -8,7 +8,7 @@ import { Coin } from "@cosmjs/amino";
 import { MsgExecuteContractEncodeObject } from "cosmwasm";
 import { MsgExecuteContract } from "cosmjs-types/cosmwasm/wasm/v1/tx";
 import { toUtf8 } from "@cosmjs/encoding";
-import { Addr, InstantiateMsg, InstantiateMsg1, ExecuteMsg, Binary, Expiration, Timestamp, Uint64, NFT, TextRecord, Metadata, QueryMsg, String, AllNftInfoResponseForMetadata, OwnerOfResponse, Approval, NftInfoResponseForMetadata, OperatorsResponse, TokensResponse, ApprovalResponse, ApprovalsResponse, ContractInfoResponse, NullableNFT, Boolean, MinterResponse, NumTokensResponse, SudoParams, ArrayOfTextRecord, NullableString } from "./Bs721Account.types";
+import { InstantiateMsg, InstantiateMsg1, ExecuteMsg, Addr, Binary, Expiration, Timestamp, Uint64, NFT, TextRecord, Metadata, QueryMsg, String, AllNftInfoResponseForMetadata, OwnerOfResponse, Approval, NftInfoResponseForMetadata, OperatorsResponse, TokensResponse, ApprovalResponse, ApprovalsResponse, ContractInfoResponse, NullableNFT, Boolean, OwnershipForAddr, NumTokensResponse, SudoParams, ArrayOfTextRecord, NullableString } from "./Bs721Account.types";
 export interface Bs721AccountMessage {
   contractAddress: string;
   sender: string;
@@ -113,15 +113,11 @@ export interface Bs721AccountMessage {
   mint: ({
     extension,
     owner,
-    paymentAddr,
-    sellerFeeBps,
     tokenId,
     tokenUri
   }: {
     extension: Metadata;
     owner: string;
-    paymentAddr?: string;
-    sellerFeeBps?: number;
     tokenId: string;
     tokenUri?: string;
   }, funds?: Coin[]) => MsgExecuteContractEncodeObject;
@@ -469,15 +465,11 @@ export class Bs721AccountMessageComposer implements Bs721AccountMessage {
   mint = ({
     extension,
     owner,
-    paymentAddr,
-    sellerFeeBps,
     tokenId,
     tokenUri
   }: {
     extension: Metadata;
     owner: string;
-    paymentAddr?: string;
-    sellerFeeBps?: number;
     tokenId: string;
     tokenUri?: string;
   }, funds?: Coin[]): MsgExecuteContractEncodeObject => {
@@ -490,8 +482,6 @@ export class Bs721AccountMessageComposer implements Bs721AccountMessage {
           mint: {
             extension,
             owner,
-            payment_addr: paymentAddr,
-            seller_fee_bps: sellerFeeBps,
             token_id: tokenId,
             token_uri: tokenUri
           }

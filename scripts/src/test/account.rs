@@ -1,9 +1,10 @@
-use crate::deploy::account::BtsgAccountSuite;
 use ::bs721_account::{commands::transcode, ContractError};
 use bs721_account::msg::{Bs721AccountsQueryMsgFns, ExecuteMsgFns};
 use cosmwasm_std::{from_json, StdError};
 use cw_orch::prelude::CallAs;
 use cw_orch::{anyhow, mock::MockBech32, prelude::*};
+
+use crate::BtsgAccountSuite;
 
 #[test]
 fn init() -> anyhow::Result<()> {
@@ -119,7 +120,10 @@ fn mint_and_update() -> anyhow::Result<()> {
         .unwrap_err();
     assert_eq!(
         err.root().to_string(),
-        ContractError::Base(bs721_base::ContractError::Unauthorized {}).to_string()
+        ContractError::Base(bs721_base::ContractError::Ownership(
+            cw_ownable::OwnershipError::NotOwner
+        ))
+        .to_string()
     );
     // passes
     suite.account.add_text_record(token_id, new_record)?;
