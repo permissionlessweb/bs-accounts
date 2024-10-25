@@ -2,21 +2,17 @@ import codegen from "@cosmwasm/ts-codegen";
 
 codegen({
   contracts: [
+    // {
+    //   name: "AccountMarketplace",
+    //   dir: "../contracts/account-market/schema",
+    // },
     {
-      name: "NameMarketplace",
-      dir: "../contracts/marketplace/schema",
+      name: "AccountMinter",
+      dir: "../contracts/bs721-account-minter/schema",
     },
     {
-      name: "NameMinter",
-      dir: "../contracts/name-minter/schema",
-    },
-    {
-      name: "Sg721Name",
-      dir: "../contracts/sg721-name/schema",
-    },
-    {
-      name: "WhitelistUpdatable",
-      dir: "../contracts/whitelist-updatable/schema",
+      name: "Bs721Account",
+      dir: "../contracts/bs721-account/schema",
     },
   ],
   outPath: "./src/",

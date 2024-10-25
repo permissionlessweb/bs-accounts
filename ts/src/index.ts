@@ -4,33 +4,19 @@
 * and run the @cosmwasm/ts-codegen generate command to regenerate this file.
 */
 
-import * as _0 from "./NameMarketplace.types";
-import * as _1 from "./NameMarketplace.client";
-import * as _2 from "./NameMarketplace.message-composer";
-import * as _3 from "./NameMinter.types";
-import * as _4 from "./NameMinter.client";
-import * as _5 from "./NameMinter.message-composer";
-import * as _6 from "./Sg721Name.types";
-import * as _7 from "./Sg721Name.client";
-import * as _8 from "./Sg721Name.message-composer";
-import * as _9 from "./WhitelistUpdatable.types";
-import * as _10 from "./WhitelistUpdatable.client";
-import * as _11 from "./WhitelistUpdatable.message-composer";
+import * as _0 from "./AccountMinter.types";
+import * as _1 from "./AccountMinter.client";
+import * as _2 from "./AccountMinter.message-composer";
+import * as _3 from "./Bs721Account.types";
+import * as _4 from "./Bs721Account.client";
+import * as _5 from "./Bs721Account.message-composer";
 export namespace contracts {
-  export const NameMarketplace = { ..._0,
+  export const AccountMinter = { ..._0,
     ..._1,
     ..._2
   };
-  export const NameMinter = { ..._3,
+  export const Bs721Account = { ..._3,
     ..._4,
     ..._5
-  };
-  export const Sg721Name = { ..._6,
-    ..._7,
-    ..._8
-  };
-  export const WhitelistUpdatable = { ..._9,
-    ..._10,
-    ..._11
   };
 }

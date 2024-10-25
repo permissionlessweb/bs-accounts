@@ -1,1 +1,0 @@
-# Stargaze Name Minter Interface

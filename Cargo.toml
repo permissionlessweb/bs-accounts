@@ -1,60 +1,45 @@
-[workspace]
-members  = ["packages/*", "contracts/*"]
+[workspace] 
+members = [ 
+    "contracts/bs721-account",
+    "contracts/bs721-account-minter",
+    "contracts/bs721-account-marketplace",
+    "packages/*",
+    # "scripts",
+    ]
+# exclude = [
+#   "scripts"
+# ]
+
 resolver = "2"
 
 [workspace.package]
-version    = "2.1.2"
-edition    = "2021"
-homepage   = "https://stargaze.zone"
-repository = "https://github.com/public-awesome/names"
+version = "0.1.0"
+authors = [
+  "Hard-nett <hardnettt@proton.me>",
+]
+edition = "2021"
+homepage   = "https://bitsong.io"
+repository = "https://github.com/bitsongofficial/bs-accounts"
 license    = "Apache-2.0"
 
 [workspace.dependencies]
-cosmwasm-schema  = "1.2.1"
-cosmwasm-std     = "1.2.1"
-cw2              = "1.1.2"
-cw721            = "0.16.0"
-cw721-base       = "0.16.0"
-cw-controllers   = "0.16.0"
-cw-multi-test    = "0.16.0"
-cw-storage-macro = "0.16.0"
-cw-storage-plus  = "0.16.0"
-cw-utils         = "0.16.0"
-schemars         = "0.8.11"
-semver           = "1"
-serde            = { version = "1.0.145", default-features = false, features = ["derive"] }
-sg1              = "0.22.9"
-sg721            = "0.22.9"
-sg721-base       = "0.22.9"
-sg-controllers   = "0.22.9"
-sg-metadata      = "0.22.9"
-sg-multi-test    = "0.22.9"
-sg-std           = "0.22.9"
-thiserror        = "1.0.31"
-sg-name-common   = { path = "./packages/sg-name-common" }
-sg-name          = { path = "./packages/sg-name" }
-sg-name-market   = { path = "./packages/sg-name-market" }
-sg-name-minter   = { path = "./packages/sg-name-minter" }
-name-marketplace = { path = "./contracts/marketplace", features = ["library"] }
-name-minter      = { path = "./contracts/name-minter", features = ["library"] }
-sg721-name       = { path = "./contracts/sg721-name", features = ["library"] }
-
-[profile.release.package.name-minter]
-codegen-units = 1
-incremental   = false
-
-[profile.release.package.sg721-name]
-codegen-units = 1
-incremental   = false
-
-[profile.release.package.name-marketplace]
-codegen-units = 1
-incremental   = false
-
-[profile.release]
-rpath            = false
-lto              = true
-overflow-checks  = true
-opt-level        = 3
-debug            = false
-debug-assertions = false
+bs721                        = { git = "https://github.com/permissionlessweb/bs-nfts", rev = "b43c7f91adf74e458f120d91db2ddab24c441d98" }
+bs721-base                   = { git = "https://github.com/permissionlessweb/bs-nfts", rev = "b43c7f91adf74e458f120d91db2ddab24c441d98"}
+btsg-account = { path = "packages/btsg-account", version = "0.1.0" }
+cosmwasm-schema = "1.5.7"
+cosmwasm-std = { version = "1.5.7", features = [
+  "cosmwasm_1_4",
+] }
+cw2 = "1.1.2"
+cw721  = "0.18.0"
+cw721-base =  { version = "0.18.0", features = ["library"] }
+cw-controllers = "1.1.2"
+cw-orch = "0.24.1"
+cw-orch-core = "1.2.4"
+cw-ownable  = "0.5.1"
+cw-storage-plus = "1.2.0"
+cw-utils = "1.0.3"
+schemars = "0.8.16"
+serde = { version = "1.0.197", default-features = false, features = ["derive"] }
+subtle-encoding = { version = "0.5.1", features = ["bech32-preview"] }
+thiserror = { version = "1.0.58" }
