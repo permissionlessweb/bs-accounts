@@ -26,6 +26,6 @@ tarpaulin-report.*
 
 *.env
 *.wasm
-*.json
+# *.json
 
 **/node_modules/
