@@ -46,7 +46,7 @@ schemars         = { workspace = true }
 semver                       = "1.0"
 cw-controllers.workspace = true
 serde            = { workspace = true }
-btsg-account     = { workspace = true }
+btsg-account     = { path = "../../packages/btsg-account"}
 thiserror        = { workspace = true }
 
 [dev-dependencies]
