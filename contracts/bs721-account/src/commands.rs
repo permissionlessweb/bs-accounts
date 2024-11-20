@@ -163,13 +163,13 @@ pub mod manifest {
         _token_id: String,
     ) -> Result<Response, ContractError> {
         nonpayable(&info)?;
-        // option1: 
-        // ensure owner 
+        // option1:
+        // ensure owner
         // transfer to this contract with reply
         // on reply, call burn function, will work as owner is now this contract
         // save list of addr that has burnt their token to state
 
-        // option2: iterate bs721 to use 
+        // option2: iterate bs721 to use
         Err(ContractError::NotImplemented {})
     }
 
