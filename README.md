@@ -6,7 +6,7 @@ See [API Docs](./API.md)
 
 ## Architecture
 
-Accounts are stored without the TLD so they can be mapped to _any_ Cosmos address. All accounts can be resolved to an address that is derived via the same Cosmos key derivation path (639).
+Accounts are stored without the TLD so they can be mapped to _any_ Cosmos address. All accounts can be resolved to an address that is derived via the same Cosmos key derivation path as Bitsong (639).
 
 When you buy a Bitsong Account, you are really getting a account on _every_ Cosmos chain. Any chain can lookup a account by its local address over IBC. Similarly, any chain can mint a account over IBC that resolves to a local address.
 
@@ -22,8 +22,7 @@ bobo.bitsong  -> bitsong1myec2z2wjpkhmf8tlhkzcjck04w25sc6ymhplz
 
 Chains that use different account types or key derivation paths can have support added later by migrating contracts. Account contracts are community-owned contracts that can be migrated by Bitsong governance.
 
-### Annual Auction
-
+<!-- ### Annual Auction -->
 - [x] When a account is minted it is automatically listed in Account Marketplace
 - [x] Owner can accept the top bid at any time
 <!-- - [ ] After 1 year, owner has to pay 0.5% of the top bid to keep the account
@@ -83,6 +82,16 @@ The secondary marketplace for accounts. Accounts are automatically listed here o
 <!-- ### [Whitelist](./contracts/whitelist-updatable/README.md)
 
 Whitelist allows for flexible updating to add / remove addresses at any point in minting. Also adds helper to account for whitelist minting limits. -->
+
+## Cw-Orchestrator 
+
+To run the integration tests:
+```sh 
+cd scripts/ && cargo test
+```
+
+To learn more about the deployment scripts, [check here](./scripts/README).
+
 
 #### Coverage
 
