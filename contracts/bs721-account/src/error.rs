@@ -51,6 +51,9 @@ pub enum ContractError {
     #[error("Invalid Metadata")]
     InvalidMetadata {},
 
+    #[error("Unauthorized: Not collection minter")]
+    UnauthorizedMinter {},
+
     #[error("Unauthorized: Not contract creator or admin")]
     UnauthorizedCreatorOrAdmin {},
 

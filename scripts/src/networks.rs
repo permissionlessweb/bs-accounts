@@ -97,3 +97,4 @@ pub async fn ping_grpc(url_str: &str) -> anyhow::Result<()> {
     let _ = TcpStream::connect(socket_addr);
     Ok(())
 }
+

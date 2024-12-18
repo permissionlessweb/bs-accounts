@@ -3,6 +3,7 @@ use bs721_account::msg::{Bs721AccountsQueryMsgFns, ExecuteMsgFns};
 use cosmwasm_std::{from_json, StdError};
 use cw_orch::prelude::CallAs;
 use cw_orch::{anyhow, mock::MockBech32, prelude::*};
+use std::error::Error;
 
 use crate::BtsgAccountSuite;
 
@@ -29,6 +30,24 @@ fn mint_and_update() -> anyhow::Result<()> {
 
     // mint token
     let token_id = "Enterprise";
+
+    let err = suite
+        .account
+        .call_as(&not_minter)
+        .mint(
+            btsg_account::Metadata::default(),
+            not_minter.clone(),
+            token_id,
+            None,
+            None,
+            None,
+        )
+        .unwrap_err();
+
+    assert_eq!(
+        err.source().unwrap().to_string(),
+        ContractError::UnauthorizedMinter {}.to_string()
+    );
 
     suite.account.call_as(&minter).mint(
         btsg_account::Metadata::default(),

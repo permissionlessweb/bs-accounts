@@ -103,7 +103,10 @@ pub mod manifest {
         info: MessageInfo,
         msg: Bs721ExecuteMsg<Metadata>,
     ) -> Result<Response, ContractError> {
-        cw_ownable::assert_owner(deps.storage, &info.sender)?;
+        let minter = Bs721AccountContract::default().minter.load(deps.storage)?;
+        if info.sender != minter {
+            return Err(ContractError::UnauthorizedMinter {});
+        }
 
         let (token_id, owner, _token_uri, extension, _seller_fee_bps, _payment_addr) = match msg {
             Bs721ExecuteMsg::Mint {
@@ -160,6 +163,13 @@ pub mod manifest {
         _token_id: String,
     ) -> Result<Response, ContractError> {
         nonpayable(&info)?;
+        // option1:
+        // ensure owner
+        // transfer to this contract with reply
+        // on reply, call burn function, will work as owner is now this contract
+        // save list of addr that has burnt their token to state
+
+        // option2: iterate bs721 to use
         Err(ContractError::NotImplemented {})
     }
 
@@ -307,8 +317,8 @@ pub mod manifest {
     ) -> Result<Response, ContractError> {
         let token_id = account.clone();
 
-        nonpayable(&info)?;
         only_owner(deps.as_ref(), &info.sender, &token_id)?;
+        nonpayable(&info)?;
 
         let mut event = Event::new("update_image_nft")
             .add_attribute("owner", info.sender.to_string())
@@ -340,14 +350,14 @@ pub mod manifest {
         mut record: TextRecord,
     ) -> Result<Response, ContractError> {
         let token_id = account;
+        only_owner(deps.as_ref(), &info.sender, &token_id)?;
+
         let params = SUDO_PARAMS.load(deps.storage)?;
         let max_record_count = params.max_record_count;
-
         // new records should reset verified to None
         record.verified = None;
 
         nonpayable(&info)?;
-        only_owner(deps.as_ref(), &info.sender, &token_id)?;
         validate_record(&record)?;
 
         Bs721AccountContract::default().tokens.update(
@@ -388,9 +398,8 @@ pub mod manifest {
         record_account: String,
     ) -> Result<Response, ContractError> {
         let token_id = account;
-
-        nonpayable(&info)?;
         only_owner(deps.as_ref(), &info.sender, &token_id)?;
+        nonpayable(&info)?;
 
         Bs721AccountContract::default().tokens.update(
             deps.storage,
@@ -421,6 +430,7 @@ pub mod manifest {
         mut record: TextRecord,
     ) -> Result<Response, ContractError> {
         let token_id = account;
+        only_owner(deps.as_ref(), &info.sender, &token_id)?;
         let params = SUDO_PARAMS.load(deps.storage)?;
         let max_record_count = params.max_record_count;
 
@@ -428,7 +438,6 @@ pub mod manifest {
         record.verified = None;
 
         nonpayable(&info)?;
-        only_owner(deps.as_ref(), &info.sender, &token_id)?;
         validate_record(&record)?;
 
         Bs721AccountContract::default().tokens.update(
@@ -505,7 +514,7 @@ pub mod manifest {
         address: String,
     ) -> Result<Response, ContractError> {
         nonpayable(&info)?;
-
+        // minter only function
         let minter = Bs721AccountContract::default().minter(deps.as_ref())?;
         if info.sender != minter.minter {
             return Err(ContractError::OwnershipError(

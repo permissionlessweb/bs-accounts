@@ -53,6 +53,8 @@ pub mod entry {
             },
         )?;
         let api = deps.api;
+        // functions as admin for verification specific features.
+        // This admin can never access token owner specific functions for btsg-accounts.
         VERIFIER.set(deps.branch(), maybe_addr(api, msg.verifier)?)?;
         ACCOUNT_MARKETPLACE.save(deps.storage, &msg.marketplace)?;
 
@@ -75,42 +77,53 @@ pub mod entry {
     ) -> Result<Response, ContractError> {
         let api = deps.api;
         match msg {
+            // minter only function
             crate::msg::ExecuteMsg::SetMarketplace { address } => {
                 set_profile_marketplace(deps, info, address)
             }
+            // only account token owner authorized
             crate::msg::ExecuteMsg::AssociateAddress { account, address } => {
                 associate_address(deps, info, account, address)
             }
+            // only account token owner authorized
             crate::msg::ExecuteMsg::UpdateImageNft { account, nft } => {
                 update_image_nft(deps, info, account, nft)
             }
+            // only account token owner authorized
             crate::msg::ExecuteMsg::AddTextRecord { account, record } => {
                 execute_add_text_record(deps, info, account, record)
             }
+            // only account token owner authorized
             crate::msg::ExecuteMsg::RemoveTextRecord {
                 account,
                 record_account,
             } => execute_remove_text_record(deps, info, account, record_account),
+            // only account token owner authorized
             crate::msg::ExecuteMsg::UpdateTextRecord { account, record } => {
                 execute_update_text_record(deps, info, account, record)
             }
+            // only verified authorized
             crate::msg::ExecuteMsg::VerifyTextRecord {
                 account,
                 record_account,
                 result,
             } => execute_verify_text_record(deps, info, account, record_account, result),
+            // only verified authorized
             crate::msg::ExecuteMsg::UpdateVerifier { verifier } => {
                 Ok(VERIFIER.execute_update_admin(deps, info, maybe_addr(api, verifier)?)?)
             }
+            // only account token owner authorized
             crate::msg::ExecuteMsg::TransferNft {
                 recipient,
                 token_id,
             } => execute_transfer_nft(deps, env, info, recipient, token_id),
+            // only account token owner authorized
             ExecuteMsg::SendNft {
                 contract,
                 token_id,
                 msg,
             } => execute_send_nft(deps, env, info, contract, token_id, msg),
+            // only collection minter authorized
             ExecuteMsg::Mint {
                 token_id,
                 owner,
