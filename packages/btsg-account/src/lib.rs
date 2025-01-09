@@ -1,3 +1,4 @@
+pub mod minter;
 pub const MAX_TEXT_LENGTH: u32 = 512;
 pub const NATIVE_DENOM: &str = "ubtsg";
 pub const SECONDS_PER_YEAR: u64 = 31536000;

@@ -86,6 +86,7 @@ pub struct AskIndicies<'a> {
     pub id: UniqueIndex<'a, u64, Ask, AskKey>,
     /// Index by seller
     pub seller: MultiIndex<'a, Addr, Ask, AskKey>,
+
 }
 
 pub fn asks<'a>() -> IndexedMap<'a, AskKey, Ask, AskIndicies<'a>> {
@@ -130,28 +131,25 @@ pub fn bid_key(token_id: &str, bidder: &Addr) -> BidKey {
 /// Defines indices for accessing bids
 #[index_list(Bid)]
 pub struct BidIndicies<'a> {
-    pub price: MultiIndex<'a, u128, Bid, BidKey>,
     pub bidder: MultiIndex<'a, Addr, Bid, BidKey>,
-    pub created_time: MultiIndex<'a, u64, Bid, BidKey>,
+    pub price: MultiIndex<'a, (String, u128), Bid, BidKey>,
+    pub created_time: MultiIndex<'a, (String, u64), Bid, BidKey>,
 }
+
 
 pub fn bids<'a>() -> IndexedMap<'a, BidKey, Bid, BidIndicies<'a>> {
     let indexes = BidIndicies {
+        bidder: MultiIndex::new(|_pk: &[u8], b: &Bid| b.bidder.clone(), "b2", "b2__b"),
         price: MultiIndex::new(
-            |_pk: &[u8], d: &Bid| d.amount.u128(),
-            "bids",
-            "bids__collection_price",
-        ),
-        bidder: MultiIndex::new(
-            |_pk: &[u8], d: &Bid| d.bidder.clone(),
+            |_pk: &[u8], b: &Bid| (b.token_id.clone(), b.amount.u128()),
             "bids",
             "bids__bidder",
         ),
         created_time: MultiIndex::new(
-            |_pk: &[u8], d: &Bid| d.created_time.seconds(),
+            |_pk: &[u8], b: &Bid| (b.token_id.clone(), b.created_time.seconds()),
             "bids",
             "bids__time",
         ),
     };
-    IndexedMap::new("bids", indexes)
+    IndexedMap::new("b2", indexes)
 }

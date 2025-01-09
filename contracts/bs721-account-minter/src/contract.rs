@@ -1,3 +1,4 @@
+use btsg_account::minter::{Config, SudoParams};
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
@@ -11,9 +12,7 @@ use cw_utils::parse_reply_instantiate_data;
 use crate::commands::*;
 use crate::error::ContractError;
 use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg, SudoMsg};
-use crate::state::{
-    Config, SudoParams, ACCOUNT_COLLECTION, ACCOUNT_MARKETPLACE, CONFIG, PAUSED, SUDO_PARAMS,
-};
+use crate::state::{ACCOUNT_COLLECTION, ACCOUNT_MARKETPLACE, CONFIG, PAUSED, SUDO_PARAMS};
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:bs721-account-minter";

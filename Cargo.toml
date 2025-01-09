@@ -4,7 +4,7 @@ members = [
     "contracts/bs721-account-minter",
     "contracts/bs721-account-marketplace",
     "packages/*",
-    # "scripts",
+    "scripts",
     ]
 # exclude = [
 #   "scripts"

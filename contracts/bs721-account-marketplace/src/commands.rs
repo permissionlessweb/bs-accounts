@@ -385,7 +385,7 @@ fn finalize_sale(
     // println!("1.1 finalize sale ----------------------------");
     payout(deps, price, ask.seller.clone(), res)?;
 
-    let cw721_transfer_msg = Bs721ExecuteMsg::<Metadata, Empty>::TransferNft {
+    let cw721_transfer_msg: Bs721ExecuteMsg<Metadata, Empty> = Bs721ExecuteMsg::TransferNft {
         token_id: ask.token_id.to_string(),
         recipient: buyer.to_string(),
     };
@@ -632,9 +632,9 @@ pub fn query_bids_sorted_by_price(
 ) -> StdResult<Vec<Bid>> {
     let limit = limit.unwrap_or(DEFAULT_QUERY_LIMIT).min(MAX_QUERY_LIMIT) as usize;
 
-    let start: Option<Bound<(u128, BidKey)>> = start_after.map(|offset| {
+    let start = start_after.map(|offset| {
         Bound::exclusive((
-            offset.price.u128(),
+            (offset.token_id.clone(), offset.price.u128()),
             bid_key(&offset.token_id, &offset.bidder),
         ))
     });
@@ -655,9 +655,9 @@ pub fn reverse_query_bids_sorted_by_price(
 ) -> StdResult<Vec<Bid>> {
     let limit = limit.unwrap_or(DEFAULT_QUERY_LIMIT).min(MAX_QUERY_LIMIT) as usize;
 
-    let end: Option<Bound<(u128, BidKey)>> = start_before.map(|offset| {
+    let end = start_before.map(|offset| {
         Bound::exclusive((
-            offset.price.u128(),
+            (offset.token_id.clone(), offset.price.u128()),
             bid_key(&offset.token_id, &offset.bidder),
         ))
     });

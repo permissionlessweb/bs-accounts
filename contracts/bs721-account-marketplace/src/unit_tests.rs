@@ -89,7 +89,6 @@ fn setup_contract(deps: DepsMut) {
         trading_fee_bps: TRADING_FEE_BASIS_POINTS,
         min_price: Uint128::from(5u128),
         ask_interval: 60,
-
         valid_bid_query_limit: 100,
     };
     let info = mock_info(CREATOR, &[]);

@@ -1,7 +1,7 @@
+use btsg_account::minter::{Config, SudoParams};
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Addr, Uint128};
 
-use crate::state::{Config, SudoParams};
 use cw_ownable::cw_ownable_execute;
 
 #[cw_serde]

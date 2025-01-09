@@ -835,7 +835,9 @@ mod collection {
 }
 mod public_start_time {
 
-    use bs721_account_minter::state::Config;
+
+
+    use btsg_account::minter::Config;
 
     use super::*;
 

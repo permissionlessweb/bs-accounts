@@ -1,5 +1,6 @@
 # Bitsong Accounts: A Tokenized Account Framework
 
+This implementation is a compatible instance of sg-names for Bitsong. To the stargaze contributors, thank you for setting the tone with these!
 ## API Docs
 
 See [API Docs](./API.md)
