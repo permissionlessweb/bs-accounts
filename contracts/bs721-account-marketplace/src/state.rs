@@ -1,7 +1,7 @@
+use bs_controllers::Hooks;
 use cosmwasm_std::{Addr, Decimal, StdResult, Storage, Timestamp, Uint128};
-use cw_controllers::Hooks;
 use cw_storage_macro::index_list;
-use cw_storage_plus::{IndexedMap, Item, Map, MultiIndex, UniqueIndex};
+use cw_storage_plus::{IndexedMap, Item, MultiIndex, UniqueIndex};
 
 // bps fee can not exceed 100%
 pub const MAX_FEE_BPS: u64 = 10000;
@@ -38,9 +38,6 @@ pub const ACCOUNT_MINTER: Item<Addr> = Item::new("am");
 pub const ACCOUNT_COLLECTION: Item<Addr> = Item::new("ac");
 pub const VERSION_CONTROL: Item<Addr> = Item::new("vc");
 
-/// (renewal_time (in seconds), id) -> [token_id]
-pub const RENEWAL_QUEUE: Map<(u64, u64), TokenId> = Map::new("rq");
-
 pub const ASK_COUNT: Item<u64> = Item::new("ask-count");
 pub const IS_SETUP: Item<bool> = Item::new("is");
 
@@ -66,8 +63,6 @@ pub struct Ask {
     pub token_id: TokenId,
     pub id: u64,
     pub seller: Addr,
-    pub renewal_time: Timestamp,
-    pub renewal_fund: Uint128,
 }
 
 /// Primary key for asks: token_id
@@ -86,10 +81,9 @@ pub struct AskIndicies<'a> {
     pub id: UniqueIndex<'a, u64, Ask, AskKey>,
     /// Index by seller
     pub seller: MultiIndex<'a, Addr, Ask, AskKey>,
-
 }
 
-pub fn asks<'a>() -> IndexedMap<'a, AskKey, Ask, AskIndicies<'a>> {
+pub fn asks<'a>() -> IndexedMap<AskKey, Ask, AskIndicies<'a>> {
     let indexes = AskIndicies {
         id: UniqueIndex::new(|d| d.id, "ask__id"),
         seller: MultiIndex::new(
@@ -136,8 +130,7 @@ pub struct BidIndicies<'a> {
     pub created_time: MultiIndex<'a, (String, u64), Bid, BidKey>,
 }
 
-
-pub fn bids<'a>() -> IndexedMap<'a, BidKey, Bid, BidIndicies<'a>> {
+pub fn bids<'a>() -> IndexedMap<BidKey, Bid, BidIndicies<'a>> {
     let indexes = BidIndicies {
         bidder: MultiIndex::new(|_pk: &[u8], b: &Bid| b.bidder.clone(), "b2", "b2__b"),
         price: MultiIndex::new(

@@ -44,10 +44,6 @@ impl<Chain: CwEnv> cw_orch::contract::Deploy<Chain> for BtsgAccountSuite<Chain> 
         Ok(suite)
     }
 
-    fn deployed_state_file_path() -> Option<String> {
-        None
-    }
-
     fn get_contracts_mut(&mut self) -> Vec<Box<&mut dyn ContractInstance<Chain>>> {
         vec![Box::new(&mut self.account), Box::new(&mut self.minter)]
     }
@@ -69,7 +65,7 @@ impl<Chain: CwEnv> cw_orch::contract::Deploy<Chain> for BtsgAccountSuite<Chain> 
                 valid_bid_query_limit: 30,
             },
             Some(&Addr::unchecked(data.to_string())),
-            None,
+            &[],
         )?;
 
         let bs721_account = suite
@@ -85,7 +81,7 @@ impl<Chain: CwEnv> cw_orch::contract::Deploy<Chain> for BtsgAccountSuite<Chain> 
                     marketplace_addr: suite.market.addr_str()?,
                 },
                 Some(&Addr::unchecked(data.clone())),
-                None,
+                &[],
             )?
             .event_attr_value("wasm", "bs721_account_address")?;
 

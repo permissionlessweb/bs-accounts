@@ -7,6 +7,7 @@ pub const SECONDS_PER_YEAR: u64 = 31536000;
 #[cosmwasm_schema::cw_serde]
 #[derive(Default)]
 pub struct Metadata {
+    pub account_ownership: bool,
     pub image_nft: Option<NFT>,
     pub records: Vec<TextRecord>,
 }
@@ -15,6 +16,13 @@ impl Metadata {
     pub fn into_json_string(self: &Metadata) -> Result<String, cosmwasm_std::StdError> {
         let json_vec = cosmwasm_std::to_json_vec(&self)?;
         String::from_utf8(json_vec).map_err(cosmwasm_std::StdError::from)
+    }
+    pub fn default_with_account() -> Self {
+        Self {
+            account_ownership: true,
+            image_nft: None,
+            records: vec![],
+        }
     }
 }
 
@@ -29,6 +37,12 @@ pub struct NFT {
 impl NFT {
     pub fn into_json_string(self: &NFT) -> String {
         String::from_utf8(cosmwasm_std::to_json_vec(&self).unwrap_or_default()).unwrap_or_default()
+    }
+    pub fn new(deps: cosmwasm_std::Deps, collection: String, token_id: String) -> cosmwasm_std::StdResult<Self> {
+        Ok(Self {
+            collection: deps.api.addr_validate(&collection)?,
+            token_id,
+        })
     }
 }
 

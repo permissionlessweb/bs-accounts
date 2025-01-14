@@ -47,7 +47,7 @@ impl BtsgAccountSuite<MockBech32> {
                 // operator: mock.sender_addr().to_string(),
             },
             None,
-            None,
+            &[],
         )?;
         // Account Minter
         // On instantitate, bs721-account contract is created by minter contract.
@@ -66,7 +66,7 @@ impl BtsgAccountSuite<MockBech32> {
                     base_price: BASE_PRICE.into(),
                 },
                 None,
-                None,
+                &[],
             )?
             .event_attr_value("wasm", "bs721_account_address")?;
 
@@ -116,7 +116,7 @@ impl BtsgAccountSuite<MockBech32> {
             &bs721_account_minter::msg::ExecuteMsg::MintAndList {
                 account: account.to_string(),
             },
-            Some(&name_fee),
+            &name_fee,
         )?;
         Ok(())
     }
@@ -141,7 +141,7 @@ impl BtsgAccountSuite<MockBech32> {
             &bs721_account_marketplace::msgs::ExecuteMsg::SetBid {
                 token_id: account.into(),
             },
-            Some(&bid_amnt),
+            &bid_amnt,
         )?;
 
         // query if bid exists
@@ -150,7 +150,7 @@ impl BtsgAccountSuite<MockBech32> {
             .bid(bidder.to_string(), account.into())?
             .unwrap();
         assert_eq!(res.token_id, account.to_string());
-        assert_eq!(res.bidder, bidder.to_string());
+        assert_eq!(res.bidder, bidder);
         assert_eq!(res.amount, Uint128::from(amount));
         Ok(())
     }
@@ -172,7 +172,7 @@ pub async fn assert_wallet_balance(mut chains: Vec<ChainInfoOwned>) -> Vec<Chain
         let fee = (GAS_TO_DEPLOY as f64 * gas_price) as u128;
         let bank = queriers::Bank::new_async(chain.channel());
         let balance = bank
-            ._balance(chain.sender_addr(), Some(gas_denom.clone()))
+            ._balance(&chain.sender_addr(), Some(gas_denom.clone()))
             .await
             .unwrap()
             .clone()[0]

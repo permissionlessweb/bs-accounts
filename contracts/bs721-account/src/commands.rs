@@ -16,6 +16,7 @@ use btsg_account::{TextRecord, MAX_TEXT_LENGTH, NFT};
 use subtle_encoding::bech32;
 
 pub mod manifest {
+    use abstract_std::objects::ownership::{self, Ownership};
     use bs721::Expiration;
     use bs721_base::state::TokenInfo;
     use btsg_account::Metadata;
@@ -26,8 +27,10 @@ pub mod manifest {
     pub fn associate_address(
         deps: DepsMut,
         info: MessageInfo,
+        contract: Addr,
         account: String,
         address: Option<String>,
+        btsg_account: bool,
     ) -> Result<Response, ContractError> {
         only_owner(deps.as_ref(), &info.sender, &account)?;
 
@@ -41,20 +44,53 @@ pub mod manifest {
                 }
             })?;
 
+        // default ownership object. Not used unless bitsong_account is true.
+        let mut ownership: Ownership<String> = Ownership {
+            owner: ownership::GovernanceDetails::Renounced {},
+            pending_owner: None,
+            pending_expiry: None,
+        };
+
         // println!("// 2. validate the new address");
         let token_uri = address
             .clone()
             .map(|address| {
-                deps.api
-                    .addr_validate(&address)
-                    .map(|addr| validate_address(deps.as_ref(), &info.sender, addr))?
+                if btsg_account {
+                    // confirm this token is still set as owner of account
+                    let owner: Ownership<String> = deps.querier.query_wasm_smart(
+                        &address,
+                        &abstract_std::account::QueryMsg::Ownership {},
+                    )?;
+                    match owner.owner.clone() {
+                        ownership::GovernanceDetails::NFT {
+                            collection_addr,
+                            token_id,
+                        } => {
+                            if address != token_id || collection_addr != contract.to_string() {
+                                return Err(
+                                    ContractError::IncorrectBitsongAccountOwnershipToken {},
+                                );
+                            } else {
+                                ownership = owner
+                            }
+                            Ok(collection_addr)
+                        }
+
+                        _ => return Err(ContractError::AccountIsNotTokenized {}),
+                    }
+                } else {
+                    let addr = deps.api.addr_validate(&address)?;
+                    validate_address(deps.as_ref(), &info.sender, addr).map(|_| address)
+                }
             })
             .transpose()?;
 
         // println!("// 3. look up prev account if it exists for the new address");
-        let old_account = token_uri
-            .clone()
-            .and_then(|addr| REVERSE_MAP.may_load(deps.storage, &addr).unwrap_or(None));
+        let old_account = token_uri.clone().and_then(|addr: String| {
+            REVERSE_MAP
+                .may_load(deps.storage, &Addr::unchecked(addr))
+                .unwrap_or(None)
+        });
 
         // println!("// 4. remove old token_uri / address from previous account");
         old_account.map(|token_id| {
@@ -76,6 +112,10 @@ pub mod manifest {
             |token| match token {
                 Some(mut token_info) => {
                     token_info.token_uri = token_uri.clone().map(|addr| addr.to_string());
+                    // save ownership metadata if set
+                    if btsg_account {
+                        token_info.extension.account_ownership = true
+                    }
                     Ok(token_info)
                 }
                 None => Err(ContractError::AccountNotFound {}),
@@ -83,9 +123,9 @@ pub mod manifest {
         )?;
 
         // println!("// 6. update new manager in token metadata");
-        // println!("// 7. save new reverse map entry");
 
-        token_uri.map(|addr| REVERSE_MAP.save(deps.storage, &addr, &account));
+        // println!("// 7. save new reverse map entry");
+        token_uri.map(|addr| REVERSE_MAP.save(deps.storage, &Addr::unchecked(addr), &account));
 
         let mut event = Event::new("associate-address")
             .add_attribute("account", account)
@@ -214,31 +254,62 @@ pub mod manifest {
         Ok(update_ask_msg)
     }
 
-    fn reset_token_metadata_and_reverse_map(deps: &mut DepsMut, token_id: &str) -> StdResult<()> {
+    fn reset_token_metadata_and_reverse_map(
+        deps: &mut DepsMut,
+        contract_addr: Addr,
+        account: &str,
+    ) -> StdResult<()> {
+        let mut extension = Metadata::default();
         let mut token = Bs721AccountContract::default()
             .tokens
-            .load(deps.storage, token_id)?;
+            .load(deps.storage, account)?;
+
+        if let Some(tokenuri) = token.token_uri.clone() {
+            if token.extension.account_ownership {
+                // confirm this token is still set as owner of account
+                let owner: Ownership<String> = deps
+                    .querier
+                    .query_wasm_smart(tokenuri, &abstract_std::account::QueryMsg::Ownership {})?;
+
+                match owner.owner {
+                    ownership::GovernanceDetails::NFT {
+                        collection_addr,
+                        token_id,
+                    } => {
+                        if collection_addr == contract_addr.to_string() && token_id == account {
+                            extension = Metadata::default_with_account();
+                        }
+                    }
+                    _ => {}
+                }
+            }
+        }
 
         // Reset image, records
-        token.extension = Metadata::default();
         Bs721AccountContract::default()
             .tokens
-            .save(deps.storage, token_id, &token)?;
+            .save(deps.storage, account, &token)?;
 
-        remove_reverse_mapping(deps, token_id)?;
+        remove_reverse_mapping(deps, account, extension)?;
 
         Ok(())
     }
 
-    fn remove_reverse_mapping(deps: &mut DepsMut, token_id: &str) -> StdResult<()> {
+    fn remove_reverse_mapping(
+        deps: &mut DepsMut,
+        token_id: &str,
+        metadata: Metadata,
+    ) -> StdResult<()> {
         let mut token = Bs721AccountContract::default()
             .tokens
             .load(deps.storage, token_id)?;
 
-        // remove reverse mapping if exists
-        if let Some(token_uri) = token.token_uri {
-            REVERSE_MAP.remove(deps.storage, &Addr::unchecked(token_uri));
-            token.token_uri = None;
+        // keep reverse mapping if tokenized ownership has been validated
+        if let Some(token_uri) = token.token_uri.clone() {
+            if !metadata.account_ownership {
+                REVERSE_MAP.remove(deps.storage, &Addr::unchecked(token_uri));
+                token.token_uri = None;
+            }
         }
 
         Bs721AccountContract::default()
@@ -258,7 +329,7 @@ pub mod manifest {
     ) -> Result<WasmMsg, ContractError> {
         let update_ask_msg = update_ask_on_marketplace(deps.as_ref(), token_id, recipient.clone())?;
 
-        reset_token_metadata_and_reverse_map(&mut deps, token_id)?;
+        reset_token_metadata_and_reverse_map(&mut deps, env.contract.address.clone(), token_id)?;
 
         let msg = bs721_base::ExecuteMsg::TransferNft {
             recipient: recipient.to_string(),
@@ -291,7 +362,7 @@ pub mod manifest {
         let update_ask_msg =
             update_ask_on_marketplace(deps.as_ref(), &token_id, contract_addr.clone())?;
 
-        reset_token_metadata_and_reverse_map(&mut deps, &token_id)?;
+        reset_token_metadata_and_reverse_map(&mut deps, env.contract.address.clone(), &token_id)?;
 
         let msg = bs721_base::ExecuteMsg::SendNft {
             contract: contract_addr.to_string(),
@@ -516,7 +587,7 @@ pub mod manifest {
         nonpayable(&info)?;
         // minter only function
         let minter = Bs721AccountContract::default().minter(deps.as_ref())?;
-        if info.sender != minter.minter {
+        if info.sender.to_string() != minter.minter {
             return Err(ContractError::OwnershipError(
                 cw_ownable::OwnershipError::NotOwner,
             ));
@@ -677,8 +748,18 @@ fn validate_address(deps: Deps, sender: &Addr, addr: Addr) -> Result<Addr, Contr
     Ok(addr)
 }
 
-pub fn sudo_update_params(deps: DepsMut, max_record_count: u32) -> Result<Response, ContractError> {
-    SUDO_PARAMS.save(deps.storage, &SudoParams { max_record_count })?;
+pub fn sudo_update_params(
+    deps: DepsMut,
+    max_record_count: u32,
+    // registry_addr: Addr,
+) -> Result<Response, ContractError> {
+    SUDO_PARAMS.save(
+        deps.storage,
+        &SudoParams {
+            max_record_count,
+            // registry_addr,
+        },
+    )?;
 
     let event =
         Event::new("update-params").add_attribute("max_record_count", max_record_count.to_string());

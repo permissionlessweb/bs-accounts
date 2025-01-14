@@ -50,6 +50,7 @@ pub mod entry {
             deps.storage,
             &SudoParams {
                 max_record_count: 10,
+                // registry_addr: msg.registry,
             },
         )?;
         let api = deps.api;
@@ -82,9 +83,18 @@ pub mod entry {
                 set_profile_marketplace(deps, info, address)
             }
             // only account token owner authorized
-            crate::msg::ExecuteMsg::AssociateAddress { account, address } => {
-                associate_address(deps, info, account, address)
-            }
+            crate::msg::ExecuteMsg::AssociateAddress {
+                account,
+                address,
+                btsg_account,
+            } => associate_address(
+                deps,
+                info,
+                env.contract.address,
+                account,
+                address,
+                btsg_account,
+            ),
             // only account token owner authorized
             crate::msg::ExecuteMsg::UpdateImageNft { account, nft } => {
                 update_image_nft(deps, info, account, nft)
@@ -175,9 +185,10 @@ pub mod entry {
     #[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
     pub fn sudo(deps: DepsMut, _env: Env, msg: SudoMsg) -> Result<Response, ContractError> {
         match msg {
-            SudoMsg::UpdateParams { max_record_count } => {
-                sudo_update_params(deps, max_record_count)
-            }
+            SudoMsg::UpdateParams {
+                max_record_count,
+                // registry_addr,
+            } => sudo_update_params(deps, max_record_count),
         }
     }
 }

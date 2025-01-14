@@ -25,12 +25,13 @@ pub enum ExecuteMsg<T> {
     /// Set an address for account reverse lookup and updates token_uri
     /// Can be an EOA or a contract address.
     AssociateAddress {
+        btsg_account: bool,
         account: String,
         address: Option<String>,
     },
     /// Update image NFT
     UpdateImageNft { account: String, nft: Option<NFT> },
-    /// Add text record ex: twitter handle, discord account, etc
+    /// Add text record ex: abstract account, twitter handle, discord account, etc
     AddTextRecord { account: String, record: TextRecord },
     /// Remove text record ex: twitter handle, discord account, etc
     RemoveTextRecord {
@@ -305,5 +306,8 @@ impl From<Bs721AccountsQueryMsg> for bs721_base::msg::QueryMsg<Bs721AccountsQuer
 
 #[cw_serde]
 pub enum SudoMsg {
-    UpdateParams { max_record_count: u32 },
+    UpdateParams {
+        max_record_count: u32,
+        // registry_addr: Addr,
+    },
 }

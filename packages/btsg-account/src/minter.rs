@@ -18,7 +18,7 @@ pub struct SudoParams {
 #[cosmwasm_schema::cw_serde]
 #[derive(cosmwasm_schema::QueryResponses)]
 pub enum BsAccountMinterQueryMsg {
-    #[returns(cw_controllers::AdminResponse)]
+    #[returns(cw_ownable::Ownership<cosmwasm_std::Addr>)]
     Admin {},
     #[returns(Vec<cosmwasm_std::Addr>)]
     Whitelists {},

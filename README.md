@@ -7,6 +7,13 @@ See [API Docs](./API.md)
 
 ## Architecture
 
+### Account Marketplace
+### Account Minter
+### Account Actions
+- `AssociateAddress`: Maps bitsong account smart contract to a token id.
+- `TextRecord`: List of text records that can be verified.
+
+### 
 Accounts are stored without the TLD so they can be mapped to _any_ Cosmos address. All accounts can be resolved to an address that is derived via the same Cosmos key derivation path as Bitsong (639).
 
 When you buy a Bitsong Account, you are really getting a account on _every_ Cosmos chain. Any chain can lookup a account by its local address over IBC. Similarly, any chain can mint a account over IBC that resolves to a local address.

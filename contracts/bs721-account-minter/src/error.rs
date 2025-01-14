@@ -1,5 +1,5 @@
-use cosmwasm_std::{StdError, Timestamp};
-use cw_controllers::AdminError;
+use cosmwasm_std::{Instantiate2AddressError, StdError, Timestamp};
+use bs_controllers::AdminError;
 use cw_ownable::OwnershipError;
 use cw_utils::PaymentError;
 use thiserror::Error;
@@ -17,6 +17,9 @@ pub enum ContractError {
 
     #[error("{0}")]
     OwnershipError(#[from] OwnershipError),
+
+    #[error("{0}")]
+    Instantiate2AddressError(#[from] Instantiate2AddressError),
 
     #[error("Account Minter: Unauthorized")]
     Unauthorized {},

@@ -1,6 +1,6 @@
 [package]
 name = "bs721-account-marketplace"
-version = "0.1.0"
+version  = { workspace = true }
 authors = ["hard-nett <hardnettt@proton.me>"]
 edition = "2021"
 
@@ -44,7 +44,7 @@ cw-orch          = { workspace = true }
 cw-ownable       = { workspace = true }
 schemars         = { workspace = true }
 semver                       = "1.0"
-cw-controllers.workspace = true
+bs-controllers.workspace = true
 serde            = { workspace = true }
 btsg-account     = { path = "../../packages/btsg-account"}
 thiserror        = { workspace = true }

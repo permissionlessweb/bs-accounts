@@ -1,5 +1,5 @@
 use cosmwasm_std::StdError;
-use cw_controllers::AdminError;
+use bs_controllers::AdminError;
 use cw_ownable::OwnershipError;
 use cw_utils::PaymentError;
 use thiserror::Error;
@@ -20,6 +20,12 @@ pub enum ContractError {
 
     #[error("{0}")]
     Base(#[from] bs721_base::ContractError),
+
+    #[error("AccountIsNotTokenized")]
+    AccountIsNotTokenized {},
+
+    #[error("IncorrectBitsongAccountOwnershipToken")]
+    IncorrectBitsongAccountOwnershipToken {},
 
     #[error("AccountNotFound")]
     AccountNotFound {},

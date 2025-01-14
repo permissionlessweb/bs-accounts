@@ -5,11 +5,11 @@ use crate::{
     // hooks::{prepare_ask_hook, prepare_bid_hook, prepare_sale_hook},
     state::*,
 };
-use btsg_account::{charge_fees, Metadata, NATIVE_DENOM, SECONDS_PER_YEAR};
+use btsg_account::{charge_fees, Metadata, NATIVE_DENOM};
 
 use cosmwasm_std::{
     coin, coins, to_json_binary, Addr, BankMsg, Decimal, Deps, DepsMut, Empty, Env, Event,
-    MessageInfo, Order, Response, StdError, StdResult, Storage, SubMsg, SubMsgResult, Timestamp,
+    Fraction, MessageInfo, Order, Response, StdError, StdResult, Storage, SubMsg, SubMsgResult,
     Uint128, WasmMsg,
 };
 use std::marker::PhantomData;
@@ -81,16 +81,8 @@ pub fn execute_set_ask(
         token_id: token_id.to_string(),
         id: increment_asks(deps.storage)?,
         seller: seller.clone(),
-        renewal_time,
-        renewal_fund: Uint128::zero(),
     };
     store_ask(deps.storage, &ask)?;
-
-    RENEWAL_QUEUE.save(
-        deps.storage,
-        (renewal_time.seconds(), ask.id),
-        &token_id.to_string(),
-    )?;
 
     let hook = prepare_ask_hook(deps.as_ref(), &ask, HookAction::Create)?;
 
@@ -130,8 +122,6 @@ pub fn execute_remove_ask(
     let ask = asks().load(deps.storage, key.clone())?;
     asks().remove(deps.storage, key)?;
 
-    RENEWAL_QUEUE.remove(deps.storage, (ask.renewal_time.seconds(), ask.id));
-
     let hook = prepare_ask_hook(deps.as_ref(), &ask, HookAction::Delete)?;
 
     let event = Event::new("remove-ask").add_attribute("token_id", token_id);
@@ -156,14 +146,6 @@ pub fn execute_update_ask(
 
     // refund any renewal funds and update the seller
     let mut ask = asks().load(deps.storage, ask_key(token_id))?;
-    if !ask.renewal_fund.is_zero() {
-        let msg = BankMsg::Send {
-            to_address: ask.seller.to_string(),
-            amount: coins(ask.renewal_fund.u128(), NATIVE_DENOM),
-        };
-        res = res.add_message(msg);
-        ask.renewal_fund = Uint128::zero();
-    }
     ask.seller = seller.clone();
     asks().save(deps.storage, ask_key(token_id), &ask)?;
 
@@ -281,24 +263,7 @@ pub fn execute_accept_bid(
     // Remove accepted bid
     bids().remove(deps.storage, bid_key)?;
 
-    // Update renewal queue
-    let renewal_time = env.block.time.plus_seconds(SECONDS_PER_YEAR);
-    RENEWAL_QUEUE.save(
-        deps.storage,
-        (renewal_time.seconds(), ask.id),
-        &token_id.to_string(),
-    )?;
-
     let mut res = Response::new();
-
-    // Return renewal funds if there's any
-    if !ask.renewal_fund.is_zero() {
-        let msg = BankMsg::Send {
-            to_address: ask.seller.to_string(),
-            amount: coins(ask.renewal_fund.u128(), NATIVE_DENOM),
-        };
-        res = res.add_message(msg);
-    }
 
     // Transfer funds and NFT
     finalize_sale(
@@ -314,8 +279,6 @@ pub fn execute_accept_bid(
         token_id: token_id.to_string(),
         id: ask.id,
         seller: bidder.clone(),
-        renewal_time,
-        renewal_fund: Uint128::zero(),
     };
     store_ask(deps.storage, &ask)?;
 
@@ -325,53 +288,6 @@ pub fn execute_accept_bid(
         .add_attribute("price", bid.amount.to_string());
 
     Ok(res.add_event(event))
-}
-
-pub fn execute_fund_renewal(
-    deps: DepsMut,
-    info: MessageInfo,
-    token_id: &str,
-) -> Result<Response, ContractError> {
-    let payment = must_pay(&info, NATIVE_DENOM)?;
-
-    let mut ask = asks().load(deps.storage, ask_key(token_id))?;
-    ask.renewal_fund += payment;
-    asks().save(deps.storage, ask_key(token_id), &ask)?;
-
-    let event = Event::new("fund-renewal")
-        .add_attribute("token_id", token_id)
-        .add_attribute("payment", payment);
-    Ok(Response::new().add_event(event))
-}
-
-pub fn execute_refund_renewal(
-    deps: DepsMut,
-    info: MessageInfo,
-    token_id: &str,
-) -> Result<Response, ContractError> {
-    nonpayable(&info)?;
-
-    let mut ask = asks().load(deps.storage, ask_key(token_id))?;
-
-    if ask.seller != info.sender {
-        return Err(ContractError::Unauthorized {});
-    }
-    if ask.renewal_fund.is_zero() {
-        return Err(ContractError::NoRenewalFund {});
-    }
-
-    let msg = BankMsg::Send {
-        to_address: ask.seller.to_string(),
-        amount: vec![coin(ask.renewal_fund.u128(), NATIVE_DENOM)],
-    };
-
-    ask.renewal_fund = Uint128::zero();
-    asks().save(deps.storage, ask_key(token_id), &ask)?;
-
-    let event = Event::new("refund-renewal")
-        .add_attribute("token_id", token_id)
-        .add_attribute("refund", ask.renewal_fund);
-    Ok(Response::new().add_event(event).add_message(msg))
 }
 
 /// Transfers funds and NFT, updates bid
@@ -421,7 +337,10 @@ fn payout(
 ) -> StdResult<()> {
     let params = SUDO_PARAMS.load(deps.storage)?;
 
-    let fee = payment * params.trading_fee_percent;
+    let fee = payment.multiply_ratio(
+        params.trading_fee_percent.numerator(),
+        params.trading_fee_percent.denominator(),
+    );
     if fee > payment {
         return Err(StdError::generic_err("Fees exceed payment"));
     }
@@ -454,7 +373,7 @@ fn only_owner(
 ) -> Result<OwnerOfResponse, ContractError> {
     let res = Bs721Contract::<Empty, Empty>(collection.clone(), PhantomData, PhantomData)
         .owner_of(&deps.querier, token_id, false)?;
-    if res.owner != info.sender {
+    if res.owner != info.sender.to_string() {
         return Err(ContractError::UnauthorizedOwner {});
     }
 
@@ -466,19 +385,6 @@ pub fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
     let collection = ACCOUNT_COLLECTION.load(deps.storage)?;
 
     Ok(ConfigResponse { minter, collection })
-}
-
-pub fn query_renewal_queue(deps: Deps, time: Timestamp) -> StdResult<Vec<Ask>> {
-    let accounts = RENEWAL_QUEUE
-        .prefix(time.seconds())
-        .range(deps.storage, None, None, Order::Ascending)
-        .map(|item| item.map(|item| item.1))
-        .collect::<StdResult<Vec<_>>>()?;
-
-    accounts
-        .iter()
-        .map(|account| asks().load(deps.storage, ask_key(account)))
-        .collect::<StdResult<Vec<_>>>()
 }
 
 pub fn query_asks(
