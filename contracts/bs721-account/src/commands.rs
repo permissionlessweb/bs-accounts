@@ -33,35 +33,60 @@ pub mod manifest {
         btsg_account: bool,
     ) -> Result<Response, ContractError> {
         only_owner(deps.as_ref(), &info.sender, &account)?;
-
-        // println!("// 1. remove old token_uri from reverse map if it exists");
-        Bs721AccountContract::default()
-            .tokens
-            .load(deps.storage, &account)
-            .map(|prev_token_info| {
-                if let Some(address) = prev_token_info.token_uri {
-                    REVERSE_MAP.remove(deps.storage, &Addr::unchecked(address));
-                }
-            })?;
-
         // default ownership object. Not used unless bitsong_account is true.
         let mut ownership: Ownership<String> = Ownership {
             owner: ownership::GovernanceDetails::Renounced {},
             pending_owner: None,
             pending_expiry: None,
         };
+        // println!("// 1. remove old token_uri from reverse map if it exists");
+        Bs721AccountContract::default()
+            .tokens
+            .load(deps.storage, &account)
+            .and_then(|prev_token_info| {
+                if let Some(address) = prev_token_info.token_uri {
+                    // check if account still set to token
+                    if !prev_token_info.extension.account_ownership {
+                        REVERSE_MAP.remove(deps.storage, &Addr::unchecked(address));
+                        Ok(())
+                    } else {
+                        let current_owner: Ownership<String> = deps.querier.query_wasm_smart(
+                            &address,
+                            &abstract_std::account::QueryMsg::Ownership {},
+                        )?;
+                        match current_owner.owner.clone() {
+                            ownership::GovernanceDetails::NFT {
+                                collection_addr,
+                                token_id,
+                            } => {
+                                if address != token_id || collection_addr != contract.to_string() {
+                                    // removes mapping
+                                    REVERSE_MAP.remove(deps.storage, &Addr::unchecked(address));
+                                } else {
+                                    // keeps mapping
+                                    ownership = current_owner
+                                }
+                            }
+
+                            _ => {
+                                // removes mapping
+                                REVERSE_MAP.remove(deps.storage, &Addr::unchecked(address));
+                            }
+                        }
+                        Ok(())
+                    }
+                } else {
+                    Ok(())
+                }
+            })
+            .unwrap_or(());
 
         // println!("// 2. validate the new address");
         let token_uri = address
             .clone()
             .map(|address| {
                 if btsg_account {
-                    // confirm this token is still set as owner of account
-                    let owner: Ownership<String> = deps.querier.query_wasm_smart(
-                        &address,
-                        &abstract_std::account::QueryMsg::Ownership {},
-                    )?;
-                    match owner.owner.clone() {
+                    match ownership.owner.clone() {
                         ownership::GovernanceDetails::NFT {
                             collection_addr,
                             token_id,
@@ -70,8 +95,6 @@ pub mod manifest {
                                 return Err(
                                     ContractError::IncorrectBitsongAccountOwnershipToken {},
                                 );
-                            } else {
-                                ownership = owner
                             }
                             Ok(collection_addr)
                         }

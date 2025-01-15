@@ -135,13 +135,13 @@ pub fn bids<'a>() -> IndexedMap<BidKey, Bid, BidIndicies<'a>> {
         bidder: MultiIndex::new(|_pk: &[u8], b: &Bid| b.bidder.clone(), "b2", "b2__b"),
         price: MultiIndex::new(
             |_pk: &[u8], b: &Bid| (b.token_id.clone(), b.amount.u128()),
-            "bids",
-            "bids__bidder",
+            "b2", // Change this to match the primary key namespace
+            "b2__price",
         ),
         created_time: MultiIndex::new(
             |_pk: &[u8], b: &Bid| (b.token_id.clone(), b.created_time.seconds()),
-            "bids",
-            "bids__time",
+            "b2", // Change this to match the primary key namespace
+            "b2__time",
         ),
     };
     IndexedMap::new("b2", indexes)

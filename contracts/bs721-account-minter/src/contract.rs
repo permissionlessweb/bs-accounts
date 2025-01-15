@@ -2,8 +2,8 @@ use btsg_account::minter::{Config, SudoParams};
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    from_json, instantiate2_address, to_json_binary, Binary, CanonicalAddr, Deps, DepsMut, Env,
-    MessageInfo, Reply, Response, StdResult, SubMsg, WasmMsg,
+    instantiate2_address, to_json_binary, Binary, CanonicalAddr, Deps, DepsMut, Env, MessageInfo,
+    Reply, Response, StdResult, SubMsg, WasmMsg,
 };
 use cw2::set_contract_version;
 
@@ -65,13 +65,11 @@ pub fn instantiate(
         marketplace,
     };
     let salt = &env.block.height.to_be_bytes();
-    let contract_info = deps
-        .querier
-        .query_wasm_contract_info(env.contract.address.clone())?;
-    let code_info = deps.querier.query_wasm_code_info(contract_info.code_id)?;
+    let code_info = deps.querier.query_wasm_code_info(msg.collection_code_id)?;
+
     let addr = instantiate2_address(
         code_info.checksum.as_slice(),
-        &deps.api.addr_canonicalize(&info.sender.as_str())?,
+        &deps.api.addr_canonicalize(&env.contract.address.as_str())?,
         salt,
     )?;
 
@@ -83,8 +81,7 @@ pub fn instantiate(
         label: "Account Collection".to_string(),
         salt: salt.into(),
     };
-    let submsg = SubMsg::reply_on_success(wasm_msg, INIT_COLLECTION_REPLY_ID)
-        .with_payload(Binary::new(addr.to_vec()));
+    let submsg = SubMsg::reply_on_success(wasm_msg, INIT_COLLECTION_REPLY_ID).with_payload(addr);
 
     Ok(Response::new()
         .add_attribute("action", "instantiate")
@@ -126,9 +123,9 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractE
     if msg.id != INIT_COLLECTION_REPLY_ID {
         return Err(ContractError::InvalidReplyID {});
     }
-
-    let addr: CanonicalAddr = from_json(msg.payload)?;
-    ACCOUNT_COLLECTION.save(deps.storage, &deps.api.addr_humanize(&addr)?)?;
+    let human_addr = deps.api.addr_humanize(&CanonicalAddr::from(msg.payload))?;
+    println!("human_addr: {:#?}", human_addr);
+    ACCOUNT_COLLECTION.save(deps.storage, &human_addr)?;
 
     Ok(Response::default().add_attribute("action", "init_collection_reply"))
 }

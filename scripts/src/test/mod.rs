@@ -76,7 +76,6 @@ impl BtsgAccountSuite<MockBech32> {
         // Provide marketplace with collection and minter contracts.
         self.market
             .setup(self.account.address()?, self.minter.address()?)?;
-
         // println!("TOKEN:   {:#?}", self.account.addr_str()?);
         // println!("MARKET:  {:#?}", self.market.addr_str()?);
         // println!("MINTER:  {:#?}", self.minter.addr_str()?);

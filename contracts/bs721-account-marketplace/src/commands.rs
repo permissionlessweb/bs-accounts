@@ -8,7 +8,7 @@ use crate::{
 use btsg_account::{charge_fees, Metadata, NATIVE_DENOM};
 
 use cosmwasm_std::{
-    coin, coins, to_json_binary, Addr, BankMsg, Decimal, Deps, DepsMut, Empty, Env, Event,
+    coin,  to_json_binary, Addr, BankMsg, Decimal, Deps, DepsMut, Empty, Env, Event,
     Fraction, MessageInfo, Order, Response, StdError, StdResult, Storage, SubMsg, SubMsgResult,
     Uint128, WasmMsg,
 };

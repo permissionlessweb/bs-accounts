@@ -174,7 +174,7 @@ mod execute {
         // associate owner address with account account
         suite.account.call_as(&admin2).associate_address(
             token_id,
-            true,
+            false,
             Some(admin2.to_string()),
         )?;
 
@@ -189,7 +189,7 @@ mod execute {
 
         suite.account.call_as(&admin2).associate_address(
             account2,
-            true,
+            false,
             Some(admin2.to_string()),
         )?;
 
@@ -211,7 +211,7 @@ mod execute {
         let addr = mock.addr_make_with_balance("not-admin", coins(1000000000, "ubtsg"))?;
         let minter = suite.minter.address()?;
         let token_id = "bobo";
-
+        println!("not-admin: {:#?}", addr);
         mock.wait_seconds(1)?;
         suite.mint_and_list(mock.clone(), &token_id, &addr)?;
 
@@ -221,6 +221,7 @@ mod execute {
             .unwrap_err();
         Ok(())
     }
+
     #[test]
     fn test_reverse_map_not_owner() -> anyhow::Result<()> {
         let mock = MockBech32::new("bitsong");
@@ -560,7 +561,7 @@ mod query {
 
         suite
             .account
-            .associate_address("yoyo", true, Some(admin.to_string()))?;
+            .associate_address("yoyo", false, Some(admin.to_string()))?;
 
         assert_eq!(suite.account.account(admin)?, "yoyo".to_string());
 
@@ -785,7 +786,7 @@ mod collection {
         suite
             .account
             .call_as(&user)
-            .associate_address(token_id, true, Some(user.to_string()))?;
+            .associate_address(token_id, false, Some(user.to_string()))?;
 
         assert_eq!(suite.account.account(user.clone())?, token_id);
 
@@ -992,7 +993,7 @@ mod associate_address {
         // USER4 tries to associate the account with the collection contract that doesn't have an admin
         suite.account.call_as(&admin_user).associate_address(
             token_id,
-            true,
+            false,
             Some(collection_with_no_admin_addr.to_string()),
         )?;
 
@@ -1065,7 +1066,7 @@ mod associate_address {
             .call_as(&user4)
             .associate_address(
                 token_id,
-                true,
+                false,
                 Some(collection_with_no_admin_addr.to_string()),
             )
             .unwrap_err();
@@ -1114,7 +1115,7 @@ mod associate_address {
         let err = suite
             .account
             .call_as(&user4)
-            .associate_address(token_id, true, Some(contract.to_string()))
+            .associate_address(token_id, false, Some(contract.to_string()))
             .unwrap_err();
 
         assert_eq!(

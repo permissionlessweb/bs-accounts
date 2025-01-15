@@ -210,13 +210,14 @@ fn test_query_accounts() -> anyhow::Result<()> {
     let mut accounts = Abstract::deploy_on(mock.clone(), ())?;
 
     suite.default_setup(mock.clone(), Some(creator.clone()), Some(owner.clone()))?;
-
+    mock.wait_blocks(5)?;
     for i in 0..200 {
         let tokenid = "babber-".to_owned() + &i.to_string();
         suite.mint_and_list(mock.clone(), &tokenid, &creator)?;
+
         // create account with nft used as governance ownership
         let btsg_account = create_default_account(
-            &creator.clone(),
+            &mock.sender.clone(),
             &accounts,
             GovernanceDetails::NFT {
                 collection_addr: suite.account.addr_str()?,

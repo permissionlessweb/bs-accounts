@@ -25,8 +25,11 @@ pub enum ExecuteMsg<T> {
     /// Set an address for account reverse lookup and updates token_uri
     /// Can be an EOA or a contract address.
     AssociateAddress {
+        // set to true to specify this as btsg_account addrses
         btsg_account: bool,
+        // namespace of the account token (token-id)
         account: String,
+        // address to set to reverse map.  Set to None to remove
         address: Option<String>,
     },
     /// Update image NFT
@@ -298,6 +301,7 @@ impl From<Bs721AccountsQueryMsg> for bs721_base::msg::QueryMsg<Bs721AccountsQuer
                 Bs721QueryMsg::AllTokens { start_after, limit }
             }
             Bs721AccountsQueryMsg::Minter {} => Bs721QueryMsg::Minter {},
+            Bs721AccountsQueryMsg::Ownership {} => Bs721QueryMsg::Minter {},
             // QueryMsg::CollectionInfo {} => cw721_base::QueryMsg::CollectionInfo {},
             _ => unreachable!("cannot convert {:?} to Bs721QueryMsg", msg),
         }
