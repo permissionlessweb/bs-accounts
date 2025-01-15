@@ -86,19 +86,34 @@ pub mod manifest {
             .clone()
             .map(|address| {
                 if btsg_account {
-                    match ownership.owner.clone() {
+                    let current_owner: Ownership<String> = deps.querier.query_wasm_smart(
+                        &address,
+                        &abstract_std::account::QueryMsg::Ownership {},
+                    )?;
+
+                    match current_owner.owner.clone() {
                         ownership::GovernanceDetails::NFT {
                             collection_addr,
                             token_id,
                         } => {
-                            if address != token_id || collection_addr != contract.to_string() {
-                                return Err(
-                                    ContractError::IncorrectBitsongAccountOwnershipToken {},
-                                );
+                            if account != token_id || collection_addr != contract.to_string() {
+                                println!("token_id: {}", token_id);
+                                println!("address: {}", address);
+                                println!("collection_addr: {}", collection_addr);
+                                println!("contract: {}", contract);
+                                return Err(ContractError::IncorrectBitsongAccountOwnershipToken {
+                                    got: current_owner.owner.to_string(),
+                                    wanted: ownership::GovernanceDetails::NFT {
+                                        collection_addr,
+                                        token_id,
+                                    }
+                                    .to_string(),
+                                });
                             }
+
+                            println!("// 2. validate the new address");
                             Ok(collection_addr)
                         }
-
                         _ => return Err(ContractError::AccountIsNotTokenized {}),
                     }
                 } else {
@@ -727,8 +742,8 @@ pub mod queries {
 pub fn transcode(address: &str) -> StdResult<String> {
     let (_, data) =
         bech32::decode(address).map_err(|_| StdError::generic_err("Invalid bech32 address"))?;
-        // get map of prefixes & coin types 
-        // perform bech32 workflow with correct coin type
+    // get map of prefixes & coin types
+    // perform bech32 workflow with correct coin type
     Ok(bech32::encode("bitsong", data))
 }
 

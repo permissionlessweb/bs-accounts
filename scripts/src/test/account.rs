@@ -209,28 +209,36 @@ fn test_query_accounts() -> anyhow::Result<()> {
     let creator = mock.addr_make("babber");
     let owner = mock.addr_make("jroc");
     let mut suite = BtsgAccountSuite::new(mock.clone());
-    suite.default_setup(mock.clone(), Some(creator.clone()), Some(owner.clone()))?;
+    suite.default_setup(
+        mock.clone(),
+        Some(mock.sender.clone()),
+        Some(mock.sender.clone()),
+    )?;
     mock.wait_blocks(5)?;
 
     let tokenid = "babber".to_owned();
-    suite.mint_and_list(mock.clone(), &tokenid, &creator)?;
+    suite.mint_and_list(mock.clone(), &tokenid, &mock.sender.clone())?;
 
     // create account with nft used as governance ownership
     let btsg_account = create_default_account(
-        &creator.clone(),
+        &mock.sender.clone(),
         &suite.abs,
         GovernanceDetails::NFT {
             collection_addr: suite.account.address()?.to_string(),
-            token_id: tokenid,
+            token_id: tokenid.clone(),
         },
     )?;
 
     // associate account addr
-
+    suite.account.associate_address(
+        tokenid.clone(),
+        true,
+        Some(btsg_account.address()?.to_string()),
+    )?;
     // cannot query mapping of unregistered address
     let error_message = format!(
         "Querier contract error: Generic error: No account associated with address {}",
-        owner
+        btsg_account.address()?.to_string(),
     );
     assert_eq!(
         suite
@@ -240,9 +248,8 @@ fn test_query_accounts() -> anyhow::Result<()> {
             .to_string(),
         StdError::generic_err(error_message).to_string(),
     );
-
     //  change ownership of account to new nft collection
-    //  assert
+    //  assert change  has been made
     Ok(())
 }
 #[test]

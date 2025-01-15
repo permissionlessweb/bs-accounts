@@ -1,5 +1,6 @@
-use cosmwasm_std::StdError;
+use abstract_std::objects::ownership::Ownership;
 use bs_controllers::AdminError;
+use cosmwasm_std::StdError;
 use cw_ownable::OwnershipError;
 use cw_utils::PaymentError;
 use thiserror::Error;
@@ -24,8 +25,8 @@ pub enum ContractError {
     #[error("AccountIsNotTokenized")]
     AccountIsNotTokenized {},
 
-    #[error("IncorrectBitsongAccountOwnershipToken")]
-    IncorrectBitsongAccountOwnershipToken {},
+    #[error("IncorrectBitsongAccountOwnershipToken: {got} ,  {wanted}")]
+    IncorrectBitsongAccountOwnershipToken { got: String, wanted: String },
 
     #[error("AccountNotFound")]
     AccountNotFound {},
