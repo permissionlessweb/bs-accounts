@@ -727,7 +727,8 @@ pub mod queries {
 pub fn transcode(address: &str) -> StdResult<String> {
     let (_, data) =
         bech32::decode(address).map_err(|_| StdError::generic_err("Invalid bech32 address"))?;
-
+        // get map of prefixes & coin types 
+        // perform bech32 workflow with correct coin type
     Ok(bech32::encode("bitsong", data))
 }
 

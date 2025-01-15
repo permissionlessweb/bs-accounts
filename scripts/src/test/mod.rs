@@ -2,6 +2,7 @@ pub mod account;
 pub mod market;
 pub mod minter;
 
+use abstract_interface::Abstract;
 use bs721_account::msg::{Bs721AccountsQueryMsgFns as _, ExecuteMsgFns as _};
 use bs721_account_marketplace::msgs::{
     ExecuteMsgFns as _, InstantiateMsg as AccountMarketInitMsg, QueryMsgFns,
@@ -37,6 +38,9 @@ impl BtsgAccountSuite<MockBech32> {
         let admin2 = mock.addr_make("admin2");
         // a. uploads all contracts
         self.upload()?;
+        // a.1 deploy abstract accounts
+        let abs = Abstract::deploy_on(mock.clone(), ())?;
+        self.abs = abs;
         // b. instantiates marketplace
         self.market.instantiate(
             &AccountMarketInitMsg {

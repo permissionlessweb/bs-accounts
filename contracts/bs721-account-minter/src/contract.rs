@@ -124,7 +124,6 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractE
         return Err(ContractError::InvalidReplyID {});
     }
     let human_addr = deps.api.addr_humanize(&CanonicalAddr::from(msg.payload))?;
-    println!("human_addr: {:#?}", human_addr);
     ACCOUNT_COLLECTION.save(deps.storage, &human_addr)?;
 
     Ok(Response::default().add_attribute("action", "init_collection_reply"))

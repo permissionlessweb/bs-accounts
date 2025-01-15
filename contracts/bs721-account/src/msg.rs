@@ -241,6 +241,21 @@ pub enum Bs721AccountsQueryMsg {
     // CollectionInfo {},
 }
 
+// impl From<Bs721AccountsQueryMsg> for ownership::cw721::Cw721QueryMsg {
+//     fn from(msg: Bs721AccountsQueryMsg) -> ownership::cw721::Cw721QueryMsg {
+//         match msg {
+//             Bs721AccountsQueryMsg::OwnerOf {
+//                 token_id,
+//                 include_expired,
+//             } => ownership::cw721::Cw721QueryMsg::OwnerOf {
+//                 token_id,
+//                 include_expired,
+//             },
+//             _ => unreachable!("cannot convert {:?} to ownership::cw721::Cw721QueryMsg", msg),
+//         }
+//     }
+// }
+
 impl From<Bs721AccountsQueryMsg> for bs721_base::msg::QueryMsg<Bs721AccountsQueryMsg> {
     fn from(msg: Bs721AccountsQueryMsg) -> bs721_base::msg::QueryMsg<Bs721AccountsQueryMsg> {
         match msg {
