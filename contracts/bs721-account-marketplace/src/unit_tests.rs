@@ -25,8 +25,6 @@ fn ask_indexed_map() {
         token_id: TOKEN_ID.to_string(),
         id: 1,
         seller: seller.clone(),
-        renewal_time: env.block.time,
-        renewal_fund: Uint128::zero(),
     };
     let key = ask_key(TOKEN_ID);
     let res = asks().save(deps.as_mut().storage, key.clone(), &ask);
@@ -36,8 +34,6 @@ fn ask_indexed_map() {
         token_id: TOKEN_ID_NEXT.to_string(),
         id: 2,
         seller: seller.clone(),
-        renewal_time: env.block.time,
-        renewal_fund: Uint128::zero(),
     };
     let key2 = ask_key(TOKEN_ID_NEXT);
     let res = asks().save(deps.as_mut().storage, key2, &ask2);
@@ -89,7 +85,6 @@ fn setup_contract(deps: DepsMut) {
         trading_fee_bps: TRADING_FEE_BASIS_POINTS,
         min_price: Uint128::from(5u128),
         ask_interval: 60,
-
         valid_bid_query_limit: 100,
     };
     let info = mock_info(CREATOR, &[]);

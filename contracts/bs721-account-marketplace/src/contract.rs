@@ -193,6 +193,6 @@ pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> Result<Response, ContractE
         }
         SudoMsg::UpdateAccountFactory { factory } => {
             sudo_update_account_minter(deps, api.addr_validate(&factory)?)
-        }
+        } // SudoMsg::EndBlock {  } => todo!(),
     }
 }

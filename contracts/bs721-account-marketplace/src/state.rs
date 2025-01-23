@@ -1,7 +1,7 @@
+use bs_controllers::Hooks;
 use cosmwasm_std::{Addr, Decimal, StdResult, Storage, Timestamp, Uint128};
-use cw_controllers::Hooks;
 use cw_storage_macro::index_list;
-use cw_storage_plus::{IndexedMap, Item, Map, MultiIndex, UniqueIndex};
+use cw_storage_plus::{IndexedMap, Item, MultiIndex, UniqueIndex};
 
 // bps fee can not exceed 100%
 pub const MAX_FEE_BPS: u64 = 10000;
@@ -38,9 +38,6 @@ pub const ACCOUNT_MINTER: Item<Addr> = Item::new("am");
 pub const ACCOUNT_COLLECTION: Item<Addr> = Item::new("ac");
 pub const VERSION_CONTROL: Item<Addr> = Item::new("vc");
 
-/// (renewal_time (in seconds), id) -> [token_id]
-pub const RENEWAL_QUEUE: Map<(u64, u64), TokenId> = Map::new("rq");
-
 pub const ASK_COUNT: Item<u64> = Item::new("ask-count");
 pub const IS_SETUP: Item<bool> = Item::new("is");
 
@@ -66,8 +63,6 @@ pub struct Ask {
     pub token_id: TokenId,
     pub id: u64,
     pub seller: Addr,
-    pub renewal_time: Timestamp,
-    pub renewal_fund: Uint128,
 }
 
 /// Primary key for asks: token_id
@@ -88,7 +83,7 @@ pub struct AskIndicies<'a> {
     pub seller: MultiIndex<'a, Addr, Ask, AskKey>,
 }
 
-pub fn asks<'a>() -> IndexedMap<'a, AskKey, Ask, AskIndicies<'a>> {
+pub fn asks<'a>() -> IndexedMap<AskKey, Ask, AskIndicies<'a>> {
     let indexes = AskIndicies {
         id: UniqueIndex::new(|d| d.id, "ask__id"),
         seller: MultiIndex::new(
@@ -130,28 +125,24 @@ pub fn bid_key(token_id: &str, bidder: &Addr) -> BidKey {
 /// Defines indices for accessing bids
 #[index_list(Bid)]
 pub struct BidIndicies<'a> {
-    pub price: MultiIndex<'a, u128, Bid, BidKey>,
     pub bidder: MultiIndex<'a, Addr, Bid, BidKey>,
-    pub created_time: MultiIndex<'a, u64, Bid, BidKey>,
+    pub price: MultiIndex<'a, (String, u128), Bid, BidKey>,
+    pub created_time: MultiIndex<'a, (String, u64), Bid, BidKey>,
 }
 
-pub fn bids<'a>() -> IndexedMap<'a, BidKey, Bid, BidIndicies<'a>> {
+pub fn bids<'a>() -> IndexedMap<BidKey, Bid, BidIndicies<'a>> {
     let indexes = BidIndicies {
+        bidder: MultiIndex::new(|_pk: &[u8], b: &Bid| b.bidder.clone(), "b2", "b2__b"),
         price: MultiIndex::new(
-            |_pk: &[u8], d: &Bid| d.amount.u128(),
-            "bids",
-            "bids__collection_price",
-        ),
-        bidder: MultiIndex::new(
-            |_pk: &[u8], d: &Bid| d.bidder.clone(),
-            "bids",
-            "bids__bidder",
+            |_pk: &[u8], b: &Bid| (b.token_id.clone(), b.amount.u128()),
+            "b2", // Change this to match the primary key namespace
+            "b2__price",
         ),
         created_time: MultiIndex::new(
-            |_pk: &[u8], d: &Bid| d.created_time.seconds(),
-            "bids",
-            "bids__time",
+            |_pk: &[u8], b: &Bid| (b.token_id.clone(), b.created_time.seconds()),
+            "b2", // Change this to match the primary key namespace
+            "b2__time",
         ),
     };
-    IndexedMap::new("bids", indexes)
+    IndexedMap::new("b2", indexes)
 }

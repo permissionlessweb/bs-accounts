@@ -1,14 +1,19 @@
+use abstract_interface::Abstract;
 use btsg_account::Metadata;
-
-use cosmwasm_std::Uint128;
-use cw_orch::prelude::*;
 
 use crate::deploy::{account::*, market::BitsongAccountMarket, minter::BitsongAccountMinter};
 use bs721_account_marketplace::msgs::ExecuteMsgFns as _;
-pub struct BtsgAccountSuite<Chain> {
+use cosmwasm_std::Uint128;
+
+use cw_orch::prelude::*;
+pub struct BtsgAccountSuite<Chain>
+where
+    Chain: cw_orch::prelude::CwEnv,
+{
     pub account: BitsongAccountCollection<Chain, Metadata>,
     pub minter: BitsongAccountMinter<Chain>,
     pub market: BitsongAccountMarket<Chain>,
+    pub abs: Abstract<Chain>,
 }
 
 impl<Chain: CwEnv> BtsgAccountSuite<Chain> {
@@ -17,17 +22,18 @@ impl<Chain: CwEnv> BtsgAccountSuite<Chain> {
             account: BitsongAccountCollection::new("bs721_account", chain.clone()),
             minter: BitsongAccountMinter::new("bs721_account_minter", chain.clone()),
             market: BitsongAccountMarket::new("bs721_account_market", chain.clone()),
+            abs: Abstract::new(chain.clone()),
         }
     }
 
     pub fn upload(&self) -> Result<(), CwOrchError> {
-        let acc = self.account.upload()?.uploaded_code_id()?;
-        let minter = self.minter.upload()?.uploaded_code_id()?;
-        let market = self.market.upload()?.uploaded_code_id()?;
+        let _acc = self.account.upload()?.uploaded_code_id()?;
+        let _minter = self.minter.upload()?.uploaded_code_id()?;
+        let _market = self.market.upload()?.uploaded_code_id()?;
 
-        println!("account collection code-id: {}", acc);
-        println!("account minter code-id: {}", minter);
-        println!("account minter code-id: {}", market);
+        // println!("account collection code-id: {}", _acc);
+        // println!("account minter code-id: {}", _minter);
+        // println!("account minter code-id: {}", _market);
         Ok(())
     }
 }
@@ -44,10 +50,6 @@ impl<Chain: CwEnv> cw_orch::contract::Deploy<Chain> for BtsgAccountSuite<Chain> 
         Ok(suite)
     }
 
-    fn deployed_state_file_path() -> Option<String> {
-        None
-    }
-
     fn get_contracts_mut(&mut self) -> Vec<Box<&mut dyn ContractInstance<Chain>>> {
         vec![Box::new(&mut self.account), Box::new(&mut self.minter)]
     }
@@ -58,8 +60,11 @@ impl<Chain: CwEnv> cw_orch::contract::Deploy<Chain> for BtsgAccountSuite<Chain> 
     }
 
     fn deploy_on(chain: Chain, data: Self::DeployData) -> Result<Self, Self::Error> {
+        let abs: Abstract<Chain> = Abstract::deploy_on(chain.clone(), ())
+            .map_err(|e| CwOrchError::from(anyhow::anyhow!(e)))?;
         // ########### Upload ##############
         let mut suite: BtsgAccountSuite<Chain> = BtsgAccountSuite::store_on(chain.clone())?;
+        suite.abs = abs;
 
         suite.market.instantiate(
             &bs721_account_marketplace::msgs::InstantiateMsg {
@@ -69,7 +74,7 @@ impl<Chain: CwEnv> cw_orch::contract::Deploy<Chain> for BtsgAccountSuite<Chain> 
                 valid_bid_query_limit: 30,
             },
             Some(&Addr::unchecked(data.to_string())),
-            None,
+            &[],
         )?;
 
         let bs721_account = suite
@@ -85,7 +90,7 @@ impl<Chain: CwEnv> cw_orch::contract::Deploy<Chain> for BtsgAccountSuite<Chain> 
                     marketplace_addr: suite.market.addr_str()?,
                 },
                 Some(&Addr::unchecked(data.clone())),
-                None,
+                &[],
             )?
             .event_attr_value("wasm", "bs721_account_address")?;
 

@@ -1,11 +1,25 @@
 use ::bs721_account::{commands::transcode, ContractError};
+use abstract_interface::{Abstract, AccountI};
+use abstract_sdk::std::objects::gov_type::GovernanceDetails;
 use bs721_account::msg::{Bs721AccountsQueryMsgFns, ExecuteMsgFns};
+use cosmwasm_std::testing::mock_dependencies;
 use cosmwasm_std::{from_json, StdError};
 use cw_orch::prelude::CallAs;
 use cw_orch::{anyhow, mock::MockBech32, prelude::*};
+use queriers::Gov;
 use std::error::Error;
 
 use crate::BtsgAccountSuite;
+
+/// creates an account with specific governance parameters
+pub fn create_default_account<T: CwEnv>(
+    sender: &Addr,
+    abstr: &Abstract<T>,
+    gov_details: GovernanceDetails<String>,
+) -> anyhow::Result<AccountI<T>> {
+    let account = AccountI::create_default_account(abstr, gov_details)?;
+    Ok(account)
+}
 
 #[test]
 fn init() -> anyhow::Result<()> {
@@ -15,9 +29,11 @@ fn init() -> anyhow::Result<()> {
     BtsgAccountSuite::deploy_on(mock.clone(), mock.sender)?;
     Ok(())
 }
+
 #[test]
 fn mint_and_update() -> anyhow::Result<()> {
     let mock = MockBech32::new("mock");
+    let deps = mock_dependencies();
     let mut suite = BtsgAccountSuite::new(mock.clone());
     suite.default_setup(mock.clone(), None, None)?;
 
@@ -65,10 +81,11 @@ fn mint_and_update() -> anyhow::Result<()> {
     assert_eq!(res.extension, btsg_account::Metadata::default());
 
     // update image
-    let new_nft = btsg_account::NFT {
-        collection: Addr::unchecked("contract"),
-        token_id: "token_id".to_string(),
-    };
+    let new_nft = btsg_account::NFT::new(
+        deps.as_ref(),
+        deps.api.addr_make("checkout").to_string(),
+        "64".into(),
+    )?;
     let nft_value = suite
         .account
         .update_image_nft(token_id, Some(new_nft.clone()))?
@@ -184,28 +201,55 @@ fn mint_and_update() -> anyhow::Result<()> {
 
     Ok(())
 }
+
 #[test]
 fn test_query_accounts() -> anyhow::Result<()> {
     let mock = MockBech32::new("bitsong");
+    // setup addresses
+    let creator = mock.addr_make("babber");
+    let owner = mock.addr_make("jroc");
     let mut suite = BtsgAccountSuite::new(mock.clone());
-    suite.default_setup(mock.clone(), None, None)?;
+    suite.default_setup(
+        mock.clone(),
+        Some(mock.sender.clone()),
+        Some(mock.sender.clone()),
+    )?;
+    mock.wait_blocks(5)?;
 
-    let addr = mock.addr_make("babber");
+    let tokenid = "babber".to_owned();
+    suite.mint_and_list(mock.clone(), &tokenid, &mock.sender.clone())?;
 
+    // create account with nft used as governance ownership
+    let btsg_account = create_default_account(
+        &mock.sender.clone(),
+        &suite.abs,
+        GovernanceDetails::NFT {
+            collection_addr: suite.account.address()?.to_string(),
+            token_id: tokenid.clone(),
+        },
+    )?;
+
+    // associate account addr
+    suite.account.associate_address(
+        tokenid.clone(),
+        true,
+        Some(btsg_account.address()?.to_string()),
+    )?;
+    // cannot query mapping of unregistered address
+    let error_message = format!(
+        "Querier contract error: Generic error: No account associated with address {}",
+        btsg_account.address()?.to_string(),
+    );
     assert_eq!(
         suite
             .account
-            .account(addr.clone().to_string())
+            .account(btsg_account.address()?.to_string())
             .unwrap_err()
             .to_string(),
-        StdError::GenericErr {
-            msg: format!(
-                "Querier contract error: Generic error: No account associated with address {}",
-                addr
-            )
-        }
-        .to_string()
+        StdError::generic_err(error_message).to_string(),
     );
+    //  change ownership of account to new nft collection
+    //  assert change  has been made
     Ok(())
 }
 #[test]

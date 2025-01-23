@@ -1,4 +1,6 @@
 use btsg_account::charge_fees;
+use btsg_account::minter::Config;
+use btsg_account::minter::SudoParams;
 use btsg_account::Metadata;
 use btsg_account::NATIVE_DENOM;
 use cosmwasm_std::{
@@ -7,8 +9,6 @@ use cosmwasm_std::{
 use cosmwasm_std::{to_json_binary, Addr, Deps, StdResult};
 use cw_utils::must_pay;
 
-use crate::state::Config;
-use crate::state::SudoParams;
 use crate::state::ACCOUNT_MARKETPLACE;
 use crate::{
     state::{ACCOUNT_COLLECTION, CONFIG, PAUSED, SUDO_PARAMS},

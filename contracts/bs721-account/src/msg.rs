@@ -25,12 +25,16 @@ pub enum ExecuteMsg<T> {
     /// Set an address for account reverse lookup and updates token_uri
     /// Can be an EOA or a contract address.
     AssociateAddress {
+        // set to true to specify this as btsg_account addrses
+        btsg_account: bool,
+        // namespace of the account token (token-id)
         account: String,
+        // address to set to reverse map.  Set to None to remove
         address: Option<String>,
     },
     /// Update image NFT
     UpdateImageNft { account: String, nft: Option<NFT> },
-    /// Add text record ex: twitter handle, discord account, etc
+    /// Add text record ex: abstract account, twitter handle, discord account, etc
     AddTextRecord { account: String, record: TextRecord },
     /// Remove text record ex: twitter handle, discord account, etc
     RemoveTextRecord {
@@ -237,6 +241,21 @@ pub enum Bs721AccountsQueryMsg {
     // CollectionInfo {},
 }
 
+// impl From<Bs721AccountsQueryMsg> for ownership::cw721::Cw721QueryMsg {
+//     fn from(msg: Bs721AccountsQueryMsg) -> ownership::cw721::Cw721QueryMsg {
+//         match msg {
+//             Bs721AccountsQueryMsg::OwnerOf {
+//                 token_id,
+//                 include_expired,
+//             } => ownership::cw721::Cw721QueryMsg::OwnerOf {
+//                 token_id,
+//                 include_expired,
+//             },
+//             _ => unreachable!("cannot convert {:?} to ownership::cw721::Cw721QueryMsg", msg),
+//         }
+//     }
+// }
+
 impl From<Bs721AccountsQueryMsg> for bs721_base::msg::QueryMsg<Bs721AccountsQueryMsg> {
     fn from(msg: Bs721AccountsQueryMsg) -> bs721_base::msg::QueryMsg<Bs721AccountsQueryMsg> {
         match msg {
@@ -297,6 +316,7 @@ impl From<Bs721AccountsQueryMsg> for bs721_base::msg::QueryMsg<Bs721AccountsQuer
                 Bs721QueryMsg::AllTokens { start_after, limit }
             }
             Bs721AccountsQueryMsg::Minter {} => Bs721QueryMsg::Minter {},
+            Bs721AccountsQueryMsg::Ownership {} => Bs721QueryMsg::Minter {},
             // QueryMsg::CollectionInfo {} => cw721_base::QueryMsg::CollectionInfo {},
             _ => unreachable!("cannot convert {:?} to Bs721QueryMsg", msg),
         }
@@ -305,5 +325,8 @@ impl From<Bs721AccountsQueryMsg> for bs721_base::msg::QueryMsg<Bs721AccountsQuer
 
 #[cw_serde]
 pub enum SudoMsg {
-    UpdateParams { max_record_count: u32 },
+    UpdateParams {
+        max_record_count: u32,
+        // registry_addr: Addr,
+    },
 }

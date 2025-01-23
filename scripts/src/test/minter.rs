@@ -100,7 +100,7 @@ mod execute {
 
         // user (owner) starts off with 0 internet funny money
         assert_eq!(
-            mock.balance(owner.clone(), Some("ubtsg".into()))?[0].amount,
+            mock.balance(&owner.clone(), Some("ubtsg".into()))?[0].amount,
             Uint128::zero()
         );
 
@@ -115,7 +115,7 @@ mod execute {
         assert_eq!(suite.owner_of(token_id.into())?, bidder.to_string());
         // check if user got the bid amount
         assert_eq!(
-            mock.balance(owner, Some("ubtsg".into()))?[0].amount,
+            mock.balance(&owner, Some("ubtsg".into()))?[0].amount,
             Uint128::from(BID_AMOUNT)
         );
         // confirm that a new ask was created
@@ -172,10 +172,11 @@ mod execute {
             .unwrap_err();
 
         // associate owner address with account account
-        suite
-            .account
-            .call_as(&admin2)
-            .associate_address(token_id, Some(admin2.to_string()))?;
+        suite.account.call_as(&admin2).associate_address(
+            token_id,
+            false,
+            Some(admin2.to_string()),
+        )?;
 
         // query associated address should return user
         assert_eq!(suite.account.associated_address(token_id)?, admin2);
@@ -186,10 +187,11 @@ mod execute {
         let account2 = "exam";
         suite.mint_and_list(mock.clone(), &account2, &admin2.clone())?;
 
-        suite
-            .account
-            .call_as(&admin2)
-            .associate_address(account2, Some(admin2.to_string()))?;
+        suite.account.call_as(&admin2).associate_address(
+            account2,
+            false,
+            Some(admin2.to_string()),
+        )?;
 
         assert_eq!(suite.account.account(admin2)?, account2.to_string());
         Ok(())
@@ -209,16 +211,17 @@ mod execute {
         let addr = mock.addr_make_with_balance("not-admin", coins(1000000000, "ubtsg"))?;
         let minter = suite.minter.address()?;
         let token_id = "bobo";
-
+        println!("not-admin: {:#?}", addr);
         mock.wait_seconds(1)?;
         suite.mint_and_list(mock.clone(), &token_id, &addr)?;
 
         suite
             .account
-            .associate_address(token_id, Some(minter.to_string()))
+            .associate_address(token_id, true, Some(minter.to_string()))
             .unwrap_err();
         Ok(())
     }
+
     #[test]
     fn test_reverse_map_not_owner() -> anyhow::Result<()> {
         let mock = MockBech32::new("bitsong");
@@ -232,7 +235,7 @@ mod execute {
 
         suite
             .account
-            .associate_address(token_id, Some(admin2.to_string()))
+            .associate_address(token_id, true, Some(admin2.to_string()))
             .unwrap_err();
         Ok(())
     }
@@ -558,7 +561,7 @@ mod query {
 
         suite
             .account
-            .associate_address("yoyo", Some(admin.to_string()))?;
+            .associate_address("yoyo", false, Some(admin.to_string()))?;
 
         assert_eq!(suite.account.account(admin)?, "yoyo".to_string());
 
@@ -783,7 +786,7 @@ mod collection {
         suite
             .account
             .call_as(&user)
-            .associate_address(token_id, Some(user.to_string()))?;
+            .associate_address(token_id, false, Some(user.to_string()))?;
 
         assert_eq!(suite.account.account(user.clone())?, token_id);
 
@@ -835,7 +838,7 @@ mod collection {
 }
 mod public_start_time {
 
-    use bs721_account_minter::state::Config;
+    use btsg_account::minter::Config;
 
     use super::*;
 
@@ -921,7 +924,10 @@ mod associate_address {
         // mint and transfer to collection
         suite.mint_and_list(mock.clone(), &token_id, &admin_user)?;
         suite.account.transfer_nft(nft_addr.clone(), token_id)?;
-        assert_eq!(suite.account.owner_of(token_id, None)?.owner, nft_addr);
+        assert_eq!(
+            suite.account.owner_of(token_id, None)?.owner,
+            nft_addr.to_string()
+        );
 
         Ok(())
     }
@@ -985,10 +991,11 @@ mod associate_address {
         suite.mint_and_list(mock.clone(), &token_id, &admin_user)?;
 
         // USER4 tries to associate the account with the collection contract that doesn't have an admin
-        suite
-            .account
-            .call_as(&admin_user)
-            .associate_address(token_id, Some(collection_with_no_admin_addr.to_string()))?;
+        suite.account.call_as(&admin_user).associate_address(
+            token_id,
+            false,
+            Some(collection_with_no_admin_addr.to_string()),
+        )?;
 
         mock.wait_seconds(1)?;
         Ok(())
@@ -1057,7 +1064,11 @@ mod associate_address {
         let err = suite
             .account
             .call_as(&user4)
-            .associate_address(token_id, Some(collection_with_no_admin_addr.to_string()))
+            .associate_address(
+                token_id,
+                false,
+                Some(collection_with_no_admin_addr.to_string()),
+            )
             .unwrap_err();
 
         assert_eq!(
@@ -1104,7 +1115,7 @@ mod associate_address {
         let err = suite
             .account
             .call_as(&user4)
-            .associate_address(token_id, Some(contract.to_string()))
+            .associate_address(token_id, false, Some(contract.to_string()))
             .unwrap_err();
 
         assert_eq!(

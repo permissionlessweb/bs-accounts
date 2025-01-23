@@ -4,6 +4,7 @@ pub mod error;
 pub mod hooks;
 pub mod msgs;
 pub mod state;
+pub mod helpers;
 
 pub use error::ContractError;
 

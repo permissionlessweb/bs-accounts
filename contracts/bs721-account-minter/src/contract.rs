@@ -1,19 +1,18 @@
+use btsg_account::minter::{Config, SudoParams};
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_json_binary, Addr, Binary, Deps, DepsMut, Env, MessageInfo, Reply, Response, StdResult,
-    SubMsg, WasmMsg,
+    instantiate2_address, to_json_binary, Binary, CanonicalAddr, Deps, DepsMut, Env, MessageInfo,
+    Reply, Response, StdResult, SubMsg, WasmMsg,
 };
 use cw2::set_contract_version;
-use cw_utils::parse_reply_instantiate_data;
+
 // use cw2::set_contract_version;
 
 use crate::commands::*;
 use crate::error::ContractError;
 use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg, SudoMsg};
-use crate::state::{
-    Config, SudoParams, ACCOUNT_COLLECTION, ACCOUNT_MARKETPLACE, CONFIG, PAUSED, SUDO_PARAMS,
-};
+use crate::state::{ACCOUNT_COLLECTION, ACCOUNT_MARKETPLACE, CONFIG, PAUSED, SUDO_PARAMS};
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:bs721-account-minter";
@@ -65,15 +64,24 @@ pub fn instantiate(
         },
         marketplace,
     };
+    let salt = &env.block.height.to_be_bytes();
+    let code_info = deps.querier.query_wasm_code_info(msg.collection_code_id)?;
 
-    let wasm_msg = WasmMsg::Instantiate {
+    let addr = instantiate2_address(
+        code_info.checksum.as_slice(),
+        &deps.api.addr_canonicalize(&env.contract.address.as_str())?,
+        salt,
+    )?;
+
+    let wasm_msg = WasmMsg::Instantiate2 {
         code_id: msg.collection_code_id,
         msg: to_json_binary(&account_collection_init_msg)?,
         funds: info.funds,
         admin: Some(info.sender.to_string()),
         label: "Account Collection".to_string(),
+        salt: salt.into(),
     };
-    let submsg = SubMsg::reply_on_success(wasm_msg, INIT_COLLECTION_REPLY_ID);
+    let submsg = SubMsg::reply_on_success(wasm_msg, INIT_COLLECTION_REPLY_ID).with_payload(addr);
 
     Ok(Response::new()
         .add_attribute("action", "instantiate")
@@ -115,31 +123,10 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractE
     if msg.id != INIT_COLLECTION_REPLY_ID {
         return Err(ContractError::InvalidReplyID {});
     }
+    let human_addr = deps.api.addr_humanize(&CanonicalAddr::from(msg.payload))?;
+    ACCOUNT_COLLECTION.save(deps.storage, &human_addr)?;
 
-    let reply = parse_reply_instantiate_data(msg);
-
-    println!("REPLYMSG{:#?}", reply);
-
-    match reply {
-        Ok(res) => {
-            let collection_address = &res.contract_address;
-
-            ACCOUNT_COLLECTION.save(deps.storage, &Addr::unchecked(collection_address))?;
-
-            // let msg = WasmMsg::Execute {
-            //     contract_addr: collection_address.to_string(),
-            //     funds: vec![],
-            //     msg: to_json_binary(
-            //         &(bs721_account::msg::ExecuteMsg::<Metadata>::SetMarketplace {
-            //             address: ACCOUNT_MARKETPLACE.load(deps.storage)?.to_string(),
-            //         }),
-            //     )?,
-            // };
-
-            Ok(Response::default().add_attribute("action", "init_collection_reply"))
-        }
-        Err(_) => Err(ContractError::ReplyOnSuccess {}),
-    }
+    Ok(Response::default().add_attribute("action", "init_collection_reply"))
 }
 
 #[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
