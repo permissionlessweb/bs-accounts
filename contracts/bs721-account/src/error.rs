@@ -1,4 +1,3 @@
-use abstract_std::objects::ownership::Ownership;
 use bs_controllers::AdminError;
 use cosmwasm_std::StdError;
 use cw_ownable::OwnershipError;

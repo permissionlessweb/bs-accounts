@@ -1,11 +1,14 @@
 use crate::error::ContractError;
 
 use crate::msg::Bs721AccountsQueryMsg;
-use crate::state::{SudoParams, ACCOUNT_MARKETPLACE, REVERSE_MAP, SUDO_PARAMS, VERIFIER};
+use crate::state::{
+    SudoParams, ACCOUNT_MARKETPLACE, REVERSE_MAP, REVERSE_MAP_KEY, SUDO_PARAMS, VERIFIER,
+};
 use crate::Bs721AccountContract;
+use cosmwasm_std::testing::mock_dependencies;
 use cosmwasm_std::{
-    ensure, Addr, Binary, ContractInfoResponse, Deps, DepsMut, Env, Event, MessageInfo, Response,
-    StdError, StdResult,
+    ensure, Addr, Binary, CanonicalAddr, ContractInfoResponse, Deps, DepsMut, Env, Event,
+    MessageInfo, Response, StdError, StdResult,
 };
 use cw_ownable::Ownership;
 use cw_utils::nonpayable;
@@ -20,7 +23,9 @@ pub mod manifest {
     use bs721::Expiration;
     use bs721_base::state::TokenInfo;
     use btsg_account::Metadata;
-    use cosmwasm_std::{to_json_binary, WasmMsg};
+    use cosmwasm_std::{to_json_binary, Attribute, WasmMsg};
+
+    use crate::state::REVERSE_MAP_KEY;
 
     use super::*;
 
@@ -233,6 +238,40 @@ pub mod manifest {
         Ok(Response::new().add_event(event))
     }
 
+    pub fn execute_update_reverse_map_keys(
+        deps: DepsMut,
+        _env: Env,
+        info: MessageInfo,
+        to_add: Vec<String>,
+        to_remove: Vec<String>,
+    ) -> Result<Response, ContractError> {
+        let mut attr = vec![];
+        nonpayable(&info)?;
+
+        let canonv = deps.api.addr_canonicalize(&info.sender.as_str())?;
+        for add in to_add {
+            if REVERSE_MAP_KEY.may_load(deps.storage, &add)?.is_none() {
+                REVERSE_MAP_KEY.save(
+                    deps.storage,
+                    &add.to_string(),
+                    &Binary::new(canonv.to_vec()),
+                )?;
+                attr.extend([Attribute::new("added", &add)]);
+            };
+        }
+
+        for rem in to_remove {
+            let canonk = deps.api.addr_canonicalize(&rem)?;
+            if REVERSE_MAP_KEY
+                .may_load(deps.storage, &canonk.to_string())?
+                .is_some()
+            {
+                REVERSE_MAP_KEY.remove(deps.storage, &rem);
+                attr.push(Attribute::new("chain-cointype-removed", rem));
+            };
+        }
+        Ok(Response::new().add_attributes(attr))
+    }
     /// WIP Throw not implemented error
     pub fn execute_burn(
         _deps: DepsMut,
@@ -681,11 +720,9 @@ pub mod queries {
         ACCOUNT_MARKETPLACE.load(deps.storage)
     }
 
-    pub fn query_account(deps: Deps, address: String) -> StdResult<String> {
+    pub fn query_account(deps: Deps, mut address: String) -> StdResult<String> {
         if !address.starts_with("bitsong") {
-            return Err(StdError::generic_err("invalid address"));
-            // todo: update to transcode if prefix is not one of the prefix we expect to have the same coin type as Bitsong (639)
-            // address = transcode(&address)?;
+            address = transcode(deps, &address)?
         }
 
         REVERSE_MAP
@@ -739,12 +776,18 @@ pub mod queries {
     }
 }
 
-pub fn transcode(address: &str) -> StdResult<String> {
-    let (_, data) =
-        bech32::decode(address).map_err(|_| StdError::generic_err("Invalid bech32 address"))?;
+pub fn transcode(deps: Deps, address: &str) -> StdResult<String> {
     // get map of prefixes & coin types
-    // perform bech32 workflow with correct coin type
-    Ok(bech32::encode("bitsong", data))
+    if let Some(ct) = REVERSE_MAP_KEY.may_load(deps.storage, &address.to_string())? {
+        Ok(deps
+            .api
+            .addr_humanize(&CanonicalAddr::from(ct))?
+            .to_string())
+    } else {
+        return Err(StdError::generic_err(
+            "no mappping set. Set an account for this chain with UpdateMyReverseMapKey",
+        ));
+    }
 }
 
 fn validate_address(deps: Deps, sender: &Addr, addr: Addr) -> Result<Addr, ContractError> {
@@ -803,4 +846,19 @@ pub fn sudo_update_params(
     let event =
         Event::new("update-params").add_attribute("max_record_count", max_record_count.to_string());
     Ok(Response::new().add_event(event))
+}
+
+#[test]
+pub fn test_transcode() -> () {
+    let deps = mock_dependencies();
+    let res = transcode(
+        deps.as_ref(),
+        "akash1fxccvvhhy43tvet2ah7jqwq4cwl9k3dx3l2y8r",
+    )
+    .unwrap_err();
+
+    assert_eq!(
+        res.to_string(),
+        "Generic error: no mappping set. Set an account for this chain with UpdateMyReverseMapKey"
+    )
 }

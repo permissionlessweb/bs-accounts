@@ -252,12 +252,21 @@ fn test_query_accounts() -> anyhow::Result<()> {
     //  assert change  has been made
     Ok(())
 }
+
+
 #[test]
 fn test_transcode() -> anyhow::Result<()> {
-    let res = transcode("cosmos1y54exmx84cqtasvjnskf9f63djuuj68p7hqf47");
-    assert_eq!(
-        res.unwrap(),
-        "bitsong1y54exmx84cqtasvjnskf9f63djuuj68pj7jph3"
+    let deps = mock_dependencies();
+
+    let res = transcode(
+        deps.as_ref(),
+        "cosmos1y54exmx84cqtasvjnskf9f63djuuj68p7hqf47",
     );
+    assert_eq!(
+        res.unwrap_err().to_string(),
+        "Generic error: no mappping set. Set an account for this chain with UpdateMyReverseMapKey"
+    );
+
+    // TODO: add addresses to map and assert query works
     Ok(())
 }

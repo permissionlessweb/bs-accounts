@@ -154,6 +154,9 @@ pub mod entry {
                 },
             ),
             ExecuteMsg::Burn { token_id } => execute_burn(deps, env, info, token_id),
+            ExecuteMsg::UpdateMyReverseMapKey { to_add, to_remove } => {
+                execute_update_reverse_map_keys(deps, env, info, to_add, to_remove)
+            }
             _ => Bs721AccountContract::default()
                 .execute(deps, env, info, msg.into())
                 .map_err(|e| e.into()),
