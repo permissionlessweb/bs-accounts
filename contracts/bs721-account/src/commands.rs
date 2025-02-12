@@ -272,22 +272,26 @@ pub mod manifest {
         }
         Ok(Response::new().add_attributes(attr))
     }
-    /// WIP Throw not implemented error
+
     pub fn execute_burn(
-        _deps: DepsMut,
-        _env: Env,
+        deps: DepsMut,
+        env: Env,
         info: MessageInfo,
-        _token_id: String,
+        account: String,
     ) -> Result<Response, ContractError> {
         nonpayable(&info)?;
-        // option1:
-        // ensure owner
-        // transfer to this contract with reply
-        // on reply, call burn function, will work as owner is now this contract
-        // save list of addr that has burnt their token to state
+        only_owner(deps.as_ref(), &info.sender, &account)?;
+        let bs721 = Bs721AccountContract::default();
 
-        // option2: iterate bs721 to use
-        Err(ContractError::NotImplemented {})
+        bs721.execute(
+            deps,
+            env,
+            info.clone(),
+            Bs721ExecuteMsg::Burn {
+                token_id: account.to_string(),
+            },
+        )?;
+        Ok(Response::new().add_event(Event::new("burn-account").add_attribute("account", account)))
     }
 
     pub fn execute_transfer_nft(
