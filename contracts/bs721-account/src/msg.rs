@@ -10,6 +10,7 @@ use bs721::{
 use bs721_base::msg::InstantiateMsg as Bs721InstantiateMsg;
 use bs721_base::msg::QueryMsg as Bs721QueryMsg;
 use cw_ownable::Ownership;
+
 #[cw_serde]
 pub struct InstantiateMsg {
     pub verifier: Option<String>,
@@ -100,6 +101,11 @@ pub enum ExecuteMsg<T> {
     Burn { token_id: String },
     /// Freeze collection info from further updates
     FreezeCollectionInfo {},
+    /// Updates the mapping of wallet accounts to the sender.
+    UpdateMyReverseMapKey {
+        to_add: Vec<String>,
+        to_remove: Vec<String>,
+    },
 }
 
 impl<T> From<ExecuteMsg<T>> for bs721_base::msg::ExecuteMsg<T> {
