@@ -102,10 +102,6 @@ pub mod manifest {
                             token_id,
                         } => {
                             if account != token_id || collection_addr != contract.to_string() {
-                                println!("token_id: {}", token_id);
-                                println!("address: {}", address);
-                                println!("collection_addr: {}", collection_addr);
-                                println!("contract: {}", contract);
                                 return Err(ContractError::IncorrectBitsongAccountOwnershipToken {
                                     got: current_owner.owner.to_string(),
                                     wanted: ownership::GovernanceDetails::NFT {
@@ -115,8 +111,6 @@ pub mod manifest {
                                     .to_string(),
                                 });
                             }
-
-                            println!("// 2. validate the new address");
                             Ok(collection_addr)
                         }
                         _ => return Err(ContractError::AccountIsNotTokenized {}),
@@ -248,6 +242,9 @@ pub mod manifest {
         let mut attr = vec![];
         nonpayable(&info)?;
 
+        // check current count for sender
+
+        // if limit is reached 
         let canonv = deps.api.addr_canonicalize(&info.sender.as_str())?;
         for add in to_add {
             if REVERSE_MAP_KEY.may_load(deps.storage, &add)?.is_none() {
