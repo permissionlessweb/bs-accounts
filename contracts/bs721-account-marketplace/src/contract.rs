@@ -49,6 +49,11 @@ pub fn execute(
     let api = deps.api;
 
     match msg {
+        ExecuteMsg::Setup { minter, collection } => execute_setup(
+            deps,
+            api.addr_validate(&minter)?,
+            api.addr_validate(&collection)?,
+        ),
         ExecuteMsg::SetAsk { token_id, seller } => {
             execute_set_ask(deps, env, info, &token_id, api.addr_validate(&seller)?)
         }
@@ -61,11 +66,6 @@ pub fn execute(
         ExecuteMsg::AcceptBid { token_id, bidder } => {
             execute_accept_bid(deps, env, info, &token_id, api.addr_validate(&bidder)?)
         }
-        ExecuteMsg::Setup { minter, collection } => execute_setup(
-            deps,
-            api.addr_validate(&minter)?,
-            api.addr_validate(&collection)?,
-        ),
     }
 }
 

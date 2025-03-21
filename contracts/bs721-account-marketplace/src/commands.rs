@@ -8,9 +8,9 @@ use crate::{
 use btsg_account::{charge_fees, Metadata, NATIVE_DENOM};
 
 use cosmwasm_std::{
-    coin,  to_json_binary, Addr, BankMsg, Decimal, Deps, DepsMut, Empty, Env, Event,
-    Fraction, MessageInfo, Order, Response, StdError, StdResult, Storage, SubMsg, SubMsgResult,
-    Uint128, WasmMsg,
+    coin, to_json_binary, Addr, BankMsg, Decimal, Deps, DepsMut, Empty, Env, Event, Fraction,
+    MessageInfo, Order, Response, StdError, StdResult, Storage, SubMsg, SubMsgResult, Uint128,
+    WasmMsg,
 };
 use std::marker::PhantomData;
 
@@ -40,10 +40,11 @@ pub fn execute_setup(
     ACCOUNT_COLLECTION.save(deps.storage, &collection)?;
     IS_SETUP.save(deps.storage, &true)?;
 
-    let event = Event::new("setup")
-        .add_attribute("minter", minter)
-        .add_attribute("collection", collection);
-    Ok(Response::new().add_event(event))
+    Ok(Response::new().add_event(
+        Event::new("setup")
+            .add_attribute("minter", minter)
+            .add_attribute("collection", collection),
+    ))
 }
 
 /// A seller may set an Ask on their NFT to list it on Marketplace

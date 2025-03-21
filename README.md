@@ -1,38 +1,54 @@
 # Bitsong Accounts: A Tokenized Account Framework
 
-This implementation is a compatible instance of sg-names for Bitsong. To the stargaze contributors, thank you for setting the tone with these!
-## API Docs
+This implementation is a compatible instance of [sg-names](https://github.com/public-awesome/names) for Bitsong. To the stargaze contributors, thank you for setting the tone with these!
+<!-- ##  [API Docs](./API.md) -->
 
-See [API Docs](./API.md)
+## Compile the contracts 
+```sh
+make optimize
+```
+## Test the workspace: 
+### Cargo
+```sh
+cargo test
+```
+### Cw-Orchestrator
+To run the integration tests:
+```sh 
+cd scripts/ && cargo test
+```
+### Deploy 
+
+To learn more about the deployment scripts, [check here](./scripts/README).
+
 
 ## Architecture
 
-### Account Marketplace
-### Account Minter
-### Account Actions
-- `AssociateAddress`: Maps bitsong account smart contract to a token id.
-- `TextRecord`: List of text records that can be verified.
+### [Account Marketplace](./contracts/bs721-account-marketplace/README.md)
+The secondary marketplace for accounts. Accounts are automatically listed here once they are minted.
 
-### 
-Accounts are stored without the TLD so they can be mapped to _any_ Cosmos address. All accounts can be resolved to an address that is derived via the same Cosmos key derivation path as Bitsong (639).
+### [Account Minter](./contracts/bs721-account-minter/README.md)
+Account minter is responsible for minting, validating, and updating accounts and their metadata.
 
-When you buy a Bitsong Account, you are really getting a account on _every_ Cosmos chain. Any chain can lookup a account by its local address over IBC. Similarly, any chain can mint a account over IBC that resolves to a local address.
+### [Bs721-Account](./contracts/bs721-account/README.md)
+A cw721 contract with on-chain metadata for an account.
 
-```
-bobo -> D93385094E906D7DA4EBFDEC2C4B167D5CAA431A (in hex)
-```
+#### Thoughts On Account Token Security Design 
+Since account tokens are the key for smart accounts, it is essential to keep in mind the security vulnurabilities that exists in a multi contract system that involved the smart contract of your Bitsong Account Token. Below will list a few obvious examples, but as always security is never static.
 
-Now this can be resolved per chain:
-```
-bobo.bitsong  -> bitsong1myec2z2wjpkhmf8tlhkzcjck04w25sc6ymhplz
-# will be incorrect due to mismatch slip44 coin types with cosmos hub and bitsong bobo.cosmos -> cosmos1myec2z2wjpkhmf8tlhkzcjck04w25sc6y2xq2r
-```
+### Centralized Smart Contract Ownership & Migration Attack
+If the code-id of the accounts used has a global contract admin, then the possible risk of the admins integrity being compromised, and an attack may occur on wallets. Bitsong mitigates this risk by having the governance module set as the admin able to migrate a contract for all of the contracts used in the accounts framework. 
 
-Chains that use different account types or key derivation paths can have support added later by migrating contracts. Account contracts are community-owned contracts that can be migrated by Bitsong governance.
+
+There is still a risk of any wallet address compromized that is also authorized to execute actions as the module, however there are none. 
+
+### Undesired Operator Or Approval Authorization
+Whenever browsing dapps with the account that is currently under ownership of the account token, it is crucial to keep concious of any unwantedauthorized operator or approval messages during interations with them, as this may result in full compromise of your account without delays  including other smart contracts, then this may put  account tokens at risk. 
 
 <!-- ### Annual Auction -->
 - [x] When a account is minted it is automatically listed in Account Marketplace
 - [x] Owner can accept the top bid at any time
+
 <!-- - [ ] After 1 year, owner has to pay 0.5% of the top bid to keep the account
 - [ ] If a bid is placed for 4 weeks, account value rises to this value
 - [ ] If fee is not paid, account is transferred to the bidder
@@ -40,18 +56,16 @@ Chains that use different account types or key derivation paths can have support
 - [ ] Cap annual fee at X per year -->
 
 ## Initial Fees
-
 ```
 5+ chars = 100 BITSONG
 4 chars  = 1,000 BITSONG
 3 chars  = 10,000 BITSONG
 ```
+ 
+ ### Text Record Verification
+Accounts are designed to be as flexible as possible, allowing generic `TextRecord` types to be added. Each record has a `verified` field that can only be modified by a verification oracle. For example, a Twitter verification oracle can verify a user's signature in a tweet, and set `verified` to `true`. Text records can also be used to link the account to other name services such as ENS.
 
-## Contracts
-
-### [Bs721-Account](./contracts/bs721-account/README.md)
-
-A cw721 contract with on-chain metadata for an account.
+`profile_nft` points to another NFT with on-chain metadata for profile information such as bio, header (banner) image, and follower information. This will be implemented as a separate collection.
 
 Types used in metadata:
 
@@ -70,41 +84,27 @@ pub struct Metadata {
 }
 ```
 
-Accounts are designed to be as flexible as possible, allowing generic `TextRecord` types to be added. Each record has a `verified` field that can only be modified by a verification oracle. For example, a Twitter verification oracle can verify a user's signature in a tweet, and set `verified` to `true`. Text records can also be used to link the account to other name services such as ENS.
+### Interoperable Design
+When you buy a Bitsong Account, you are really getting a account on _every_ Cosmos chain. Any chain can lookup a account by its local address over IBC. Similarly, any chain can mint a account over IBC that resolves to a local address. 
 
-`profile_nft` points to another NFT with on-chain metadata for profile information such as bio, header (banner) image, and follower information. This will be implemented as a separate collection.
-
-### [Account Minter](./contracts/account-minter/README.md)
-
-Account minter is responsible for minting, validating, and updating accounts and their metadata.
-
-### Compile the contracts 
-```sh
-make optimize
+```
+jimmy -> D93385094E906D7DA4EBFDEC2C4B167D5CAA431A (in hex)
 ```
 
-<!-- ### [Account Marketplace](./contracts/account-market/README.md)
+#### Bitsong Use Of Coin Type 639
+Resolving an address for different chains is done with logic that includes the chains coin type used, in order to determine the human redimal representation of the account that a private key has control over. This is how a single key can control multiple accounts on multiple chains. 
 
-The secondary marketplace for accounts. Accounts are automatically listed here once they are minted. -->
 
-<!-- ### [Whitelist](./contracts/whitelist-updatable/README.md)
-
-Whitelist allows for flexible updating to add / remove addresses at any point in minting. Also adds helper to account for whitelist minting limits. -->
-
-## Cw-Orchestrator 
-
-To run the integration tests:
-```sh 
-cd scripts/ && cargo test
+Now this can be resolved per chain:
+```
+jimmy.bitsong  -> bitsong1myec2z2wjpkhmf8tlhkzcjck04w25sc6ymhplz
+# will be incorrect due to mismatch slip44 coin types with cosmos hub and bitsong 
+jimmy.cosmos -> cosmos1myec2z2wjpkhmf8tlhkzcjck04w25sc6y2xq2r
 ```
 
-To learn more about the deployment scripts, [check here](./scripts/README).
+Chains that use different account types or key derivation paths has support with the use of the custom entry point `UpdateMyReverseMapKey`, which lets mapping and retrieval of external accounts quick and compatible without any custom cryptographic library. 
 
 
-#### Coverage
+## DISCLAIMER
 
-To run code coverage checks first install `tarpaulin` (`cargo install cargo-tarpaulin`), then run `make coverage` from the project root.
-
-<!-- ## DISCLAIMER
-
-STARGAZE SOURCE CODE IS PROVIDED “AS IS”, AT YOUR OWN RISK, AND WITHOUT WARRANTIES OF ANY KIND. No developer or entity involved in creating or instantiating Stargaze smart contracts will be liable for any claims or damages whatsoever associated with your use, inability to use, or your interaction with other users of Stargaze, including any direct, indirect, incidental, special, exemplary, punitive or consequential damages, or loss of profits, cryptocurrencies, tokens, or anything else of value. Although Public Awesome, LLC and it's affilliates developed the initial code for Stargaze, it does not own or control the Stargaze network, which is run by a decentralized validator set. -->
+BITSONG CODE IS PROVIDED “AS IS”, AT YOUR OWN RISK, AND WITHOUT WARRANTIES OF ANY KIND. No developer or entity involved in creating or instantiating Bitsong smart contracts will be liable for any claims or damages whatsoever associated with your use, inability to use, or your interaction with other users of Bitsong, including any direct, indirect, incidental, special, exemplary, punitive or consequential damages, or loss of profits, cryptocurrencies, tokens, or anything else of value. Although Discover Decentralization DAO, and it's members configured existing code for the accounts, it does not own or control the Bitsong network.
