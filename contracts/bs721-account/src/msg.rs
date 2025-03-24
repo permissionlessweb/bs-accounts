@@ -26,8 +26,6 @@ pub enum ExecuteMsg<T> {
     /// Set an address for account reverse lookup and updates token_uri
     /// Can be an EOA or a contract address.
     AssociateAddress {
-        // set to true to specify this as btsg_account addrses
-        btsg_account: bool,
         // namespace of the account token (token-id)
         account: String,
         // address to set to reverse map.  Set to None to remove
@@ -333,6 +331,6 @@ impl From<Bs721AccountsQueryMsg> for bs721_base::msg::QueryMsg<Bs721AccountsQuer
 pub enum SudoMsg {
     UpdateParams {
         max_record_count: u32,
-        // registry_addr: Addr,
+        max_rev_map_count: u32,
     },
 }

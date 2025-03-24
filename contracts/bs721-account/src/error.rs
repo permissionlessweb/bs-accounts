@@ -66,6 +66,9 @@ pub enum ContractError {
     #[error("TooManyRecords max: {max}")]
     TooManyRecords { max: u32 },
 
+    #[error("TooManyReverseMaps max: {max}")]
+    TooManyReverseMaps { max: u32 },
+
     #[error("NotImplemented")]
     NotImplemented {},
 }

@@ -7,6 +7,7 @@ pub const SECONDS_PER_YEAR: u64 = 31536000;
 #[cosmwasm_schema::cw_serde]
 #[derive(Default)]
 pub struct Metadata {
+    /// signals if this account token is making use of an tokenized-account authentication system.
     pub account_ownership: bool,
     pub image_nft: Option<NFT>,
     pub records: Vec<TextRecord>,
