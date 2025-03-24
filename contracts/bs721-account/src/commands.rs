@@ -240,7 +240,7 @@ pub mod manifest {
         to_remove: Vec<String>,
     ) -> Result<Response, ContractError> {
         let mut attr = vec![];
-        nonpayable(&info)?
+        nonpayable(&info)?;
       
         let canonv = deps.api.addr_canonicalize(&info.sender.as_str())?;
         let max = SUDO_PARAMS.load(deps.storage)?.max_reverse_map_key_limit;
