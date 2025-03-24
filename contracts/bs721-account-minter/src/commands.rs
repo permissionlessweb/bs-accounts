@@ -41,9 +41,9 @@ pub fn execute_mint_and_list(
     let price = validate_payment(account.len(), &info, params.base_price.u128())?;
 
     let mut res = Response::new();
-    // burns any tokens sent as fees if required
-    if price.is_some() {
-        charge_fees(&mut res, price.clone().unwrap().amount);
+    // burns any tokens sent as fees if required (only ubtsg supported currently)
+    if let Some(fee) = &price {
+        charge_fees(&mut res, fee.amount);
     }
 
     let marketplace = ACCOUNT_MARKETPLACE.load(deps.storage)?;
@@ -87,8 +87,7 @@ pub fn execute_mint_and_list(
         );
     Ok(res
         .add_event(event)
-        .add_message(mint_msg_exec)
-        .add_message(list_msg_exec))
+        .add_messages(vec![mint_msg_exec, list_msg_exec]))
 }
 
 /// Pause or unpause minting

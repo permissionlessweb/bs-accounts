@@ -1,5 +1,7 @@
 # Bs721-Account
 
+
+
  ## Instantiate Msg 
 | Parameter | Description | 
 | --- | --- | 
@@ -13,7 +15,7 @@
 | `AssociateAddress` | |
 | `UpdateMyReverseMapKey` |  Each account can create a mapping of bech32 addresses for non type 639 coin chains (Bitsong defaults to 639). Uses the external address as the key, and saves the users Canonical Addr to the store for future retrival via `transcode()`. |
 | `UpdateImageNft` | 
-| `AddTextRecord` | 
+| `AddTextRecord` |     
 | `RemoveTextRecord` | 
 | `UpdateTextRecord` | 
 | `VerifyTextRecord` |

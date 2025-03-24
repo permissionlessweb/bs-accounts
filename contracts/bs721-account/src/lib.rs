@@ -50,7 +50,7 @@ pub mod entry {
             deps.storage,
             &SudoParams {
                 max_record_count: 10,
-                // registry_addr: msg.registry,
+                max_reverse_map_key_limit: 10,
             },
         )?;
         let api = deps.api;
@@ -83,18 +83,9 @@ pub mod entry {
                 set_profile_marketplace(deps, info, address)
             }
             // only account token owner authorized
-            crate::msg::ExecuteMsg::AssociateAddress {
-                account,
-                address,
-                btsg_account,
-            } => associate_address(
-                deps,
-                info,
-                env.contract.address,
-                account,
-                address,
-                btsg_account,
-            ),
+            crate::msg::ExecuteMsg::AssociateAddress { account, address } => {
+                associate_address(deps, info, env.contract.address, account, address)
+            }
             // only account token owner authorized
             crate::msg::ExecuteMsg::UpdateImageNft { account, nft } => {
                 update_image_nft(deps, info, account, nft)
@@ -190,8 +181,8 @@ pub mod entry {
         match msg {
             SudoMsg::UpdateParams {
                 max_record_count,
-                // registry_addr,
-            } => sudo_update_params(deps, max_record_count),
+                max_rev_map_count,
+            } => sudo_update_params(deps, max_record_count, max_rev_map_count),
         }
     }
 }

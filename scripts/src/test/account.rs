@@ -1,7 +1,8 @@
 use ::bs721_account::{commands::transcode, ContractError};
 use bs721_account::msg::{Bs721AccountsQueryMsgFns, ExecuteMsgFns};
+use bs721_account::state::REVERSE_MAP_KEY;
 use cosmwasm_std::testing::mock_dependencies;
-use cosmwasm_std::{from_json, StdError};
+use cosmwasm_std::{from_json, Api, Binary, StdError};
 use cw_orch::prelude::CallAs;
 use cw_orch::{anyhow, mock::MockBech32, prelude::*};
 use cw_ownable::OwnershipError;
@@ -245,14 +246,32 @@ fn test_burn_function() -> anyhow::Result<()> {
 
 #[test]
 fn test_transcode() -> anyhow::Result<()> {
-    let deps = mock_dependencies();
+    let mut deps = mock_dependencies();
+
+    let cosmos1 = deps.api.addr_make("cosmos");
+    let bitsong1 = deps.api.addr_make("bitsong");
     let res = transcode(
         deps.as_ref(),
         "cosmos1y54exmx84cqtasvjnskf9f63djuuj68p7hqf47",
     );
     assert_eq!(
-        res.unwrap(),
-        "bitsong1y54exmx84cqtasvjnskf9f63djuuj68pj7jph3"
+        res.unwrap_err().to_string(),
+        "Generic error: no mappping set. Set an account for this chain with UpdateMyReverseMapKey"
     );
+
+    //
+    let canon = deps.api.addr_canonicalize(&bitsong1.to_string()).unwrap();
+
+    // save to store
+    REVERSE_MAP_KEY
+        .save(
+            &mut deps.storage,
+            &cosmos1.to_string(),
+            &Binary::new(canon.to_vec()),
+        )
+        .unwrap();
+
+    let res = transcode(deps.as_ref(), &cosmos1.to_string()).unwrap();
+    assert_eq!(bitsong1.to_string(), res);
     Ok(())
 }
