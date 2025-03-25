@@ -66,8 +66,14 @@ pub enum ContractError {
     #[error("TooManyRecords max: {max}")]
     TooManyRecords { max: u32 },
 
-    #[error("TooManyReverseMaps max: {max}")]
-    TooManyReverseMaps { max: u32 },
+    #[error("TooManyReverseMaps max: {max}, have: {have}")]
+    TooManyReverseMaps { max: u32, have: u32 },
+
+    #[error("CannotRemoveEmptyMap")]
+    CannotRemoveEmptyMap {},
+
+    #[error("CannotRemoveMoreThanWillExists")]
+    CannotRemoveMoreThanWillExists {},
 
     #[error("NotImplemented")]
     NotImplemented {},

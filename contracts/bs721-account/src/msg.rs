@@ -165,6 +165,7 @@ impl<T> From<ExecuteMsg<T>> for bs721_base::msg::ExecuteMsg<T> {
 }
 
 impl CustomMsg for Bs721AccountsQueryMsg {}
+
 #[cw_ownable::cw_ownable_query]
 #[cw_serde]
 #[derive(QueryResponses)]

@@ -109,6 +109,8 @@ pub mod manifest {
                 }
                 _ => {
                     let addr = deps.api.addr_validate(&address)?;
+                    // println!("2.account:{:#?}", account);
+                    // println!("2.addr:{:#?}", addr);
                     Ok(validate_address(deps.as_ref(), &info.sender, addr).map(|_| address)?)
                 }
             })
@@ -121,6 +123,8 @@ pub mod manifest {
                 .unwrap_or(None)
         });
 
+        // println!("3.old_account:{:#?}", old_account);
+        // println!("3.old_account:{:#?}", token_uri);
         // println!("// 4. remove old token_uri / address from previous account");
         old_account.map(|token_id| {
             Bs721AccountContract::default()
@@ -159,6 +163,8 @@ pub mod manifest {
         let canonv = deps.api.addr_canonicalize(&info.sender.as_str())?;
         REVMAP_LIMIT.save(deps.storage, &canonv.to_string(), &0u32)?;
         // println!("// 7. save new reverse map entry");
+        // println!("token_uri:{:#?}", token_uri);
+        // println!("account:{:#?}", account);
         token_uri.map(|addr| REVERSE_MAP.save(deps.storage, &Addr::unchecked(addr), &account));
 
         let mut event = Event::new("associate-address")
@@ -219,8 +225,11 @@ pub mod manifest {
                 None => Ok(token),
             },
         )?;
-
         Bs721AccountContract::default().increment_tokens(deps.storage)?;
+
+        // save with token owner canonv as key
+        let canonv = deps.api.addr_canonicalize(&owner)?;
+        REVMAP_LIMIT.save(deps.storage, &canonv.to_string(), &0)?;
 
         let event = Event::new("mint")
             .add_attribute("minter", info.sender)
@@ -235,47 +244,85 @@ pub mod manifest {
         deps: DepsMut,
         _env: Env,
         info: MessageInfo,
-        to_add: Vec<String>,
-        to_remove: Vec<String>,
+        mut to_add: Vec<String>,
+        mut to_remove: Vec<String>,
     ) -> Result<Response, ContractError> {
         let mut attr = vec![];
         nonpayable(&info)?;
-
         let canonv = deps.api.addr_canonicalize(&info.sender.as_str())?;
+
         let max = SUDO_PARAMS.load(deps.storage)?.max_reverse_map_key_limit;
-        let count = REVMAP_LIMIT.load(deps.storage, &canonv.to_string())?;
+        let count = REVMAP_LIMIT.may_load(deps.storage, &canonv.to_string())?;
 
-        //
-        if count + to_add.len() as u32 - to_remove.len() as u32 > max {
-            return Err(ContractError::TooManyReverseMaps { max });
-        }
-        for rem in to_remove {
-            if let Some(addr) = REVERSE_MAP_KEY.may_load(deps.storage, &rem)? {
-                let human_addr = deps.api.addr_humanize(&CanonicalAddr::from(addr))?;
-                if human_addr == info.sender {
-                    REVMAP_LIMIT.save(deps.storage, &human_addr.to_string(), &(count - 1))?;
-                    attr.push(Attribute::new("chain-cointype-removed", rem));
-                } else {
-                    return Err(ContractError::OwnershipError(
-                        cw_ownable::OwnershipError::NotOwner,
-                    ));
+        if count.is_none() {
+            return Err(ContractError::AccountNotFound {});
+        } else {
+            let mut count = count.unwrap();
+            // Calculate new count after adding and removing
+            let mut new_count = count as u32 + to_add.len() as u32;
+            // println!("new_count: {:#?}", new_count);
+            // println!("to_remove.len(): {:#?}", to_remove.len());
+            // println!("max: {:#?}", max);
+
+            // Check if we're trying to remove more than we're going to have
+            if new_count != 0 && new_count < to_remove.len() as u32 {
+                return Err(ContractError::CannotRemoveMoreThanWillExists {});
+            } else {
+                if to_remove.len() as u32 > max {
+                    return Err(ContractError::CannotRemoveMoreThanWillExists {});
                 }
-            };
-        }
+            }
 
-        for add in to_add {
-            if let Some(addr) = REVERSE_MAP_KEY.may_load(deps.storage, &add)? {
-                let human_addr = deps.api.addr_humanize(&CanonicalAddr::from(addr))?;
-                if human_addr == info.sender {
+            if new_count != 0 {
+                new_count = new_count - to_remove.len() as u32;
+            }
+
+            if new_count > max {
+                return Err(ContractError::TooManyReverseMaps {
+                    max,
+                    have: new_count,
+                });
+            }
+            // Process additions
+            for add in to_add.drain(..) {
+                count += 1;
+                if count > max {
+                    return Err(ContractError::TooManyReverseMaps { max, have: count });
+                } else if REVERSE_MAP_KEY.may_load(deps.storage, &add)?.is_none() {
+                    REVMAP_LIMIT.save(deps.storage, &canonv.to_string(), &(count))?;
                     REVERSE_MAP_KEY.save(
                         deps.storage,
                         &add.to_string(),
                         &Binary::new(canonv.to_vec()),
                     )?;
-                    REVMAP_LIMIT.save(deps.storage, &human_addr.to_string(), &(count + 1))?;
-                    attr.extend([Attribute::new("added", &add)]);
+                    attr.push(Attribute::new("added", &add));
+                } else {
+                    return Err(ContractError::RecordAccountAlreadyExists {});
                 }
-            };
+            }
+
+            // Process removals
+            for rem in to_remove.drain(..) {
+                if count == 0 {
+                    count = 1
+                }
+                if let Some(addr) = REVERSE_MAP_KEY.may_load(deps.storage, &rem)? {
+                    let canonv = &CanonicalAddr::from(addr.clone());
+                    let human_addr = deps.api.addr_humanize(canonv)?;
+                    if human_addr == info.sender {
+                        REVMAP_LIMIT.save(deps.storage, &canonv.to_string(), &(count - 1))?;
+                        // println!("removed-key:   {:#?}", rem);
+                        // println!("removed-value:   {:#?}", info.sender.as_str());
+                        REVERSE_MAP_KEY.remove(deps.storage, &rem.to_string());
+                        attr.push(Attribute::new("chain-cointype-removed", rem));
+                        count -= 1;
+                    } else {
+                        return Err(ContractError::OwnershipError(
+                            cw_ownable::OwnershipError::NotOwner,
+                        ));
+                    }
+                }
+            }
         }
 
         Ok(Response::new().add_attributes(attr))
@@ -788,13 +835,10 @@ pub mod queries {
     }
 }
 
-pub fn transcode(deps: Deps, address: &str) -> StdResult<String> {
-    // get map of prefixes & coin types
-    if let Some(ct) = REVERSE_MAP_KEY.may_load(deps.storage, &address.to_string())? {
-        Ok(deps
-            .api
-            .addr_humanize(&CanonicalAddr::from(ct))?
-            .to_string())
+pub fn transcode(deps: Deps, addr: &str) -> StdResult<String> {
+    if let Some(canonv) = REVERSE_MAP_KEY.may_load(deps.storage, &addr.to_string())? {
+        let human = &CanonicalAddr::from(canonv);
+        Ok(deps.api.addr_humanize(human)?.to_string())
     } else {
         return Err(StdError::generic_err(
             "no mappping set. Set a non `bitsong1...` addr mapped to your`bitsong1..` that owns this account token with UpdateMyReverseMapKey",
@@ -815,8 +859,8 @@ fn validate_address(deps: Deps, sender: &Addr, addr: Addr) -> Result<Addr, Contr
         let collection_info: Ownership<Addr> = deps
             .querier
             .query_wasm_smart(&addr, &Bs721AccountsQueryMsg::Minter {})?;
-        if let Some(ci) = &collection_info.owner {
-            if ci == sender {
+        if let Some(col_owner) = &collection_info.owner {
+            if col_owner == sender {
                 return Ok(addr);
             }
         }
@@ -873,7 +917,6 @@ mod test {
 
         assert_eq!(
             res.to_string(),
-            "Generic error: no mappping set. Set an account for this chain with UpdateMyReverseMapKey"
-        )
+            "Generic error: no mappping set. Set a non `bitsong1...` addr mapped to your`bitsong1..` that owns this account token with UpdateMyReverseMapKey"        )
     }
 }
