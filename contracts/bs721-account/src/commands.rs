@@ -22,7 +22,7 @@ pub mod manifest {
     };
     use bs721::Expiration;
     use bs721_base::state::TokenInfo;
-    use btsg_account::Metadata;
+    use btsg_account::{verify_generic::CosmosArbitrary, Metadata};
     use cosmwasm_std::{to_json_binary, Attribute, WasmMsg};
 
     use crate::state::{REVERSE_MAP_KEY, REVMAP_LIMIT};
@@ -178,77 +178,18 @@ pub mod manifest {
         Ok(Response::new().add_event(event))
     }
 
-    pub fn execute_mint(
-        deps: DepsMut,
-        info: MessageInfo,
-        msg: Bs721ExecuteMsg<Metadata>,
-    ) -> Result<Response, ContractError> {
-        let minter = Bs721AccountContract::default().minter.load(deps.storage)?;
-        if info.sender != minter {
-            return Err(ContractError::UnauthorizedMinter {});
-        }
-
-        let (token_id, owner, _, extension, _, _) = match msg {
-            Bs721ExecuteMsg::Mint {
-                token_id,
-                owner,
-                token_uri,
-                extension,
-                seller_fee_bps,
-                payment_addr,
-            } => (
-                token_id,
-                owner,
-                token_uri,
-                extension,
-                seller_fee_bps,
-                payment_addr,
-            ),
-            _ => return Err(ContractError::NotImplemented {}),
-        };
-
-        // create the token
-        let token = TokenInfo {
-            owner: deps.api.addr_validate(&owner)?,
-            approvals: vec![],
-            token_uri: None, // reserved for reverse map
-            extension,
-            seller_fee_bps: None,
-            payment_addr: None,
-        };
-
-        Bs721AccountContract::default().tokens.update(
-            deps.storage,
-            &token_id,
-            |old| match old {
-                Some(_) => Err(ContractError::Base(bs721_base::ContractError::Claimed {})),
-                None => Ok(token),
-            },
-        )?;
-        Bs721AccountContract::default().increment_tokens(deps.storage)?;
-
-        // save with token owner canonv as key
-        let canonv = deps.api.addr_canonicalize(&owner)?;
-        REVMAP_LIMIT.save(deps.storage, &canonv.to_string(), &0)?;
-
-        let event = Event::new("mint")
-            .add_attribute("minter", info.sender)
-            .add_attribute("token_id", &token_id)
-            .add_attribute("owner", &owner);
-        Ok(Response::new().add_event(event))
-    }
-
     /// updates the (usually) non `bitsong1...` addresses mapped to a `bitsong1...` account.
     /// Verify it is this account updating before removing.
     pub fn execute_update_reverse_map_keys(
         deps: DepsMut,
         _env: Env,
         info: MessageInfo,
-        mut to_add: Vec<String>,
+        mut to_add: Vec<CosmosArbitrary>,
         mut to_remove: Vec<String>,
     ) -> Result<Response, ContractError> {
         let mut attr = vec![];
         nonpayable(&info)?;
+        // the sender is always the value mapped to the store.
         let canonv = deps.api.addr_canonicalize(&info.sender.as_str())?;
 
         let max = SUDO_PARAMS.load(deps.storage)?.max_reverse_map_key_limit;
@@ -285,20 +226,23 @@ pub mod manifest {
             }
             // Process additions
             for add in to_add.drain(..) {
+                // verify signature
+                let hraddr = add.verify_return_readable()?;
                 count += 1;
                 if count > max {
                     return Err(ContractError::TooManyReverseMaps { max, have: count });
-                } else if REVERSE_MAP_KEY.may_load(deps.storage, &add)?.is_none() {
-                    REVMAP_LIMIT.save(deps.storage, &canonv.to_string(), &(count))?;
-                    REVERSE_MAP_KEY.save(
-                        deps.storage,
-                        &add.to_string(),
-                        &Binary::new(canonv.to_vec()),
-                    )?;
-                    attr.push(Attribute::new("added", &add));
-                } else {
-                    return Err(ContractError::RecordAccountAlreadyExists {});
+                } else if let Some(cv) = REVERSE_MAP_KEY.may_load(deps.storage, &hraddr)? {
+                    // override any mapping if this sender is value in map.
+                    let canon_map = &CanonicalAddr::from(cv.clone());
+                    if canon_map == &canonv {
+                    } else {
+                        return Err(ContractError::RecordAccountAlreadyExists {});
+                    }
                 }
+
+                REVMAP_LIMIT.save(deps.storage, &canonv.to_string(), &(count))?;
+                REVERSE_MAP_KEY.save(deps.storage, &hraddr, &Binary::new(canonv.to_vec()))?;
+                attr.push(Attribute::new("added", &hraddr));
             }
 
             // Process removals
@@ -313,7 +257,7 @@ pub mod manifest {
                         REVMAP_LIMIT.save(deps.storage, &canonv.to_string(), &(count - 1))?;
                         // println!("removed-key:   {:#?}", rem);
                         // println!("removed-value:   {:#?}", info.sender.as_str());
-                        REVERSE_MAP_KEY.remove(deps.storage, &rem.to_string());
+                        REVERSE_MAP_KEY.remove(deps.storage, &rem);
                         attr.push(Attribute::new("chain-cointype-removed", rem));
                         count -= 1;
                     } else {
@@ -326,68 +270,6 @@ pub mod manifest {
         }
 
         Ok(Response::new().add_attributes(attr))
-    }
-
-    pub fn execute_burn(
-        deps: DepsMut,
-        env: Env,
-        info: MessageInfo,
-        account: String,
-    ) -> Result<Response, ContractError> {
-        nonpayable(&info)?;
-        only_owner(deps.as_ref(), &info.sender, &account)?;
-        let bs721 = Bs721AccountContract::default();
-
-        bs721.execute(
-            deps,
-            env,
-            info.clone(),
-            Bs721ExecuteMsg::Burn {
-                token_id: account.to_string(),
-            },
-        )?;
-        Ok(Response::new().add_event(Event::new("burn-account").add_attribute("account", account)))
-    }
-
-    pub fn execute_transfer_nft(
-        deps: DepsMut,
-        env: Env,
-        info: MessageInfo,
-        recipient: String,
-        token_id: String,
-    ) -> Result<Response, ContractError> {
-        nonpayable(&info)?;
-        let recipient = deps.api.addr_validate(&recipient)?;
-
-        let names_marketplace = ACCOUNT_MARKETPLACE.load(deps.storage)?;
-
-        let update_ask_msg =
-            _transfer_nft(deps, env, &info, &recipient, &token_id, &names_marketplace)?;
-
-        let event = Event::new("transfer")
-            .add_attribute("sender", info.sender)
-            .add_attribute("recipient", recipient)
-            .add_attribute("token_id", token_id);
-
-        Ok(Response::new().add_message(update_ask_msg).add_event(event))
-    }
-
-    // Update the ask on the marketplace
-    fn update_ask_on_marketplace(
-        deps: Deps,
-        token_id: &str,
-        recipient: Addr,
-    ) -> Result<WasmMsg, ContractError> {
-        let msg = bs721_account_marketplace::msgs::ExecuteMsg::UpdateAsk {
-            token_id: token_id.to_string(),
-            seller: recipient.to_string(),
-        };
-        let update_ask_msg = WasmMsg::Execute {
-            contract_addr: ACCOUNT_MARKETPLACE.load(deps.storage)?.to_string(),
-            funds: vec![],
-            msg: to_json_binary(&msg)?,
-        };
-        Ok(update_ask_msg)
     }
 
     fn reset_token_metadata_and_reverse_map(
@@ -453,101 +335,6 @@ pub mod manifest {
             .save(deps.storage, token_id, &token)?;
 
         Ok(())
-    }
-
-    fn _transfer_nft(
-        mut deps: DepsMut,
-        env: Env,
-        info: &MessageInfo,
-        recipient: &Addr,
-        token_id: &str,
-        names_marketplace: &Addr,
-    ) -> Result<WasmMsg, ContractError> {
-        let update_ask_msg = update_ask_on_marketplace(deps.as_ref(), token_id, recipient.clone())?;
-
-        reset_token_metadata_and_reverse_map(&mut deps, env.contract.address.clone(), token_id)?;
-
-        let msg = bs721_base::ExecuteMsg::TransferNft {
-            recipient: recipient.to_string(),
-            token_id: token_id.to_string(),
-        };
-
-        let bs721 = Bs721AccountContract::default();
-
-        // Force account marketplace address as operator
-        bs721.operators.save(
-            deps.storage,
-            (&info.sender, names_marketplace),
-            &Expiration::Never {},
-        )?;
-
-        bs721.execute(deps, env, info.clone(), msg)?;
-
-        Ok(update_ask_msg)
-    }
-
-    pub fn execute_send_nft(
-        mut deps: DepsMut,
-        env: Env,
-        info: MessageInfo,
-        contract: String,
-        token_id: String,
-        msg: Binary,
-    ) -> Result<Response, ContractError> {
-        let contract_addr = deps.api.addr_validate(&contract)?;
-        let update_ask_msg =
-            update_ask_on_marketplace(deps.as_ref(), &token_id, contract_addr.clone())?;
-
-        reset_token_metadata_and_reverse_map(&mut deps, env.contract.address.clone(), &token_id)?;
-
-        let msg = bs721_base::ExecuteMsg::SendNft {
-            contract: contract_addr.to_string(),
-            token_id: token_id.to_string(),
-            msg,
-        };
-
-        Bs721AccountContract::default().execute(deps, env, info.clone(), msg)?;
-
-        let event = Event::new("send")
-            .add_attribute("sender", info.sender)
-            .add_attribute("contract", contract_addr.to_string())
-            .add_attribute("token_id", token_id);
-
-        Ok(Response::new().add_message(update_ask_msg).add_event(event))
-    }
-
-    pub fn update_image_nft(
-        deps: DepsMut,
-        info: MessageInfo,
-        account: String,
-        nft: Option<NFT>,
-    ) -> Result<Response, ContractError> {
-        let token_id = account.clone();
-
-        only_owner(deps.as_ref(), &info.sender, &token_id)?;
-        nonpayable(&info)?;
-
-        let mut event = Event::new("update_image_nft")
-            .add_attribute("owner", info.sender.to_string())
-            .add_attribute("token_id", account);
-
-        Bs721AccountContract::default().tokens.update(
-            deps.storage,
-            &token_id,
-            |token| match token {
-                Some(mut token_info) => {
-                    token_info.extension.image_nft.clone_from(&nft);
-                    Ok(token_info)
-                }
-                None => Err(ContractError::AccountNotFound {}),
-            },
-        )?;
-
-        if let Some(nft) = nft {
-            event = event.add_attribute("image_nft", nft.into_json_string());
-        }
-
-        Ok(Response::new().add_event(event))
     }
 
     pub fn execute_add_text_record(
@@ -715,6 +502,40 @@ pub mod manifest {
         Ok(Response::new().add_event(event))
     }
 
+    pub fn update_image_nft(
+        deps: DepsMut,
+        info: MessageInfo,
+        account: String,
+        nft: Option<NFT>,
+    ) -> Result<Response, ContractError> {
+        let token_id = account.clone();
+
+        only_owner(deps.as_ref(), &info.sender, &token_id)?;
+        nonpayable(&info)?;
+
+        let mut event = Event::new("update_image_nft")
+            .add_attribute("owner", info.sender.to_string())
+            .add_attribute("token_id", account);
+
+        Bs721AccountContract::default().tokens.update(
+            deps.storage,
+            &token_id,
+            |token| match token {
+                Some(mut token_info) => {
+                    token_info.extension.image_nft.clone_from(&nft);
+                    Ok(token_info)
+                }
+                None => Err(ContractError::AccountNotFound {}),
+            },
+        )?;
+
+        if let Some(nft) = nft {
+            event = event.add_attribute("image_nft", nft.into_json_string());
+        }
+
+        Ok(Response::new().add_event(event))
+    }
+
     pub fn set_profile_marketplace(
         deps: DepsMut,
         info: MessageInfo,
@@ -769,6 +590,192 @@ pub mod manifest {
             return Err(ContractError::RecordValueEmpty {});
         }
         Ok(())
+    }
+
+    /// BS721 FUNCTIONS
+    ///
+
+    pub fn execute_mint(
+        deps: DepsMut,
+        info: MessageInfo,
+        msg: Bs721ExecuteMsg<Metadata>,
+    ) -> Result<Response, ContractError> {
+        let minter = Bs721AccountContract::default().minter.load(deps.storage)?;
+        if info.sender != minter {
+            return Err(ContractError::UnauthorizedMinter {});
+        }
+
+        let (token_id, owner, _, extension, _, _) = match msg {
+            Bs721ExecuteMsg::Mint {
+                token_id,
+                owner,
+                token_uri,
+                extension,
+                seller_fee_bps,
+                payment_addr,
+            } => (
+                token_id,
+                owner,
+                token_uri,
+                extension,
+                seller_fee_bps,
+                payment_addr,
+            ),
+            _ => return Err(ContractError::NotImplemented {}),
+        };
+
+        // create the token
+        let token = TokenInfo {
+            owner: deps.api.addr_validate(&owner)?,
+            approvals: vec![],
+            token_uri: None, // reserved for reverse map
+            extension,
+            seller_fee_bps: None,
+            payment_addr: None,
+        };
+
+        Bs721AccountContract::default().tokens.update(
+            deps.storage,
+            &token_id,
+            |old| match old {
+                Some(_) => Err(ContractError::Base(bs721_base::ContractError::Claimed {})),
+                None => Ok(token),
+            },
+        )?;
+        Bs721AccountContract::default().increment_tokens(deps.storage)?;
+
+        // save with token owner canonv as key
+        let canonv = deps.api.addr_canonicalize(&owner)?;
+        REVMAP_LIMIT.save(deps.storage, &canonv.to_string(), &0)?;
+
+        let event = Event::new("mint")
+            .add_attribute("minter", info.sender)
+            .add_attribute("token_id", &token_id)
+            .add_attribute("owner", &owner);
+        Ok(Response::new().add_event(event))
+    }
+
+    pub fn execute_burn(
+        deps: DepsMut,
+        env: Env,
+        info: MessageInfo,
+        account: String,
+    ) -> Result<Response, ContractError> {
+        nonpayable(&info)?;
+        only_owner(deps.as_ref(), &info.sender, &account)?;
+        let bs721 = Bs721AccountContract::default();
+
+        bs721.execute(
+            deps,
+            env,
+            info.clone(),
+            Bs721ExecuteMsg::Burn {
+                token_id: account.to_string(),
+            },
+        )?;
+        Ok(Response::new().add_event(Event::new("burn-account").add_attribute("account", account)))
+    }
+
+    pub fn execute_transfer_nft(
+        deps: DepsMut,
+        env: Env,
+        info: MessageInfo,
+        recipient: String,
+        token_id: String,
+    ) -> Result<Response, ContractError> {
+        nonpayable(&info)?;
+        let recipient = deps.api.addr_validate(&recipient)?;
+
+        let names_marketplace = ACCOUNT_MARKETPLACE.load(deps.storage)?;
+
+        let update_ask_msg =
+            _transfer_nft(deps, env, &info, &recipient, &token_id, &names_marketplace)?;
+
+        let event = Event::new("transfer")
+            .add_attribute("sender", info.sender)
+            .add_attribute("recipient", recipient)
+            .add_attribute("token_id", token_id);
+
+        Ok(Response::new().add_message(update_ask_msg).add_event(event))
+    }
+
+    // Update the ask on the marketplace
+    fn update_ask_on_marketplace(
+        deps: Deps,
+        token_id: &str,
+        recipient: Addr,
+    ) -> Result<WasmMsg, ContractError> {
+        let msg = bs721_account_marketplace::msgs::ExecuteMsg::UpdateAsk {
+            token_id: token_id.to_string(),
+            seller: recipient.to_string(),
+        };
+        let update_ask_msg = WasmMsg::Execute {
+            contract_addr: ACCOUNT_MARKETPLACE.load(deps.storage)?.to_string(),
+            funds: vec![],
+            msg: to_json_binary(&msg)?,
+        };
+        Ok(update_ask_msg)
+    }
+
+    fn _transfer_nft(
+        mut deps: DepsMut,
+        env: Env,
+        info: &MessageInfo,
+        recipient: &Addr,
+        token_id: &str,
+        names_marketplace: &Addr,
+    ) -> Result<WasmMsg, ContractError> {
+        let update_ask_msg = update_ask_on_marketplace(deps.as_ref(), token_id, recipient.clone())?;
+
+        reset_token_metadata_and_reverse_map(&mut deps, env.contract.address.clone(), token_id)?;
+
+        let msg = bs721_base::ExecuteMsg::TransferNft {
+            recipient: recipient.to_string(),
+            token_id: token_id.to_string(),
+        };
+
+        let bs721 = Bs721AccountContract::default();
+
+        // Force account marketplace address as operator
+        bs721.operators.save(
+            deps.storage,
+            (&info.sender, names_marketplace),
+            &Expiration::Never {},
+        )?;
+
+        bs721.execute(deps, env, info.clone(), msg)?;
+
+        Ok(update_ask_msg)
+    }
+
+    pub fn execute_send_nft(
+        mut deps: DepsMut,
+        env: Env,
+        info: MessageInfo,
+        contract: String,
+        token_id: String,
+        msg: Binary,
+    ) -> Result<Response, ContractError> {
+        let contract_addr = deps.api.addr_validate(&contract)?;
+        let update_ask_msg =
+            update_ask_on_marketplace(deps.as_ref(), &token_id, contract_addr.clone())?;
+
+        reset_token_metadata_and_reverse_map(&mut deps, env.contract.address.clone(), &token_id)?;
+
+        let msg = bs721_base::ExecuteMsg::SendNft {
+            contract: contract_addr.to_string(),
+            token_id: token_id.to_string(),
+            msg,
+        };
+
+        Bs721AccountContract::default().execute(deps, env, info.clone(), msg)?;
+
+        let event = Event::new("send")
+            .add_attribute("sender", info.sender)
+            .add_attribute("contract", contract_addr.to_string())
+            .add_attribute("token_id", token_id);
+
+        Ok(Response::new().add_message(update_ask_msg).add_event(event))
     }
 }
 

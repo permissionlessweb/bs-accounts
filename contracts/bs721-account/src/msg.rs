@@ -1,4 +1,5 @@
 use crate::{state::SudoParams, Metadata};
+use btsg_account::verify_generic::CosmosArbitrary;
 use btsg_account::{TextRecord, NFT};
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Addr, Binary, CustomMsg};
@@ -101,7 +102,7 @@ pub enum ExecuteMsg<T> {
     FreezeCollectionInfo {},
     /// Updates the mapping of wallet accounts to the sender.
     UpdateMyReverseMapKey {
-        to_add: Vec<String>,
+        to_add: Vec<CosmosArbitrary>,
         to_remove: Vec<String>,
     },
 }

@@ -1,4 +1,8 @@
+use cosmwasm_std::Binary;
+
 pub mod minter;
+pub mod verify_generic;
+
 pub const MAX_TEXT_LENGTH: u32 = 512;
 pub const NATIVE_DENOM: &str = "ubtsg";
 pub const SECONDS_PER_YEAR: u64 = 31536000;
@@ -39,7 +43,11 @@ impl NFT {
     pub fn into_json_string(self: &NFT) -> String {
         String::from_utf8(cosmwasm_std::to_json_vec(&self).unwrap_or_default()).unwrap_or_default()
     }
-    pub fn new(deps: cosmwasm_std::Deps, collection: String, token_id: String) -> cosmwasm_std::StdResult<Self> {
+    pub fn new(
+        deps: cosmwasm_std::Deps,
+        collection: String,
+        token_id: String,
+    ) -> cosmwasm_std::StdResult<Self> {
         Ok(Self {
             collection: deps.api.addr_validate(&collection)?,
             token_id,

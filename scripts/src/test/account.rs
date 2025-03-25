@@ -281,12 +281,10 @@ fn test_reverse_map_key_limit() -> anyhow::Result<()> {
         .update_my_reverse_map_key(addrs.clone(), vec![])
         .unwrap_err();
 
-    // assert_eq!(err.root().to_string())
     assert_eq!(
         err.root().to_string(),
         ContractError::TooManyReverseMaps { max: 10, have: 20 }.to_string()
     );
-    // assert!(err.is_err());
 
     // not owner tries to update reverse map
     for i in 0..11 {
@@ -326,6 +324,13 @@ fn test_reverse_map_key_limit() -> anyhow::Result<()> {
     // confirm we can query the non cosmos addr token_id associated to it
     let res = suite.account.reverse_map_account(addrs[5].clone()).unwrap();
     assert_eq!(token_id, res);
+
+    /// confirm we have maps set
+    for i in 0..10 {
+        // query the bitsong address for a given external address
+        let res = suite.account.reverse_map_address(addrs[i].clone()).unwrap();
+        assert_eq!(mock.sender, res);
+    }
 
     //try to remove more than existing at once
     let err = suite

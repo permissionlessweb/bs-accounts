@@ -1374,11 +1374,15 @@ name = "btsg-account"
 version = "0.2.0"
 dependencies = [
  "abstract-std",
+ "bech32 0.11.0",
  "bs-controllers",
+ "cosmwasm-crypto 2.2.0",
  "cosmwasm-schema 1.5.9",
  "cosmwasm-std 2.2.0",
  "cw-orch 0.25.1",
  "cw-ownable",
+ "ripemd",
+ "sha2 0.10.8",
 ]
 
 [[package]]
