@@ -53,10 +53,31 @@ Along with the mint message, the minter forms a default `SetAsk` msg to the Acco
 Bitsong accounts uses custom metadata that specificies whether or not this token is being used for an abstract account.   -->
 
 ### 2. Managing An Account 
+Once an account it minted, the nft owner can add details to the nft for futher customization of their account token. 
 
 #### Associate Address
-
 `REVERSE_MAP_KEY` is the storage object used to map a `bitsong1...` addr as the value of various storage keys. This enables effecient data retrieval from the contract for multiple items in the storage mapped to a specific address. 
+
+### Interoperable Design
+When you buy a Bitsong Account, you are really getting a account on _every_ Cosmos chain. Any chain can lookup a account by its local address over IBC. Similarly, any chain can mint a account over IBC that resolves to a local address. 
+
+```
+jimi -> D93385094E906D7DA4EBFDEC2C4B167D5CAA431A (in hex)
+```
+
+#### Bitsong Use Of Coin Type 639
+Resolving an address for different chains is done with logic that includes the chains coin type used, in order to determine the human redimal representation of the account that a private key has control over. This is how a single key can control multiple accounts on multiple chains. 
+
+
+
+Now this can be resolved per chain:
+```
+jimi.bitsong  -> bitsong1myec2z2wjpkhmf8tlhkzcjck04w25sc6ymhplz
+# will be incorrect due to mismatch slip44 coin types with cosmos hub and bitsong 
+jimi.cosmos -> cosmos1myec2z2wjpkhmf8tlhkzcjck04w25sc6y2xq2r
+```
+
+Chains that use different account types or key derivation paths has support with the use of the custom entry point `UpdateMyReverseMapKey`, which lets mapping and retrieval of external accounts quick and compatible without any custom cryptographic library. 
 
 #### Image NFT 
 
@@ -84,26 +105,6 @@ pub struct Metadata {
 ### 3. Transferring Ownership of An Account 
 
 
-### Interoperable Design
-When you buy a Bitsong Account, you are really getting a account on _every_ Cosmos chain. Any chain can lookup a account by its local address over IBC. Similarly, any chain can mint a account over IBC that resolves to a local address. 
-
-```
-jimi -> D93385094E906D7DA4EBFDEC2C4B167D5CAA431A (in hex)
-```
-
-#### Bitsong Use Of Coin Type 639
-Resolving an address for different chains is done with logic that includes the chains coin type used, in order to determine the human redimal representation of the account that a private key has control over. This is how a single key can control multiple accounts on multiple chains. 
-
-
-Now this can be resolved per chain:
-```
-jimi.bitsong  -> bitsong1myec2z2wjpkhmf8tlhkzcjck04w25sc6ymhplz
-# will be incorrect due to mismatch slip44 coin types with cosmos hub and bitsong 
-jimi.cosmos -> cosmos1myec2z2wjpkhmf8tlhkzcjck04w25sc6y2xq2r
-```
-
-Chains that use different account types or key derivation paths has support with the use of the custom entry point `UpdateMyReverseMapKey`, which lets mapping and retrieval of external accounts quick and compatible without any custom cryptographic library. 
-
 
 ## DISCLAIMER
 
@@ -126,3 +127,5 @@ cd scripts/ && cargo test
 ### Deploy 
 
 To learn more about the deployment scripts, [check here](./scripts/README).
+
+## Code Coverage 

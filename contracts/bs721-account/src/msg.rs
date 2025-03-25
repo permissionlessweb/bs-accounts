@@ -19,7 +19,7 @@ pub struct InstantiateMsg {
 }
 
 #[cw_serde]
-#[derive(cw_orch::ExecuteFns)]
+#[cfg_attr(feature = "interface", derive(cw_orch::ExecuteFns))] // cw-orch automatic
 pub enum ExecuteMsg<T> {
     /// Set account marketplace contract address
     SetMarketplace { address: String },
@@ -167,20 +167,27 @@ impl<T> From<ExecuteMsg<T>> for bs721_base::msg::ExecuteMsg<T> {
 impl CustomMsg for Bs721AccountsQueryMsg {}
 #[cw_ownable::cw_ownable_query]
 #[cw_serde]
-#[derive(QueryResponses, cw_orch::QueryFns)]
+#[derive(QueryResponses)]
+#[cfg_attr(feature = "interface", derive(cw_orch::QueryFns))] // cw-orch automatic
 pub enum Bs721AccountsQueryMsg {
     /// Returns sudo params
     #[returns(SudoParams)]
     Params {},
-    /// Reverse lookup of account for address
+    /// query an address to return the account owned by this address
     #[returns(String)]
     Account { address: String },
+    /// query an account address to return the associated address. This will be the abstract account contract addr if nft used as ownership token
+    #[returns(Addr)]
+    AssociatedAddress { account: String },
     /// Returns the marketplace contract address
     #[returns(Addr)]
     AccountMarketplace {},
-    /// Returns the associated address for a account
+    /// Query a non `bitsong1...` address to retrieve the `bitsong1...` associated with it
     #[returns(Addr)]
-    AssociatedAddress { account: String },
+    ReverseMapAddress { address: String },
+    /// Query a non `bitsong1...` address to retrieve the account token associated with it. *Same as `QueryMsg::Account`*
+    #[returns(String)]
+    ReverseMapAccount { address: String },
     /// Returns the image NFT for a account
     #[returns(Option<NFT>)]
     ImageNFT { account: String },

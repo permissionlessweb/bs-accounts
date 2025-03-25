@@ -52,7 +52,7 @@ pub mod manifest {
                         REVERSE_MAP.remove(deps.storage, &Addr::unchecked(address));
                         Ok(())
                     } else {
-                        // token_uri has been set to the account address. Query who it has set as its current owner
+                        // token_uri has been set to the abstract-account address. Query who it has set as its current owner.
                         let current_owner: Ownership<String> = deps.querier.query_wasm_smart(
                             &address,
                             &abstract_std::account::QueryMsg::Ownership {},
@@ -87,33 +87,29 @@ pub mod manifest {
             })
             .unwrap_or(());
 
-        // println!("// 2. validate the new address, prepare to save into token_uri");
-
+        // println!("// 2. validate the new address, prepare to save into token_uri")
         let token_uri = address
             .clone()
-            .map(|address| {
-                match ownership.owner.clone() {
-                    ownership::GovernanceDetails::NFT {
-                        collection_addr,
-                        token_id,
-                    } => {
-                        if account != token_id || collection_addr != this.to_string() {
-                            return Err(ContractError::IncorrectBitsongAccountOwnershipToken {
-                                got: ownership.owner.to_string(),
-                                wanted: ownership::GovernanceDetails::NFT {
-                                    collection_addr,
-                                    token_id,
-                                }
-                                .to_string(),
-                            });
-                        }
-                        // returns the
-                        Ok(address)
+            .map(|address| match ownership.owner.clone() {
+                ownership::GovernanceDetails::NFT {
+                    collection_addr,
+                    token_id,
+                } => {
+                    if account != token_id || collection_addr != this.to_string() {
+                        return Err(ContractError::IncorrectBitsongAccountOwnershipToken {
+                            got: ownership.owner.to_string(),
+                            wanted: ownership::GovernanceDetails::NFT {
+                                collection_addr,
+                                token_id,
+                            }
+                            .to_string(),
+                        });
                     }
-                    _ => {
-                        let addr = deps.api.addr_validate(&address)?;
-                        Ok(validate_address(deps.as_ref(), &info.sender, addr).map(|_| address)?)
-                    }
+                    Ok(address)
+                }
+                _ => {
+                    let addr = deps.api.addr_validate(&address)?;
+                    Ok(validate_address(deps.as_ref(), &info.sender, addr).map(|_| address)?)
                 }
             })
             .transpose()?;
@@ -150,7 +146,7 @@ pub mod manifest {
                         GovernanceDetails::NFT { .. } => {
                             token_info.extension.account_ownership = true
                         }
-                        _ => {}
+                        _ => token_info.extension.account_ownership = false,
                     }
 
                     Ok(token_info)
@@ -160,7 +156,8 @@ pub mod manifest {
         )?;
 
         // println!("// 6. update new manager in token metadata");
-
+        let canonv = deps.api.addr_canonicalize(&info.sender.as_str())?;
+        REVMAP_LIMIT.save(deps.storage, &canonv.to_string(), &0u32)?;
         // println!("// 7. save new reverse map entry");
         token_uri.map(|addr| REVERSE_MAP.save(deps.storage, &Addr::unchecked(addr), &account));
 
@@ -232,6 +229,8 @@ pub mod manifest {
         Ok(Response::new().add_event(event))
     }
 
+    /// updates the (usually) non `bitsong1...` addresses mapped to a `bitsong1...` account.
+    /// Verify it is this account updating before removing.
     pub fn execute_update_reverse_map_keys(
         deps: DepsMut,
         _env: Env,
@@ -241,35 +240,44 @@ pub mod manifest {
     ) -> Result<Response, ContractError> {
         let mut attr = vec![];
         nonpayable(&info)?;
-      
+
         let canonv = deps.api.addr_canonicalize(&info.sender.as_str())?;
         let max = SUDO_PARAMS.load(deps.storage)?.max_reverse_map_key_limit;
         let count = REVMAP_LIMIT.load(deps.storage, &canonv.to_string())?;
-        if count + 1 > max {
+
+        //
+        if count + to_add.len() as u32 - to_remove.len() as u32 > max {
             return Err(ContractError::TooManyReverseMaps { max });
+        }
+        for rem in to_remove {
+            if let Some(addr) = REVERSE_MAP_KEY.may_load(deps.storage, &rem)? {
+                let human_addr = deps.api.addr_humanize(&CanonicalAddr::from(addr))?;
+                if human_addr == info.sender {
+                    REVMAP_LIMIT.save(deps.storage, &human_addr.to_string(), &(count - 1))?;
+                    attr.push(Attribute::new("chain-cointype-removed", rem));
+                } else {
+                    return Err(ContractError::OwnershipError(
+                        cw_ownable::OwnershipError::NotOwner,
+                    ));
+                }
+            };
         }
 
         for add in to_add {
-            if REVERSE_MAP_KEY.may_load(deps.storage, &add)?.is_none() {
-                REVERSE_MAP_KEY.save(
-                    deps.storage,
-                    &add.to_string(),
-                    &Binary::new(canonv.to_vec()),
-                )?;
-                attr.extend([Attribute::new("added", &add)]);
+            if let Some(addr) = REVERSE_MAP_KEY.may_load(deps.storage, &add)? {
+                let human_addr = deps.api.addr_humanize(&CanonicalAddr::from(addr))?;
+                if human_addr == info.sender {
+                    REVERSE_MAP_KEY.save(
+                        deps.storage,
+                        &add.to_string(),
+                        &Binary::new(canonv.to_vec()),
+                    )?;
+                    REVMAP_LIMIT.save(deps.storage, &human_addr.to_string(), &(count + 1))?;
+                    attr.extend([Attribute::new("added", &add)]);
+                }
             };
         }
 
-        for rem in to_remove {
-            let canonk = deps.api.addr_canonicalize(&rem)?;
-            if REVERSE_MAP_KEY
-                .may_load(deps.storage, &canonk.to_string())?
-                .is_some()
-            {
-                REVERSE_MAP_KEY.remove(deps.storage, &rem);
-                attr.push(Attribute::new("chain-cointype-removed", rem));
-            };
-        }
         Ok(Response::new().add_attributes(attr))
     }
 
@@ -789,7 +797,7 @@ pub fn transcode(deps: Deps, address: &str) -> StdResult<String> {
             .to_string())
     } else {
         return Err(StdError::generic_err(
-            "no mappping set. Set an account for this chain with UpdateMyReverseMapKey",
+            "no mappping set. Set a non `bitsong1...` addr mapped to your`bitsong1..` that owns this account token with UpdateMyReverseMapKey",
         ));
     }
 }
@@ -856,7 +864,7 @@ mod test {
     #[test]
     pub fn test_transcode() -> () {
         let deps = cosmwasm_std::testing::mock_dependencies();
-        
+
         let res = super::transcode(
             deps.as_ref(),
             "akash1fxccvvhhy43tvet2ah7jqwq4cwl9k3dx3l2y8r",

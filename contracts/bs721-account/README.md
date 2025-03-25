@@ -51,7 +51,7 @@
 | `Params` | Returns the sudo parameters. | 
 | `Account` | Reverse lookup of account for a given address. | 
 | `AccountMarketplace` | Returns the marketplace contract address. | 
-| `AssociatedAddress` | Returns the associated address for a given account. | 
+| `AssociatedAddress` | Returns the associated address for a given account. This is the address set during `ExecuteMsg::AssociateAddress`,contract expects this to be the abstract-account contract address if a token is being used for tokenized account | 
 | `ImageNFT` | Returns the image NFT for a given account. | 
 | `TextRecords` | Returns the text records for a given account. | 
 | `IsTwitterVerified` | Returns whether Twitter is verified for a given account. | 

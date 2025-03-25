@@ -8,7 +8,7 @@ version  = { workspace = true }
 [dependencies]
 bs721-base                 = { workspace = true }
 btsg-account               = { path = "../packages/btsg-account" }
-bs721-account              = { path = "../contracts/bs721-account" }
+bs721-account              = { path = "../contracts/bs721-account", features = [ "interface"]}
 bs721-account-minter       = { path = "../contracts/bs721-account-minter"  }
 bs721-account-marketplace  = { path = "../contracts/bs721-account-marketplace"  }
 cosmwasm-std               = { workspace = true }
