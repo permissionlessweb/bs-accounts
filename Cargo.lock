@@ -6584,12 +6584,14 @@ dependencies = [
  "abstract-sdk",
  "abstract-std",
  "anyhow",
+ "bech32 0.11.0",
  "bs721-account",
  "bs721-account-marketplace",
  "bs721-account-minter",
  "bs721-base",
  "btsg-account",
  "clap",
+ "cosmwasm-crypto 2.2.0",
  "cosmwasm-std 2.2.0",
  "cw-orch 0.27.0",
  "cw-orch-clone-testing",
@@ -6602,8 +6604,11 @@ dependencies = [
  "log",
  "pretty_env_logger",
  "reqwest 0.11.27",
+ "ripemd",
+ "secp256k1 0.30.0",
  "serde",
  "serde_json",
+ "sha2 0.10.8",
  "tokio",
 ]
 
@@ -6656,6 +6661,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9465315bc9d4566e1724f0fffcbcc446268cb522e60f9a27bcded6b19c108113"
 dependencies = [
  "bitcoin_hashes 0.14.0",
+ "secp256k1-sys 0.10.1",
+]
+
+[[package]]
+name = "secp256k1"
+version = "0.30.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b50c5943d326858130af85e049f2661ba3c78b26589b8ab98e65e80ae44a1252"
+dependencies = [
+ "bitcoin_hashes 0.14.0",
+ "rand",
  "secp256k1-sys 0.10.1",
 ]
 

@@ -1,12 +1,17 @@
 use ::bs721_account::{commands::transcode, ContractError};
 use bs721_account::msg::{Bs721AccountsQueryMsgFns, ExecuteMsgFns};
 use bs721_account::state::REVERSE_MAP_KEY;
+use btsg_account::verify_generic::{
+    preamble_msg_arb_036, pubkey_to_address, sha256, CosmosArbitrary, TestCosmosArb,
+};
 use cosmwasm_std::testing::mock_dependencies;
 use cosmwasm_std::{from_json, Api, Binary, StdError};
 use cw_orch::prelude::CallAs;
 use cw_orch::{anyhow, mock::MockBech32, prelude::*};
 use cw_ownable::OwnershipError;
 use std::error::Error;
+
+use secp256k1::{Message, PublicKey, Secp256k1, SecretKey};
 
 use crate::BtsgAccountSuite;
 
@@ -210,6 +215,7 @@ fn test_query_accounts() -> anyhow::Result<()> {
     );
     Ok(())
 }
+
 #[test]
 fn test_burn_function() -> anyhow::Result<()> {
     let mock = MockBech32::new("bitsong");
@@ -253,15 +259,49 @@ fn test_reverse_map_key_limit() -> anyhow::Result<()> {
     let notminter = mock.addr_make("not-minter");
 
     // create non 'bitsong1...' addrs
-    let mut addrs = vec![];
+    let mut carbs = vec![];
     for a in 0..20 {
-        let deps = mock_dependencies();
-        let cosmos1 = deps
-            .api
-            .with_prefix("cosmos")
-            .addr_make(&("babber23".to_owned() + a.to_string().as_str()));
-        addrs.push(cosmos1.to_string());
+        // creeate new key
+        let secp = Secp256k1::new();
+        let secret_key = SecretKey::from_slice(&[0xcd; 32]).expect("32 bytes, within curve order");
+        let public_key = PublicKey::from_secret_key(&secp, &secret_key);
+        let hrp = "cosmos";
+        let signer = pubkey_to_address(&public_key.to_string().as_bytes().to_vec(), hrp)?;
+
+        // create message to add into adr036 compatible msg
+        let pramble_msg = preamble_msg_arb_036(&signer.to_string(), &mock.sender.to_string());
+
+        // *only used for testing library, btsg-accounts library has internal digest for msgs*
+        let shamsg = Binary::new(sha256(&pramble_msg.as_bytes().to_vec())).to_array()?;
+        let lib_msg = Message::from_digest(shamsg);
+
+        // sign msg with key
+        let sig = secp.sign_ecdsa(&lib_msg, &secret_key);
+
+        // form CosmosArbitray object
+        let carb = CosmosArbitrary {
+            pubkey: Binary::from(public_key.to_string().as_bytes().to_vec()), // binary public key
+            signature: Binary::from(sig.to_string().as_bytes().to_vec()),
+            message: Binary::from(mock.sender.to_string().as_bytes().to_vec()),
+            hrp: Some(hrp.to_string()),
+        };
+
+        println!("signer: {:#?}", signer.to_string());
+        println!("data being signed: {:#?}", &mock.sender.to_string());
+        println!("sig: {:#?}", sig);
+        println!("lib_msg: {:#?}", lib_msg);
+        println!("carb: {:#?}", carb);
+        println!("pramble_msg: {:#?}", pramble_msg);
+
+        assert!(secp.verify_ecdsa(&lib_msg, &sig, &public_key).is_ok());
+        // add object,including private key
+        carbs.push(TestCosmosArb {
+            carb,
+            pk: Binary::from(secret_key.secret_bytes()),
+        });
     }
+
+    let fifth_carb = carbs[5].clone();
 
     // mint tokens for mock.sender.clone()
     let token_id = "Enterprise";
@@ -278,7 +318,7 @@ fn test_reverse_map_key_limit() -> anyhow::Result<()> {
     let err = suite
         .account
         .call_as(&mock.sender.clone())
-        .update_my_reverse_map_key(addrs.clone(), vec![])
+        .update_my_reverse_map_key(carbs.iter().map(|c| c.carb.clone()).collect(), vec![])
         .unwrap_err();
 
     assert_eq!(
@@ -291,7 +331,7 @@ fn test_reverse_map_key_limit() -> anyhow::Result<()> {
         let err = suite
             .account
             .call_as(&minter)
-            .update_my_reverse_map_key(vec![addrs[i as usize].clone()], vec![])
+            .update_my_reverse_map_key(vec![carbs[i as usize].clone().carb], vec![])
             .unwrap_err();
         assert_eq!(
             err.root().to_string(),
@@ -302,7 +342,7 @@ fn test_reverse_map_key_limit() -> anyhow::Result<()> {
     for i in 0..10 {
         let res = suite
             .account
-            .update_my_reverse_map_key(vec![addrs[i as usize].clone()], vec![]);
+            .update_my_reverse_map_key(vec![carbs[i as usize].clone().carb], vec![]);
         if i == 10 {
             assert!(res.is_err());
             assert_eq!(
@@ -311,6 +351,7 @@ fn test_reverse_map_key_limit() -> anyhow::Result<()> {
             )
         } else {
             println!("i: {:#?}", i);
+            println!("res: {:#?}", res);
             assert!(res.is_ok())
         }
     }
@@ -322,20 +363,38 @@ fn test_reverse_map_key_limit() -> anyhow::Result<()> {
         .account
         .associate_address(token_id, Some(mock.sender.to_string()))?;
     // confirm we can query the non cosmos addr token_id associated to it
-    let res = suite.account.reverse_map_account(addrs[5].clone()).unwrap();
+    let res = suite
+        .account
+        .reverse_map_account(&pubkey_to_address(
+            &fifth_carb.carb.pubkey,
+            &fifth_carb.carb.hrp.as_ref().expect("hrp must be set"),
+        )?)
+        .unwrap();
     assert_eq!(token_id, res);
 
-    /// confirm we have maps set
+    // confirm we have maps set
     for i in 0..10 {
         // query the bitsong address for a given external address
-        let res = suite.account.reverse_map_address(addrs[i].clone()).unwrap();
+        let res = suite
+            .account
+            .reverse_map_address(
+                btsg_account::verify_generic::pubkey_to_address(
+                    &fifth_carb.carb.pubkey,
+                    &fifth_carb.carb.hrp.as_ref().expect("hrp must be set"),
+                )?
+                .to_string(),
+            )
+            .unwrap();
         assert_eq!(mock.sender, res);
     }
 
     //try to remove more than existing at once
     let err = suite
         .account
-        .update_my_reverse_map_key(vec![], addrs.clone())
+        .update_my_reverse_map_key(
+            vec![],
+            carbs.iter().map(|c| c.carb.pubkey.to_string()).collect(),
+        )
         .unwrap_err();
 
     assert_eq!(
@@ -349,7 +408,7 @@ fn test_reverse_map_key_limit() -> anyhow::Result<()> {
     let err = suite
         .account
         .call_as(&notminter)
-        .update_my_reverse_map_key(vec![], vec![addrs[1].clone()])
+        .update_my_reverse_map_key(vec![], vec![fifth_carb.carb.pubkey.to_string()])
         .unwrap_err();
     assert_eq!(
         err.root().to_string(),
@@ -360,7 +419,7 @@ fn test_reverse_map_key_limit() -> anyhow::Result<()> {
     for i in 0..10 {
         let res = suite
             .account
-            .update_my_reverse_map_key(vec![], vec![addrs[i as usize].clone()]);
+            .update_my_reverse_map_key(vec![], vec![carbs[i as usize].carb.pubkey.to_string()]);
         if i == 10 {
             assert!(res.is_err());
             assert_eq!(

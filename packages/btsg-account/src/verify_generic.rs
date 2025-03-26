@@ -1,6 +1,7 @@
 // condensed from: https://github.com/MegaRockLabs/smart-account-auth
-use bech32::{Bech32, Hrp};
 use cosmwasm_std::{ensure, Binary, StdError};
+
+use bech32::{Bech32, Hrp};
 use ripemd::Ripemd160;
 use sha2::{Digest, Sha256};
 
@@ -10,6 +11,13 @@ pub struct CosmosArbitrary {
     pub signature: Binary,
     pub message: Binary,
     pub hrp: Option<String>,
+}
+
+// used for testing only.
+#[cosmwasm_schema::cw_serde]
+pub struct TestCosmosArb {
+    pub carb: CosmosArbitrary,
+    pub pk: Binary,
 }
 
 impl CosmosArbitrary {
@@ -63,6 +71,7 @@ impl CosmosArbitrary {
     }
 }
 
+/// inject the data to be signed within the json struct 
 pub fn preamble_msg_arb_036(signer: &str, data: &str) -> String {
     format!(
         "{{\"account_number\":\"0\",\"chain_id\":\"\",\"fee\":{{\"amount\":[],\"gas\":\"0\"}},\"memo\":\"\",\"msgs\":[{{\"type\":\"sign/MsgSignData\",\"value\":{{\"data\":\"{}\",\"signer\":\"{}\"}}}}],\"sequence\":\"0\"}}", 
