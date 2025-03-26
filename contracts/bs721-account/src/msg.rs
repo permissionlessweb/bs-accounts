@@ -1,5 +1,4 @@
 use crate::{state::SudoParams, Metadata};
-use btsg_account::verify_generic::CosmosArbitrary;
 use btsg_account::{TextRecord, NFT};
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Addr, Binary, CustomMsg};
@@ -20,7 +19,7 @@ pub struct InstantiateMsg {
 }
 
 #[cw_serde]
-#[cfg_attr(feature = "interface", derive(cw_orch::ExecuteFns))] // cw-orch automatic
+#[derive(cw_orch::ExecuteFns)]
 pub enum ExecuteMsg<T> {
     /// Set account marketplace contract address
     SetMarketplace { address: String },
@@ -102,7 +101,7 @@ pub enum ExecuteMsg<T> {
     FreezeCollectionInfo {},
     /// Updates the mapping of wallet accounts to the sender.
     UpdateMyReverseMapKey {
-        to_add: Vec<CosmosArbitrary>,
+        to_add: Vec<String>,
         to_remove: Vec<String>,
     },
 }
@@ -166,30 +165,22 @@ impl<T> From<ExecuteMsg<T>> for bs721_base::msg::ExecuteMsg<T> {
 }
 
 impl CustomMsg for Bs721AccountsQueryMsg {}
-
 #[cw_ownable::cw_ownable_query]
 #[cw_serde]
-#[derive(QueryResponses)]
-#[cfg_attr(feature = "interface", derive(cw_orch::QueryFns))] // cw-orch automatic
+#[derive(QueryResponses, cw_orch::QueryFns)]
 pub enum Bs721AccountsQueryMsg {
     /// Returns sudo params
     #[returns(SudoParams)]
     Params {},
-    /// query an address to return the account owned by this address
+    /// Reverse lookup of account for address
     #[returns(String)]
     Account { address: String },
-    /// query an account address to return the associated address. This will be the abstract account contract addr if nft used as ownership token
-    #[returns(Addr)]
-    AssociatedAddress { account: String },
     /// Returns the marketplace contract address
     #[returns(Addr)]
     AccountMarketplace {},
-    /// Query a non `bitsong1...` address to retrieve the `bitsong1...` associated with it
+    /// Returns the associated address for a account
     #[returns(Addr)]
-    ReverseMapAddress { address: String },
-    /// Query a non `bitsong1...` address to retrieve the account token associated with it. *Same as `QueryMsg::Account`*
-    #[returns(String)]
-    ReverseMapAccount { address: String },
+    AssociatedAddress { account: String },
     /// Returns the image NFT for a account
     #[returns(Option<NFT>)]
     ImageNFT { account: String },

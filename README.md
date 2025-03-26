@@ -3,19 +3,18 @@
 This implementation is a compatible instance of [sg-names](https://github.com/public-awesome/names) for Bitsong. To the stargaze contributors, thank you for setting the tone with these!
 <!-- ##  [API Docs](./API.md) -->
 
-## TODO: 
- - generate tests for cosmos arbitrary signature  
- 
-## [Account Marketplace](./contracts/bs721-account-marketplace/README.md)
+## Architecture
+
+### [Account Marketplace](./contracts/bs721-account-marketplace/README.md)
 The secondary marketplace for accounts. Accounts are automatically listed here once they are minted.
 
-## [Account Minter](./contracts/bs721-account-minter/README.md)
+### [Account Minter](./contracts/bs721-account-minter/README.md)
 Account minter is responsible for minting, validating, and updating accounts and their metadata.
 
-## [Bs721-Account](./contracts/bs721-account/README.md)
+### [Bs721-Account](./contracts/bs721-account/README.md)
 A cw721 contract with on-chain metadata for an account.
 
-## Thoughts On Account Token Security Design 
+#### Thoughts On Account Token Security Design 
 Since account tokens are the key for smart accounts, it is essential to keep in mind the security vulnurabilities that exists in a multi contract system that involved the smart contract of your Bitsong Account Token. Below will list a few obvious examples, but as always security is never static.
 
 ### Centralized Smart Contract Ownership & Migration Attack
@@ -28,11 +27,12 @@ There is still a risk of any wallet address compromized that is also authorized 
 Whenever browsing dapps with the account that is currently under ownership of the account token, it is crucial to keep concious of any unwantedauthorized operator or approval messages during interations with them, as this may result in full compromise of your account without delays  including other smart contracts, then this may put  account tokens at risk. 
 
 
+
 ## Technical Workflow
 
 In this repo are [cw-orchestrator scripts](../../scripts/src/bin/manual_deploy.rs) that highlight this first step.
 
-## 1. Mint An Account 
+### 1. Mint An Account 
 
 #### Initial Fees
 ```
@@ -52,37 +52,11 @@ Along with the mint message, the minter forms a default `SetAsk` msg to the Acco
 <!-- #### Abstract Account Support 
 Bitsong accounts uses custom metadata that specificies whether or not this token is being used for an abstract account.   -->
 
-## 2. Managing An Account 
-Once an account it minted, the nft owner can add details to the nft for futher customization of their account token. 
+### 2. Managing An Account 
 
-### Associating an Address to an Account Token
-### Interoperable Design
-When you buy a Bitsong Account, you are really getting a account on _every_ Cosmos chain that is using the same type address as Bitsong. 
+#### Associate Address
 
-```
-jimi -> D93385094E906D7DA4EBFDEC2C4B167D5CAA431A (in hex)
-```
-
-#### Bitsong Use Of Coin Type 639
-Cosmos-sdk chains have key derivation support, which is why chains using different coin types default to resolves a bech32 addr differently. The addresses still in  control of the private key, it is just the current nature of our wasmvm that introduces this discrepency when parsing between human readable addrs of a public key from chains with different coin types. *This is also how a single key can control multiple accounts on a single chain*. 
-
-
-### Mapping an **outside address** to your `bitsong1..` addr.
-`REVERSE_MAP_KEY` is the storage object used to map an outside address (non `bitsong1...`) as the value of various storage keys. This enables effecient data retrieval from the contract for multiple items in the storage mapped to a specific address. 
-
-#### Arbitrary Cosmos Signature
-In order to avoid someone mapping a wallet not under control to their own, we make use of the generic signature verification spec to verify a private key signature from the out-side address was generated, containing the bitsong wallet address.
-
-
-
-Now this can be resolved per chain:
-```
-jimi.bitsong  -> bitsong1myec2z2wjpkhmf8tlhkzcjck04w25sc6ymhplz
-# will be incorrect due to mismatch slip44 coin types with cosmos hub and bitsong 
-jimi.cosmos -> cosmos1myec2z2wjpkhmf8tlhkzcjck04w25sc6y2xq2r
-```
-
-Chains that use different account types or key derivation paths has support with the use of the custom entry point `UpdateMyReverseMapKey`, which lets mapping and retrieval of external accounts quick and compatible without any custom cryptographic library. 
+`REVERSE_MAP_KEY` is the storage object used to map a `bitsong1...` addr as the value of various storage keys. This enables effecient data retrieval from the contract for multiple items in the storage mapped to a specific address. 
 
 #### Image NFT 
 
@@ -110,6 +84,26 @@ pub struct Metadata {
 ### 3. Transferring Ownership of An Account 
 
 
+### Interoperable Design
+When you buy a Bitsong Account, you are really getting a account on _every_ Cosmos chain. Any chain can lookup a account by its local address over IBC. Similarly, any chain can mint a account over IBC that resolves to a local address. 
+
+```
+jimi -> D93385094E906D7DA4EBFDEC2C4B167D5CAA431A (in hex)
+```
+
+#### Bitsong Use Of Coin Type 639
+Resolving an address for different chains is done with logic that includes the chains coin type used, in order to determine the human redimal representation of the account that a private key has control over. This is how a single key can control multiple accounts on multiple chains. 
+
+
+Now this can be resolved per chain:
+```
+jimi.bitsong  -> bitsong1myec2z2wjpkhmf8tlhkzcjck04w25sc6ymhplz
+# will be incorrect due to mismatch slip44 coin types with cosmos hub and bitsong 
+jimi.cosmos -> cosmos1myec2z2wjpkhmf8tlhkzcjck04w25sc6y2xq2r
+```
+
+Chains that use different account types or key derivation paths has support with the use of the custom entry point `UpdateMyReverseMapKey`, which lets mapping and retrieval of external accounts quick and compatible without any custom cryptographic library. 
+
 
 ## DISCLAIMER
 
@@ -132,5 +126,3 @@ cd scripts/ && cargo test
 ### Deploy 
 
 To learn more about the deployment scripts, [check here](./scripts/README).
-
-## Code Coverage 
