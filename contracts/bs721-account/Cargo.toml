@@ -23,6 +23,7 @@ overflow-checks = true
 [features]
 # use library feature to disable all instantiate/execute/query exports
 library = []
+interface = ["dep:cw-orch"]
 
 [package.metadata.scripts]
 optimize = """docker run --rm -v "$(pwd)":/code \
@@ -42,7 +43,7 @@ cosmwasm-std = { workspace = true}
 cw2 = { workspace = true}
 
 bs-controllers = { workspace = true }
-cw-orch = { workspace = true }
+cw-orch = { workspace = true, optional = true }
 cw-ownable = { workspace = true }
 cw-storage-plus = { workspace = true }
 cw-utils = { workspace = true }

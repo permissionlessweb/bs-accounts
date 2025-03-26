@@ -23,6 +23,8 @@ pub type ExecuteMsg = crate::msg::ExecuteMsg<Metadata>;
 pub type QueryMsg = Bs721AccountsQueryMsg;
 
 pub mod entry {
+    use crate::commands::transcode;
+
     use super::*;
 
     use commands::sudo_update_params;
@@ -172,6 +174,10 @@ pub mod entry {
                 to_json_binary(&query_is_twitter_verified(deps, &account)?)
             }
             QueryMsg::Minter {} => to_json_binary(&cw_ownable::get_ownership(deps.storage)?),
+            QueryMsg::ReverseMapAccount { address } => {
+                to_json_binary(&query_account(deps, address)?)
+            }
+            QueryMsg::ReverseMapAddress { address } => to_json_binary(&transcode(deps, &address)?),
             _ => Bs721AccountContract::default().query(deps, env, msg.into()),
         }
     }
