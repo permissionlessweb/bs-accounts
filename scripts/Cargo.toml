@@ -10,6 +10,8 @@ secp256k1 = "0.30.0"
 sha2         = { workspace = true }
 bech32       = { workspace = true }
 ripemd       = { version = "0.1.3",  default-features = false }
+k256 = { version = "0.13.3", default-features = false, features = ["ecdsa"] }
+ecdsa = "0.16.2"             
 
 bs721-base                 = { workspace = true }
 btsg-account               = { path = "../packages/btsg-account" }

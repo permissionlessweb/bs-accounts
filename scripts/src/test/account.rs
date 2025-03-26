@@ -11,9 +11,18 @@ use cw_orch::{anyhow, mock::MockBech32, prelude::*};
 use cw_ownable::OwnershipError;
 use std::error::Error;
 
-use secp256k1::{Message, PublicKey, Secp256k1, SecretKey};
-
 use crate::BtsgAccountSuite;
+use ecdsa::signature::rand_core::OsRng;
+use k256::{
+    ecdsa::signature::DigestSigner, // trait
+    ecdsa::{RecoveryId, Signature, SigningKey, VerifyingKey},
+};
+// use serde::Deserialize;
+use sha2::digest::Update;
+use sha2::Digest;
+use sha2::Sha256;
+use std::fs::File;
+use std::io::BufReader;
 
 #[test]
 fn init() -> anyhow::Result<()> {
@@ -253,52 +262,56 @@ fn test_burn_function() -> anyhow::Result<()> {
 #[test]
 fn test_reverse_map_key_limit() -> anyhow::Result<()> {
     let mock = MockBech32::new("bitsong");
+    let hrp = "cosmos";
     let mut suite = BtsgAccountSuite::new(mock.clone());
     suite.default_setup(mock.clone(), None, None)?;
     let minter = suite.minter.address()?;
     let notminter = mock.addr_make("not-minter");
+    let sender = mock.sender.clone();
 
     // create non 'bitsong1...' addrs
     let mut carbs = vec![];
     for a in 0..20 {
         // creeate new key
-        let secp = Secp256k1::new();
-        let secret_key = SecretKey::from_slice(&[0xcd; 32]).expect("32 bytes, within curve order");
-        let public_key = PublicKey::from_secret_key(&secp, &secret_key);
-        let hrp = "cosmos";
-        let signer = pubkey_to_address(&public_key.to_string().as_bytes().to_vec(), hrp)?;
+        let secret_key: ecdsa::SigningKey<k256::Secp256k1> = SigningKey::random(&mut OsRng); // Serialize with `::to_bytes()`
+        let public_key: ecdsa::VerifyingKey<k256::Secp256k1> = VerifyingKey::from(&secret_key); // Serialize with `::to_encoded_point()`
+        let base64btsgaddr = &Binary::new(sender.as_bytes().to_vec()).to_base64();
+        let hraddr = pubkey_to_address(public_key.to_encoded_point(false).as_bytes(), "cosmos")?;
+        let adr036msgtohash = preamble_msg_arb_036(&hraddr.to_string(), base64btsgaddr);
+        let msg_digest = Sha256::new().chain(&adr036msgtohash);
+        let msg_hash = msg_digest.clone().finalize();
 
-        // create message to add into adr036 compatible msg
-        let pramble_msg = preamble_msg_arb_036(&signer.to_string(), &mock.sender.to_string());
+        let signature: Signature = secret_key
+            .sign_prehash_recoverable(&msg_hash.to_vec())
+            .unwrap()
+            .0;
 
-        // *only used for testing library, btsg-accounts library has internal digest for msgs*
-        let shamsg = Binary::new(sha256(&pramble_msg.as_bytes().to_vec())).to_array()?;
-        let lib_msg = Message::from_digest(shamsg);
+        assert!(cosmwasm_crypto::secp256k1_verify(
+            &msg_hash,
+            signature.to_bytes().as_slice(),
+            public_key.to_encoded_point(false).as_bytes()
+        )
+        .unwrap());
 
-        // sign msg with key
-        let sig = secp.sign_ecdsa(&lib_msg, &secret_key);
-
-        // form CosmosArbitray object
-        let carb = CosmosArbitrary {
-            pubkey: Binary::from(public_key.to_string().as_bytes().to_vec()), // binary public key
-            signature: Binary::from(sig.to_string().as_bytes().to_vec()),
-            message: Binary::from(mock.sender.to_string().as_bytes().to_vec()),
+        let mut cosmosarb = CosmosArbitrary {
+            pubkey: Binary::from(public_key.to_encoded_point(false).as_bytes()),
+            signature: Binary::from(signature.to_bytes().as_slice()),
+            message: Binary::from(sender.as_bytes().to_vec()), // set the value to be base64 (verify_return_readable handles base64 automatically)
             hrp: Some(hrp.to_string()),
         };
+        cosmosarb.verify_return_readable()?;
 
-        println!("signer: {:#?}", signer.to_string());
-        println!("data being signed: {:#?}", &mock.sender.to_string());
-        println!("sig: {:#?}", sig);
-        println!("lib_msg: {:#?}", lib_msg);
-        println!("carb: {:#?}", carb);
-        println!("pramble_msg: {:#?}", pramble_msg);
-
-        assert!(secp.verify_ecdsa(&lib_msg, &sig, &public_key).is_ok());
         // add object,including private key
         carbs.push(TestCosmosArb {
-            carb,
-            pk: Binary::from(secret_key.secret_bytes()),
+            carb: cosmosarb,
+            pk: Binary::new(secret_key.to_bytes().to_vec()),
         });
+        println!("hraddr: {:#?}", hraddr);
+        println!("sender: {:#?}", sender);
+        println!("base64btsgaddr: {:#?}", base64btsgaddr);
+        println!("adr036msgtohash: {:#?}", adr036msgtohash.to_string());
+        println!("msg_hash:  {:#?}", Binary::new(msg_hash.to_vec()));
+        println!("signature:  {:#?}", Binary::new(signature.to_vec()));
     }
 
     let fifth_carb = carbs[5].clone();
