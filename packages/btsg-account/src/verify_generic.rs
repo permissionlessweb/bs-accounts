@@ -17,6 +17,7 @@ pub struct CosmosArbitrary {
 #[cosmwasm_schema::cw_serde]
 pub struct TestCosmosArb {
     pub carb: CosmosArbitrary,
+    // ecdsa::SigningKey binary
     pub pk: Binary,
 }
 
@@ -105,7 +106,6 @@ pub fn ripemd160(bytes: &[u8]) -> Vec<u8> {
     hasher.finalize().to_vec()
 }
 
-
 #[cfg(test)]
 mod tests {
     use cosmwasm_std::{testing::mock_dependencies, Api, Binary, CanonicalAddr};
@@ -142,19 +142,13 @@ mod tests {
         let base64btsgaddr = &Binary::new(btsgaddr.as_bytes().to_vec()).to_base64();
         // this is the human readable address derived from the public key of the secret key
         let hraddr = pubkey_to_address(public_key.to_encoded_point(false).as_bytes(), "cosmos")?;
-        // println!("hraddr: {:#?}", hraddr);
-        // println!("btsgaddr: {:#?}", btsgaddr);
-        // println!("base64btsgaddr: {:#?}", base64btsgaddr);
 
         // create adr036 msgs data to sign
         let adr036msgtohash = preamble_msg_arb_036(&hraddr.to_string(), base64btsgaddr);
-        // println!("adr036msgtohash: {:#?}", adr036msgtohash.to_string());
-
         // Explicit / external hashing
         // sha256 hash msgs data
         let msg_digest = Sha256::new().chain(&adr036msgtohash);
         let msg_hash = msg_digest.clone().finalize();
-        // println!("msg_hash:  {:#?}", Binary::new(msg_hash.to_vec()));
 
         // Note: the signature type must be annotated or otherwise inferable as
         // `Signer` has many impls of the `Signer` trait (for both regular and
@@ -163,7 +157,6 @@ mod tests {
             .sign_prehash_recoverable(&msg_hash.to_vec())
             .unwrap()
             .0;
-        // println!("signature:  {:#?}", Binary::new(signature.to_vec()));
 
         // Verification (uncompressed public key)
         assert!(cosmwasm_crypto::secp256k1_verify(
@@ -182,14 +175,6 @@ mod tests {
         .unwrap());
 
         let hrp = "cosmos";
-        // CosmosArbitrary Verification (uncompressed public key)
-        let mut cosmosarb = CosmosArbitrary {
-            pubkey: Binary::from(public_key.to_encoded_point(false).as_bytes()),
-            signature: Binary::from(signature.to_bytes().as_slice()),
-            message: Binary::from(btsgaddr.as_bytes().to_vec()), // set the base64 of the address
-            hrp: Some(hrp.to_string()),
-        };
-        cosmosarb.verify_return_readable()?;
 
         // CosmosArbitrary Verification (compressed public key)
         CosmosArbitrary {
@@ -200,6 +185,12 @@ mod tests {
         }
         .verify_return_readable()?;
 
+        // println!("hraddr: {:#?}", hraddr);
+        // println!("btsgaddr: {:#?}", btsgaddr);
+        // println!("base64btsgaddr: {:#?}", base64btsgaddr);
+        // println!("adr036msgtohash: {:#?}", adr036msgtohash.to_string());
+        // println!("msg_hash:  {:#?}", Binary::new(msg_hash.to_vec()));
+        // println!("signature:  {:#?}", Binary::new(signature.to_vec()));
         Ok(())
     }
 }
