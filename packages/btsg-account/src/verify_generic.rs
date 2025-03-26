@@ -105,6 +105,8 @@ pub fn ripemd160(bytes: &[u8]) -> Vec<u8> {
     hasher.finalize().to_vec()
 }
 
+
+#[cfg(test)]
 mod tests {
     use cosmwasm_std::{testing::mock_dependencies, Api, Binary, CanonicalAddr};
     use cw_orch::anyhow;

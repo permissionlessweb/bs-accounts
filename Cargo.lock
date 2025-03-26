@@ -1381,6 +1381,10 @@ dependencies = [
  "cosmwasm-std 2.2.0",
  "cw-orch 0.25.1",
  "cw-ownable",
+ "ecdsa",
+ "hex",
+ "hex-literal",
+ "k256",
  "ripemd",
  "sha2 0.10.8",
 ]
@@ -4048,6 +4052,9 @@ name = "hex"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "hex-conservative"
