@@ -35,7 +35,6 @@ abstract-client              = { version = "0.26.0",  features = ["interchain"] 
 abstract-interface           = { version = "0.26.0", features = [ "daemon"]}
 cw-orch-polytone             = { package = "abstract-cw-orch-polytone", version = "6.0.1" }
 
-cw-orch-interchain           = { version = "0.9.0",  features = ["daemon"] }
 cw-orch                      = { workspace = true, features = ["daemon"] }
 polytone                     = { package = "abstract-polytone", version = "1.0.5" }
 polytone-note                = { package = "abstract-polytone-note", version = "3.0.0" }
