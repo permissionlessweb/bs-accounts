@@ -1,4 +1,5 @@
-!/bin/bash
+#!/bin/bash
+
 for d in ../artifacts/bs721_account.wasm; do 
 echo $d;
 bitsongd tx wasm store ../artifacts/bs721_account.wasm  --from ica --gas auto --fees 1000000ubtsg --gas-adjustment 2 -y

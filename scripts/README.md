@@ -17,7 +17,6 @@ This library contains both Rust & Bash scripts for the BS-NFT repository.
 | [`BtsgAccountSuite`](./src/deploy/bundles/account.rs#12)| Account Collection, Marketplace, and Minter. |
 
 
-
 ## Cw-Orchestrator Commands 
 | Command | Description |
 |----------|----------|
@@ -28,13 +27,13 @@ This library contains both Rust & Bash scripts for the BS-NFT repository.
 
 
 ## Bash Commands 
-before running, copy `.env.testnet` to `.env`.
+before running, `sh/.env.testnet` to `sh/.env`.
 | Command | Description |
 |----------|----------|
-| `./1_upload` | store wasm code |
-| `./2a_init_marketplace.sh` | instantiate marketplace, make sure you have updated `.env` with code-ids. |
-| `./2b_init_minter.sh` | instantiate minter. make sure you have updated `.env` with Marketplace address (MKT). |
-| `./3_setup_minter` | setup marketplace . Update .env with both the minter and collection addresses (MINTER and COLLECTION).|
+| `./sh/1_upload` | store wasm code |
+| `./sh/2a_init_marketplace.sh` | instantiate marketplace, make sure you have updated `.env` with code-ids. |
+| `./sh/2b_init_minter.sh` | instantiate minter. make sure you have updated `.env` with Marketplace address (MKT). |
+| `./sh/3_setup_minter` | setup marketplace . Update .env with both the minter and collection addresses (MINTER and COLLECTION).|
 <!-- | `sh broadcast.sh` | Broadcast a transaction or a message to the network or chain |
 | `sh exec_accept_bid.sh` | accept bid as account owner|
 | `sh exec_add_text.sh` | add text records to an account token |
