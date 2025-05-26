@@ -1,7 +1,9 @@
 use abstract_interface::Abstract;
 use btsg_account::Metadata;
 
-use crate::deploy::{account::*, market::BitsongAccountMarket, minter::BitsongAccountMinter};
+use crate::deploy::{
+    account::*, btsg_wavs::BtsgWavsAuth, market::BtsgAccountMarket, minter::BtsgAccountMinter,
+};
 use bs721_account_marketplace::msgs::ExecuteMsgFns as _;
 use cosmwasm_std::Uint128;
 
@@ -10,19 +12,25 @@ pub struct BtsgAccountSuite<Chain>
 where
     Chain: cw_orch::prelude::CwEnv,
 {
-    pub account: BitsongAccountCollection<Chain, Metadata>,
-    pub minter: BitsongAccountMinter<Chain>,
-    pub market: BitsongAccountMarket<Chain>,
+    pub account: BtsgAccountCollection<Chain, Metadata>,
+    pub minter: BtsgAccountMinter<Chain>,
+    pub market: BtsgAccountMarket<Chain>,
+    pub wavs: BtsgWavsAuth<Chain>,
+    pub infusions:  BtsgWavsAuth<Chain>,
     pub abs: Abstract<Chain>,
 }
+
+pub const BLS_PUBKEY: &str = "";
 
 impl<Chain: CwEnv> BtsgAccountSuite<Chain> {
     pub fn new(chain: Chain) -> BtsgAccountSuite<Chain> {
         BtsgAccountSuite::<Chain> {
-            account: BitsongAccountCollection::new("bs721_account", chain.clone()),
-            minter: BitsongAccountMinter::new("bs721_account_minter", chain.clone()),
-            market: BitsongAccountMarket::new("bs721_account_market", chain.clone()),
+            account: BtsgAccountCollection::new("bs721_account", chain.clone()),
+            minter: BtsgAccountMinter::new("bs721_account_minter", chain.clone()),
+            market: BtsgAccountMarket::new("bs721_account_market", chain.clone()),
             abs: Abstract::new(chain.clone()),
+            wavs: BtsgWavsAuth::new("btsg_wavs", chain.clone()),
+            infusions:  BtsgWavsAuth::new("cw_infusion", chain.clone()),
         }
     }
 
@@ -30,6 +38,7 @@ impl<Chain: CwEnv> BtsgAccountSuite<Chain> {
         let _acc = self.account.upload()?.uploaded_code_id()?;
         let _minter = self.minter.upload()?.uploaded_code_id()?;
         let _market = self.market.upload()?.uploaded_code_id()?;
+        let _wavs = self.wavs.upload()?.uploaded_code_id()?;
 
         // println!("account collection code-id: {}", _acc);
         // println!("account minter code-id: {}", _minter);
@@ -108,6 +117,25 @@ impl<Chain: CwEnv> cw_orch::contract::Deploy<Chain> for BtsgAccountSuite<Chain> 
         suite
             .market
             .setup(suite.account.address()?, suite.minter.address()?)?;
+
+        // instantiate wavs authenticator
+        suite.wavs.instantiate(
+            &btsg_wavs::msg::InstantiateMsg {
+                owner: None,
+                wavs_operator_pubkeys: vec![BLS_PUBKEY.as_bytes().into()], // only one bls key, need to add more
+            },
+            None,
+            &[],
+        )?;
+
+        suite.infusions.instantiate(
+            &btsg_wavs::msg::InstantiateMsg {
+                owner: None,
+                wavs_operator_pubkeys: vec![BLS_PUBKEY.as_bytes().into()], // only one bls key, need to add more
+            },
+            None,
+            &[],
+        )?;
 
         Ok(suite)
     }

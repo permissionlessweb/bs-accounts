@@ -54,4 +54,4 @@ serde = { workspace = true, default-features = false, features = ["derive"] }
 thiserror.workspace = true
 
 [dev-dependencies]
-cw-multi-test = "2.0.0"
+cw-multi-test = {version = "2.2.0",features = ["stargate", "cosmwasm_2_1"]}

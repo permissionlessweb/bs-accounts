@@ -22,8 +22,9 @@ This library contains both Rust & Bash scripts for the BS-NFT repository.
 | Command | Description |
 |----------|----------|
 | `cargo test` | Run all test in codebase |
-| `cargo run --bin deploy -- --network [<testnet>,<mainnet>,<local>] ` | Deploy workflow for all contracts needed for bs-accounts. |
-| `cargo run -- --bin deploy` | Same as `deploy`, but with authz wrapper for msgs. |
+| `cargo run --bin manual_deploy -- --network [<testnet>,<mainnet>,<local>] ` | Deploy workflow for all contracts needed for bs-accounts. |
+<!-- | `cargo run -- --bin wavs` | Deploys all nessesary infrastructure. learn more here | -->
+
 
 
 ## Bash Commands 

@@ -143,8 +143,6 @@ pub fn execute_update_ask(
         return Err(ContractError::Unauthorized {});
     }
 
-    let mut res = Response::new();
-
     // refund any renewal funds and update the seller
     let mut ask = asks().load(deps.storage, ask_key(token_id))?;
     ask.seller = seller.clone();
@@ -154,7 +152,7 @@ pub fn execute_update_ask(
         .add_attribute("token_id", token_id)
         .add_attribute("seller", seller);
 
-    Ok(res.add_event(event))
+    Ok(Response::new().add_event(event))
 }
 
 /// Places a bid on a account. The bid is escrowed in the contract.
@@ -237,7 +235,7 @@ pub fn execute_remove_bid(
 /// The bid is removed, then a new ask is created for the same token.
 pub fn execute_accept_bid(
     deps: DepsMut,
-    env: Env,
+    _env: Env,
     info: MessageInfo,
     token_id: &str,
     bidder: Addr,

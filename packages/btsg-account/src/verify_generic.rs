@@ -108,27 +108,22 @@ pub fn ripemd160(bytes: &[u8]) -> Vec<u8> {
 
 #[cfg(test)]
 mod tests {
-    use cosmwasm_std::{testing::mock_dependencies, Api, Binary, CanonicalAddr};
+    use cosmwasm_std::{testing::mock_dependencies, Binary};
     use cw_orch::anyhow;
     use ecdsa::signature::rand_core::OsRng;
-    use hex_literal::hex;
-    use k256::{
-        ecdsa::signature::DigestSigner, // trait
-        ecdsa::{RecoveryId, Signature, SigningKey, VerifyingKey},
-    };
+
+    use k256::ecdsa::{Signature, SigningKey, VerifyingKey};
     // use serde::Deserialize;
     use sha2::digest::Update;
     use sha2::Digest;
     use sha2::Sha256;
-    use std::fs::File;
-    use std::io::BufReader;
 
-    use crate::verify_generic::{preamble_msg_arb_036, pubkey_to_address, sha256, CosmosArbitrary};
+    use crate::verify_generic::{preamble_msg_arb_036, pubkey_to_address, CosmosArbitrary};
 
     // "Cosmos" secp256k1 signature verification. Matches tendermint/PubKeySecp256k1 pubkey.
-    const COSMOS_SECP256K1_PUBKEY_HEX: &str =
-        "034f04181eeba35391b858633a765c4a0c189697b40d216354d50890d350c70290";
-    const MSG: &str = "Hello World!";
+    // const COSMOS_SECP256K1_PUBKEY_HEX: &str =
+    //     "034f04181eeba35391b858633a765c4a0c189697b40d216354d50890d350c70290";
+    // const MSG: &str = "Hello World!";
 
     #[test]
     fn test_example() -> anyhow::Result<()> {

@@ -13,6 +13,7 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 cosmwasm-std = { workspace = true }
+cosmwasm-schema = { workspace = true }
 cw-ownable   = { workspace = true }
 sha2         = { workspace = true }
 bech32       = { workspace = true }
@@ -21,10 +22,10 @@ ecdsa = "0.16.2"
 ripemd       = { version = "0.1.3",  default-features = false }
 hex = { version = "0.4", features = ["serde"] }
 hex-literal = "0.4.1"
-cosmwasm-crypto  = { version = "2.1.4",  default-features = false }
 k256 = { version = "0.13.3", default-features = false, features = ["ecdsa"] }
+cosmwasm-crypto  = { workspace = true,  default-features = false }
 
-cosmwasm-schema = "1.5.7"
-abstract-std = "0.26.0"
+  
+abstract-std  = { workspace = true }
 bs-controllers = { workspace = true }
-cw-orch = "0.25.0"
+cw-orch    = { workspace = true }

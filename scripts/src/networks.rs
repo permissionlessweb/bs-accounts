@@ -1,12 +1,12 @@
 use cw_orch::environment::{ChainKind, NetworkInfo};
 //////////////// SUPPORTED NETWORK CONFIGS ////////////////
 /// Add more chains in SUPPORTED_CHAINS to include in account framework instance.
-use cw_orch::prelude::{networks::UNI_6, *};
+use cw_orch::prelude::{networks::OSMOSIS_1, *};
 /// Cw-orch imports
 use reqwest::Url;
 use std::net::TcpStream;
 
-pub const SUPPORTED_CHAINS: &[ChainInfo] = &[UNI_6, BITSONG_MAINNET];
+pub const SUPPORTED_CHAINS: &[ChainInfo] = &[BITSONG_MAINNET, OSMOSIS_1];
 pub const BITSONG_SUPPORTED_NETWORKS: &[ChainInfo] = &SUPPORTED_CHAINS;
 
 pub const GAS_TO_DEPLOY: u64 = 60_000_000;
@@ -33,7 +33,7 @@ pub const BITSONG_MAINNET: ChainInfo = ChainInfo {
     chain_id: "bitsong-2b",
     gas_denom: "ubtsg",
     gas_price: 0.025,
-    grpc_urls: &["http://grpc"],
+    grpc_urls: &["http://bitsong-grpc.polkachu.com:16090"],
     network_info: BITSONG_NETWORK,
     lcd_url: None,
     fcd_url: None,
@@ -44,7 +44,7 @@ pub const BITSONG_TESTNET: ChainInfo = ChainInfo {
     chain_id: "bobnet",
     gas_denom: "ubtsg",
     gas_price: 0.025,
-    grpc_urls: &["http://142.132.147.182:9090"],
+    grpc_urls: &["http://"],
     network_info: BITSONG_NETWORK,
     lcd_url: None,
     fcd_url: None,
@@ -97,4 +97,3 @@ pub async fn ping_grpc(url_str: &str) -> anyhow::Result<()> {
     let _ = TcpStream::connect(socket_addr);
     Ok(())
 }
-

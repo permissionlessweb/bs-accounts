@@ -1,0 +1,39 @@
+[package]
+name          = "btsg-wavs"
+description   = "A custom authentication contract verifying BLS12-381 signature aggregations, used by WAVS operators."
+authors       = [""]
+version       = { workspace = true }
+edition       = { workspace = true }
+license       = { workspace = true }
+repository    = { workspace = true }
+homepage      = { workspace = true }
+documentation = { workspace = true }
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+# use library feature to disable all instantiate/execute/query exports
+library = []
+
+[dependencies]
+cosmwasm-schema    = { workspace = true }
+cosmwasm-crypto    = { workspace = true  }
+cw-ownable      = { workspace = true }
+rayon = "1.9.0"
+cw-orch    = { workspace = true }
+cosmwasm-std       = { workspace = true }
+cw-utils           = { workspace = true }
+cw2                = { workspace = true }
+cw-storage-plus    = { workspace = true }
+schemars           = { workspace = true }
+serde              = { workspace = true }
+thiserror          = { workspace = true }
+cosmos-sdk-proto   = { workspace = true, default-features = false }
+btsg-auth  = { package = "btsg-auth", git = "https://github.com/permissionlessweb/bs-nfts", branch = "cosmwasm-std-v2" } 
+
+[dev-dependencies]
+prost = "0.11.9"
+cw-multi-test = {version = "2.2.0",features = ["stargate", "cosmwasm_2_1"]}
+derivative = "2.2"
+anyhow = "1"

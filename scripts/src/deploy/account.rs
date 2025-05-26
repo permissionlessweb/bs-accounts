@@ -6,9 +6,9 @@ use btsg_account::Metadata;
 
 /// Uploadable trait for bs721_account & use with cw-orchestrator library
 #[interface(InstantiateMsg, ExecuteMsg::<Metadata>, QueryMsg, Empty)]
-pub struct BitsongAccountCollection;
+pub struct BtsgAccountCollection;
 
-impl<Chain> Uploadable for BitsongAccountCollection<Chain, Metadata> {
+impl<Chain> Uploadable for BtsgAccountCollection<Chain, Metadata> {
     /// Return the path to the wasm file corresponding to the contract
     fn wasm(_chain: &ChainInfoOwned) -> WasmPath {
         artifacts_dir_from_workspace!()

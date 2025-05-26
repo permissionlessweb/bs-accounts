@@ -5,9 +5,9 @@ use bs721_account_marketplace::msgs::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
 /// Uploadable trait for bs721_account_minter & use with cw-orchestrator library
 #[interface(InstantiateMsg, ExecuteMsg, QueryMsg, Empty)]
-pub struct BitsongAccountMarket;
+pub struct BtsgAccountMarket;
 
-impl<Chain> Uploadable for BitsongAccountMarket<Chain> {
+impl<Chain> Uploadable for BtsgAccountMarket<Chain> {
     /// Return the path to the wasm file corresponding to the contract
     fn wasm(_chain: &ChainInfoOwned) -> WasmPath {
         artifacts_dir_from_workspace!()

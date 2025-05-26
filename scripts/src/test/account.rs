@@ -2,7 +2,7 @@ use ::bs721_account::{commands::transcode, ContractError};
 use bs721_account::msg::{Bs721AccountsQueryMsgFns, ExecuteMsgFns};
 use bs721_account::state::REVERSE_MAP_KEY;
 use btsg_account::verify_generic::{
-    preamble_msg_arb_036, pubkey_to_address, sha256, CosmosArbitrary, TestCosmosArb,
+    preamble_msg_arb_036, pubkey_to_address, CosmosArbitrary, TestCosmosArb,
 };
 use cosmwasm_std::testing::mock_dependencies;
 use cosmwasm_std::{from_json, Api, Binary, StdError};
@@ -13,16 +13,11 @@ use std::error::Error;
 
 use crate::BtsgAccountSuite;
 use ecdsa::signature::rand_core::OsRng;
-use k256::{
-    ecdsa::signature::DigestSigner, // trait
-    ecdsa::{RecoveryId, Signature, SigningKey, VerifyingKey},
-};
+use k256::ecdsa::{Signature, SigningKey, VerifyingKey};
 // use serde::Deserialize;
 use sha2::digest::Update;
 use sha2::Digest;
 use sha2::Sha256;
-use std::fs::File;
-use std::io::BufReader;
 
 #[test]
 fn init() -> anyhow::Result<()> {
@@ -271,7 +266,7 @@ fn test_reverse_map_key_limit() -> anyhow::Result<()> {
 
     // create non 'bitsong1...' addrs
     let mut carbs = vec![];
-    for a in 0..20 {
+    for _ in 0..20 {
         // creeate new key
         let secret_key: ecdsa::SigningKey<k256::Secp256k1> = SigningKey::random(&mut OsRng); // Serialize with `::to_bytes()`
         let public_key: ecdsa::VerifyingKey<k256::Secp256k1> = VerifyingKey::from(&secret_key); // Serialize with `::to_encoded_point()`
@@ -293,7 +288,7 @@ fn test_reverse_map_key_limit() -> anyhow::Result<()> {
         )
         .unwrap());
 
-        let mut cosmosarb = CosmosArbitrary {
+        let cosmosarb = CosmosArbitrary {
             pubkey: Binary::from(public_key.to_encoded_point(false).as_bytes()),
             signature: Binary::from(signature.to_bytes().as_slice()),
             message: Binary::from(sender.as_bytes().to_vec()), // set the value to be base64 (verify_return_readable handles base64 automatically)
@@ -369,7 +364,7 @@ fn test_reverse_map_key_limit() -> anyhow::Result<()> {
         }
     }
 
-    let nfts = suite.account.owner_of(token_id, None)?;
+    // let nfts = suite.account.owner_of(token_id, None)?;
 
     // associate address with token owner
     suite
@@ -386,7 +381,7 @@ fn test_reverse_map_key_limit() -> anyhow::Result<()> {
     assert_eq!(token_id, res);
 
     // confirm we have maps set
-    for i in 0..10 {
+    for _ in 0..10 {
         // query the bitsong address for a given external address
         let res = suite
             .account

@@ -1,5 +1,3 @@
-use cosmwasm_std::Binary;
-
 pub mod minter;
 pub mod verify_generic;
 

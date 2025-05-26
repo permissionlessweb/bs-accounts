@@ -1,5 +1,5 @@
 [package]
-name = "scripts"
+name = "btsg-account-scripts"
 edition = "2021"
 license = "BSD-3-Clause"
 repository = "https://github.com/bitsongofficial/bs-accounts"
@@ -13,30 +13,35 @@ ripemd       = { version = "0.1.3",  default-features = false }
 k256 = { version = "0.13.3", default-features = false, features = ["ecdsa"] }
 ecdsa = "0.16.2"             
 
+btsg-wavs                  = { workspace = true }
 bs721-base                 = { workspace = true }
 btsg-account               = { path = "../packages/btsg-account" }
 bs721-account              = { path = "../contracts/bs721-account", features = [ "interface"]}
 bs721-account-minter       = { path = "../contracts/bs721-account-minter"  }
 bs721-account-marketplace  = { path = "../contracts/bs721-account-marketplace"  }
 
+cw-infuser             = { git = "https://github.com/permissionlessweb/cw-infuser", branch = "feat/wavs", features  =["library"] }
+
+cosmwasm-schema            = { workspace = true }
 cosmwasm-std               = { workspace = true }
-cosmwasm-crypto  = { version = "2.1.4",  default-features = false }
+cosmos-sdk-proto    = { workspace = true }
+cosmwasm-crypto              = { workspace = true,  default-features = false }
 cw-ownable                 = { workspace = true }
 
 # Abstract Framework and CW-Orchestrator Dependencies
-abstract-std                 = "0.26.0"
+abstract-std                  = { workspace = true }
 abstract-sdk                 = "0.26.0"
 abstract-client              = { version = "0.26.0",  features = ["interchain"] }
 abstract-interface           = { version = "0.26.0", features = [ "daemon"]}
 cw-orch-polytone             = { package = "abstract-cw-orch-polytone", version = "6.0.1" }
-cw-orch-interchain           = { version = "0.8.1",  features = ["daemon"] }
-cw-orch-interchain-core      = "0.5.0"
-cw-orch-clone-testing        = { version = "0.9.1" }
-cw-orch                      = { version = "0.27.0", features = ["daemon"] }
+
+cw-orch-interchain           = { version = "0.9.0",  features = ["daemon"] }
+cw-orch                      = { workspace = true, features = ["daemon"] }
 polytone                     = { package = "abstract-polytone", version = "1.0.5" }
 polytone-note                = { package = "abstract-polytone-note", version = "3.0.0" }
 
 clap                         = { version = "4.0.32", features = ["derive"] }
+csv                          = "1.2"
 anyhow                       = "1"
 dirs                         = "5.0.1"
 dotenv                     = { version = "0.15.0" }
@@ -47,6 +52,7 @@ reqwest                      = { version = "0.11.9" }
 serde                        = { version = "1.0.140", default-features = false, features = ["derive"] }
 serde_json                   = "1.0.79"
 tokio                        = "1.39.3"
+prost-types                  = "0.13.4"
 
 
 [dev-dependencies]
