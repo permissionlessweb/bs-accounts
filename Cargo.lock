@@ -1118,7 +1118,7 @@ checksum = "33415e24172c1b7d6066f6d999545375ab8e1d95421d6784bdfff9496f292387"
 dependencies = [
  "bitcoin_hashes 0.13.0",
  "rand",
- "rand_core 0.6.4",
+ "rand_core 0.5.1",
  "serde",
  "unicode-normalization",
 ]
@@ -1283,7 +1283,7 @@ checksum = "3e31ea183f6ee62ac8b8a8cf7feddd766317adfb13ff469de57ce033efd6a790"
 [[package]]
 name = "bs-controllers"
 version = "0.3.0"
-source = "git+https://github.com/permissionlessweb/bs-nfts?rev=1e50abdac4517bcdd5e03491589bdba6929806cf#1e50abdac4517bcdd5e03491589bdba6929806cf"
+source = "git+https://github.com/permissionlessweb/bs-nfts?branch=feat%2Fwavs#39c0ff42bcbbf1776395b608c3afaf4a8066b77f"
 dependencies = [
  "cosmwasm-schema 2.2.0",
  "cosmwasm-std 2.2.0",
@@ -1307,7 +1307,7 @@ dependencies = [
 [[package]]
 name = "bs721"
 version = "0.3.0"
-source = "git+https://github.com/permissionlessweb/bs-nfts?rev=1e50abdac4517bcdd5e03491589bdba6929806cf#1e50abdac4517bcdd5e03491589bdba6929806cf"
+source = "git+https://github.com/permissionlessweb/bs-nfts?branch=feat%2Fwavs#39c0ff42bcbbf1776395b608c3afaf4a8066b77f"
 dependencies = [
  "cosmwasm-schema 2.2.0",
  "cosmwasm-std 2.2.0",
@@ -1389,13 +1389,90 @@ dependencies = [
 [[package]]
 name = "bs721-base"
 version = "0.3.0"
-source = "git+https://github.com/permissionlessweb/bs-nfts?rev=1e50abdac4517bcdd5e03491589bdba6929806cf#1e50abdac4517bcdd5e03491589bdba6929806cf"
+source = "git+https://github.com/permissionlessweb/bs-nfts?branch=feat%2Fwavs#39c0ff42bcbbf1776395b608c3afaf4a8066b77f"
 dependencies = [
  "bs721",
  "cosmwasm-schema 2.2.0",
  "cosmwasm-std 2.2.0",
  "cw-orch 0.26.0",
  "cw-ownable 2.1.0",
+ "cw-storage-plus 2.0.0",
+ "cw-utils 2.0.0",
+ "cw2 2.0.0",
+ "schemars",
+ "serde",
+ "thiserror 1.0.69",
+]
+
+[[package]]
+name = "bs721-curve"
+version = "0.3.0"
+source = "git+https://github.com/permissionlessweb/bs-nfts?branch=feat%2Fwavs#39c0ff42bcbbf1776395b608c3afaf4a8066b77f"
+dependencies = [
+ "bs721",
+ "bs721-base",
+ "bs721-royalties",
+ "cosmos-sdk-proto 0.26.1",
+ "cosmwasm-schema 2.2.0",
+ "cosmwasm-std 2.2.0",
+ "cw-orch 0.26.0",
+ "cw-storage-plus 2.0.0",
+ "cw-utils 2.0.0",
+ "cw2 2.0.0",
+ "schemars",
+ "serde",
+ "thiserror 1.0.69",
+]
+
+[[package]]
+name = "bs721-factory"
+version = "0.3.0"
+source = "git+https://github.com/permissionlessweb/bs-nfts?branch=feat%2Fwavs#39c0ff42bcbbf1776395b608c3afaf4a8066b77f"
+dependencies = [
+ "bs721",
+ "bs721-base",
+ "bs721-curve",
+ "bs721-launchparty",
+ "bs721-royalties",
+ "cosmos-sdk-proto 0.26.1",
+ "cosmwasm-schema 2.2.0",
+ "cosmwasm-std 2.2.0",
+ "cw-storage-plus 2.0.0",
+ "cw-utils 2.0.0",
+ "cw2 2.0.0",
+ "schemars",
+ "serde",
+ "thiserror 1.0.69",
+]
+
+[[package]]
+name = "bs721-launchparty"
+version = "0.3.0"
+source = "git+https://github.com/permissionlessweb/bs-nfts?branch=feat%2Fwavs#39c0ff42bcbbf1776395b608c3afaf4a8066b77f"
+dependencies = [
+ "bs721",
+ "bs721-base",
+ "bs721-royalties",
+ "cosmos-sdk-proto 0.26.1",
+ "cosmwasm-schema 2.2.0",
+ "cosmwasm-std 2.2.0",
+ "cw-storage-plus 2.0.0",
+ "cw-utils 2.0.0",
+ "cw2 2.0.0",
+ "schemars",
+ "serde",
+ "thiserror 1.0.69",
+]
+
+[[package]]
+name = "bs721-royalties"
+version = "0.3.0"
+source = "git+https://github.com/permissionlessweb/bs-nfts?branch=feat%2Fwavs#39c0ff42bcbbf1776395b608c3afaf4a8066b77f"
+dependencies = [
+ "bs721-base",
+ "cosmwasm-schema 2.2.0",
+ "cosmwasm-std 2.2.0",
+ "cw-orch 0.26.0",
  "cw-storage-plus 2.0.0",
  "cw-utils 2.0.0",
  "cw2 2.0.0",
@@ -1452,7 +1529,8 @@ dependencies = [
  "bs721-account-minter",
  "bs721-base",
  "btsg-account",
- "btsg-wavs",
+ "btsg-cw-orch",
+ "btsg-wavs 0.2.0",
  "clap",
  "cosmos-sdk-proto 0.26.1",
  "cosmwasm-crypto 2.2.2",
@@ -1507,11 +1585,43 @@ dependencies = [
 ]
 
 [[package]]
+name = "btsg-auth"
+version = "0.3.0"
+source = "git+https://github.com/permissionlessweb/bs-nfts?branch=feat%2Fwavs#39c0ff42bcbbf1776395b608c3afaf4a8066b77f"
+dependencies = [
+ "cosmwasm-schema 2.2.0",
+ "cosmwasm-std 2.2.0",
+ "cw-utils 2.0.0",
+ "schemars",
+ "serde",
+ "serde_json",
+ "sha2 0.10.8",
+]
+
+[[package]]
+name = "btsg-cw-orch"
+version = "0.3.0"
+source = "git+https://github.com/permissionlessweb/bs-nfts?branch=feat%2Fwavs#39c0ff42bcbbf1776395b608c3afaf4a8066b77f"
+dependencies = [
+ "bs721",
+ "bs721-base",
+ "bs721-curve",
+ "bs721-factory",
+ "bs721-launchparty",
+ "bs721-royalties",
+ "btsg-auth 0.3.0 (git+https://github.com/permissionlessweb/bs-nfts?branch=feat%2Fwavs)",
+ "btsg-wavs 0.3.0",
+ "cosmwasm-std 2.2.0",
+ "cw-orch 0.26.0",
+ "serde",
+]
+
+[[package]]
 name = "btsg-wavs"
 version = "0.2.0"
 dependencies = [
  "anyhow",
- "btsg-auth 0.3.0",
+ "btsg-auth 0.3.0 (git+https://github.com/permissionlessweb/bs-nfts?branch=cosmwasm-std-v2)",
  "cosmos-sdk-proto 0.26.1",
  "cosmwasm-crypto 2.2.2",
  "cosmwasm-schema 2.2.0",
@@ -1524,6 +1634,32 @@ dependencies = [
  "cw2 2.0.0",
  "derivative",
  "prost 0.11.9",
+ "rayon",
+ "schemars",
+ "serde",
+ "thiserror 1.0.69",
+]
+
+[[package]]
+name = "btsg-wavs"
+version = "0.3.0"
+source = "git+https://github.com/permissionlessweb/bs-nfts?branch=feat%2Fwavs#39c0ff42bcbbf1776395b608c3afaf4a8066b77f"
+dependencies = [
+ "bs721",
+ "bs721-base",
+ "bs721-curve",
+ "bs721-launchparty",
+ "bs721-royalties",
+ "btsg-auth 0.3.0 (git+https://github.com/permissionlessweb/bs-nfts?branch=cosmwasm-std-v2)",
+ "cosmos-sdk-proto 0.26.1",
+ "cosmwasm-crypto 2.2.2",
+ "cosmwasm-schema 2.2.0",
+ "cosmwasm-std 2.2.0",
+ "cw-orch 0.26.0",
+ "cw-ownable 2.1.0",
+ "cw-storage-plus 2.0.0",
+ "cw-utils 2.0.0",
+ "cw2 2.0.0",
  "rayon",
  "schemars",
  "serde",
@@ -5966,7 +6102,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "157c5a9d7ea5c2ed2d9fb8f495b64759f7816c7eaea54ba3978f0d63000162e3"
 dependencies = [
  "anyhow",
- "itertools 0.13.0",
+ "itertools 0.12.1",
  "proc-macro2",
  "quote",
  "syn 2.0.96",

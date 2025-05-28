@@ -14,6 +14,7 @@ k256 = { version = "0.13.3", default-features = false, features = ["ecdsa"] }
 ecdsa = "0.16.2"             
 
 btsg-wavs                  = { workspace = true }
+btsg-cw-orch               = { workspace = true }
 bs721-base                 = { workspace = true }
 btsg-account               = { path = "../packages/btsg-account" }
 bs721-account              = { path = "../contracts/bs721-account", features = [ "interface"]}

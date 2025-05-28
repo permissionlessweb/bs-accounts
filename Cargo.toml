@@ -26,18 +26,13 @@ license    = "Apache-2.0"
 
 [workspace.dependencies]
 abstract-std = "0.26.0"
-bs721                        = { git = "https://github.com/permissionlessweb/bs-nfts", rev = "1e50abdac4517bcdd5e03491589bdba6929806cf" }
-bs721-base                   = { git = "https://github.com/permissionlessweb/bs-nfts", rev = "1e50abdac4517bcdd5e03491589bdba6929806cf"}
-bs-controllers               = { library = "bs-controllers", git = "https://github.com/permissionlessweb/bs-nfts", rev = "1e50abdac4517bcdd5e03491589bdba6929806cf" } 
-btsg-account                 = { path = "packages/btsg-account" }
-btsg-wavs                    = { path = "contracts/smart-accounts/btsg-wavs" }
-cosmwasm-schema              = "2.2.0"
-cosmwasm-crypto              = "2.2.2"
+cosmwasm-schema = "2.2.0"
+cosmwasm-crypto = "2.2.2"
+cosmos-sdk-proto = { version = "0.26.1", default-features = false }
 cosmwasm-std = { version = "2.2.0", features = [
   "cosmwasm_1_4",
   "cosmwasm_2_0",
 ] }
-cosmos-sdk-proto             = { version = "0.26.1", default-features = false }
 cw2 = "2.0.0"
 cw-orch = "0.28.0"
 cw-orch-core = "2.1.4"
@@ -45,11 +40,17 @@ cw-ownable = "2.1.0"
 cw-storage-plus = "2.0.0"
 cw-utils = "2.0.0"
 
+bs721                        = { git = "https://github.com/permissionlessweb/bs-nfts", branch = "feat/wavs",package = "bs721" }
+bs721-base                   = { git = "https://github.com/permissionlessweb/bs-nfts", branch = "feat/wavs"}
+bs-controllers               = { git = "https://github.com/permissionlessweb/bs-nfts", branch = "feat/wavs", library = "bs-controllers" } 
+btsg-cw-orch                 = { git = "https://github.com/permissionlessweb/bs-nfts", branch = "feat/wavs", package = "btsg-cw-orch" }
+btsg-account                 = { path = "packages/btsg-account" }
+btsg-wavs                    = { path = "contracts/smart-accounts/btsg-wavs" }
 
-bech32                       = { version = "0.11.0", default-features = false, features = ["alloc"] }
-sha2                    = { version = "0.10.8", default-features = false } 
+bech32 = { version = "0.11.0", default-features = false, features = ["alloc"] }
+sha2 = { version = "0.10.8", default-features = false } 
 schemars = "0.8.16"
 serde = { version = "1.0.197", default-features = false, features = ["derive"] }
-serde_json                   = "1.0.79"
+serde_json = "1.0.79"
 subtle-encoding = { version = "0.5.1", features = ["bech32-preview"] }
 thiserror = { version = "1.0.58" }

@@ -5,6 +5,7 @@ use crate::deploy::{
     account::*, btsg_wavs::BtsgWavsAuth, market::BtsgAccountMarket, minter::BtsgAccountMinter,
 };
 use bs721_account_marketplace::msgs::ExecuteMsgFns as _;
+use btsg_cw_orch::base::Bs721Base;
 use cosmwasm_std::Uint128;
 
 use cw_orch::prelude::*;
@@ -16,7 +17,7 @@ where
     pub minter: BtsgAccountMinter<Chain>,
     pub market: BtsgAccountMarket<Chain>,
     pub wavs: BtsgWavsAuth<Chain>,
-    pub infusions:  BtsgWavsAuth<Chain>,
+    pub bs721base: Bs721Base<Chain, Empty, Empty>,
     pub abs: Abstract<Chain>,
 }
 
@@ -30,7 +31,7 @@ impl<Chain: CwEnv> BtsgAccountSuite<Chain> {
             market: BtsgAccountMarket::new("bs721_account_market", chain.clone()),
             abs: Abstract::new(chain.clone()),
             wavs: BtsgWavsAuth::new("btsg_wavs", chain.clone()),
-            infusions:  BtsgWavsAuth::new("cw_infusion", chain.clone()),
+            bs721base: Bs721Base::new("bs721_base", chain.clone()),
         }
     }
 
@@ -39,10 +40,7 @@ impl<Chain: CwEnv> BtsgAccountSuite<Chain> {
         let _minter = self.minter.upload()?.uploaded_code_id()?;
         let _market = self.market.upload()?.uploaded_code_id()?;
         let _wavs = self.wavs.upload()?.uploaded_code_id()?;
-
-        // println!("account collection code-id: {}", _acc);
-        // println!("account minter code-id: {}", _minter);
-        // println!("account minter code-id: {}", _market);
+        let _bs721base = self.bs721base.upload()?.uploaded_code_id()?;
         Ok(())
     }
 }
@@ -119,23 +117,14 @@ impl<Chain: CwEnv> cw_orch::contract::Deploy<Chain> for BtsgAccountSuite<Chain> 
             .setup(suite.account.address()?, suite.minter.address()?)?;
 
         // instantiate wavs authenticator
-        suite.wavs.instantiate(
-            &btsg_wavs::msg::InstantiateMsg {
-                owner: None,
-                wavs_operator_pubkeys: vec![BLS_PUBKEY.as_bytes().into()], // only one bls key, need to add more
-            },
-            None,
-            &[],
-        )?;
-
-        suite.infusions.instantiate(
-            &btsg_wavs::msg::InstantiateMsg {
-                owner: None,
-                wavs_operator_pubkeys: vec![BLS_PUBKEY.as_bytes().into()], // only one bls key, need to add more
-            },
-            None,
-            &[],
-        )?;
+        // suite.wavs.instantiate(
+        //     &btsg_wavs::msg::InstantiateMsg {
+        //         owner: None,
+        //         wavs_operator_pubkeys: vec![BLS_PUBKEY.as_bytes().into()], // only one bls key, need to add more
+        //     },
+        //     None,
+        //     &[],
+        // )?;
 
         Ok(suite)
     }
