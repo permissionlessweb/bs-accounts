@@ -206,9 +206,8 @@ pub mod manifest {
             // println!("max: {:#?}", max);
 
             // Check if we're trying to remove more than we're going to have
-            if new_count != 0 && new_count < to_remove.len() as u32 {
-                return Err(ContractError::CannotRemoveMoreThanWillExists {});
-            } else if to_remove.len() as u32 > max {
+            if new_count != 0 && new_count < to_remove.len() as u32 || to_remove.len() as u32 > max
+            {
                 return Err(ContractError::CannotRemoveMoreThanWillExists {});
             }
 
@@ -589,8 +588,6 @@ pub mod manifest {
     }
 
     /// BS721 FUNCTIONS
-    ///
-
     pub fn execute_mint(
         deps: DepsMut,
         info: MessageInfo,
@@ -874,13 +871,13 @@ fn validate_address(deps: Deps, sender: &Addr, addr: Addr) -> Result<Addr, Contr
 
     if let Some(admin) = admin {
         ensure!(
-            &admin == sender,
+            admin == sender,
             ContractError::UnauthorizedCreatorOrAdmin {}
         );
     } else {
         // If there is no admin and the creator is not the sender, check creator's admin
         let creator_info = deps.querier.query_wasm_contract_info(creator)?;
-        if creator_info.admin.is_none_or(|a| &a != sender) {
+        if creator_info.admin.is_none_or(|a| a != sender) {
             return Err(ContractError::UnauthorizedCreatorOrAdmin {});
         }
     }
