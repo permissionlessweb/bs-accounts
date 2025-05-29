@@ -1,11 +1,11 @@
+use btsg_account_scripts::{
+    networks::{ping_grpc, BITSONG_MAINNET, BITSONG_TESTNET, LOCAL_NETWORK1},
+    BtsgAccountSuite,
+};
 use clap::Parser;
 use cw_orch::{
     daemon::{DaemonBuilder, TxSender},
     prelude::*,
-};
-use btsg_account_scripts::{
-    networks::{ping_grpc, BITSONG_MAINNET, BITSONG_TESTNET, LOCAL_NETWORK1},
-    BtsgAccountSuite,
 };
 use tokio::runtime::Runtime;
 

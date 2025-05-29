@@ -1,7 +1,7 @@
 use crate::state::*;
+use bs_controllers::HooksResponse;
 use cosmwasm_schema::QueryResponses;
 use cosmwasm_std::{to_json_binary, Addr, Binary, Coin, StdResult, Uint128};
-use bs_controllers::HooksResponse;
 
 #[cosmwasm_schema::cw_serde]
 pub struct InstantiateMsg {
