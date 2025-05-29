@@ -87,6 +87,12 @@ cw_serde_struct_allow_unknown_fields! {
     pub authenticator_type: String,
     pub data: Vec<u8>,
     }
+    
+    pub struct CosmwasmAuthenticatorInitData {
+        pub contract: String,
+        pub params: Vec<u8>,
+    }
+
 }
 
 /// `AuthenticatorSudoMsg` contains variants of messages that can be sent to the authenticator contract

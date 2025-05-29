@@ -10,7 +10,7 @@ pub fn sha256(data: &[u8]) -> Vec<u8> {
 }
 
 /// Register a given seckp256k1 key with a specific authenticator
-async fn setup_bitsong_smart_account(authenticator: MsgAddAuthenticator) -> StdResult<Any> {
+pub async fn setup_bitsong_smart_account(authenticator: MsgAddAuthenticator) -> StdResult<Any> {
     // register custom authenticator to account
     Ok(Any {
         type_url: "/bitsong.smartaccount.v1beta1.MsgAddAuthenticator".into(),

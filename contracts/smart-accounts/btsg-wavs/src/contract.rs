@@ -108,13 +108,13 @@ fn sudo_authentication_request(
     if a != b {
         return Err(ContractError::InvalidPubkeyCount { a, b });
     }
-    // EXAMPLE IMPLEMENTATION FOR BLS12_381 VERIFICATION
-    let dst = b"QUUX-V01-CS02-with-BLS12381G1_XMD:SHA-256_SSWU_RO_";
+    // Make use of the commonware-cryptogrphy libraries default Domain Separation Tag (dst)
+    let dst = b"BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_POP_";
     // Aggregate public keys when registered (G1 points)
     let wavs_ops_pubkeys: Vec<_> = pubkeys.iter().map(|a| a.to_vec()).collect();
 
     // Aggregate signatures (G2 points)
-    let wavs_ops_signatures: Vec<_> = auth_req
+    let wavs_ops_signatures: Vec<Vec<u8>> = auth_req
         .signature_data
         .signatures
         .into_iter()
@@ -177,3 +177,4 @@ pub fn execute_update_owner(
     let ownership = cw_ownable::update_ownership(deps, &env.block, &info.sender, action)?;
     Ok(Response::default().add_attributes(ownership.into_attributes()))
 }
+

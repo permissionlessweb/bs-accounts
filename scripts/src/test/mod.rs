@@ -1,6 +1,7 @@
 pub mod account;
 pub mod market;
 pub mod minter;
+pub mod smart_accounts;
 
 use abstract_interface::Abstract;
 use bs721_account::msg::{Bs721AccountsQueryMsgFns as _, ExecuteMsgFns as _};

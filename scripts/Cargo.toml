@@ -21,7 +21,7 @@ bs721-account              = { path = "../contracts/bs721-account", features = [
 bs721-account-minter       = { path = "../contracts/bs721-account-minter"  }
 bs721-account-marketplace  = { path = "../contracts/bs721-account-marketplace"  }
 
-cw-infuser             = { git = "https://github.com/permissionlessweb/cw-infuser", branch = "feat/wavs", features  =["library"] }
+cw-infuser                 = { git = "https://github.com/permissionlessweb/cw-infuser", branch = "feat/wavs", features  =["library"] }
 
 cosmwasm-schema            = { workspace = true }
 cosmwasm-std               = { workspace = true }
@@ -31,6 +31,7 @@ cw-ownable                 = { workspace = true }
 
 # Abstract Framework and CW-Orchestrator Dependencies
 abstract-std                  = { workspace = true }
+btsg-auth                     = { workspace = true }
 abstract-sdk                 = "0.26.0"
 abstract-client              = { version = "0.26.0",  features = ["interchain"] }
 abstract-interface           = { version = "0.26.0", features = [ "daemon"]}
@@ -44,7 +45,7 @@ clap                         = { version = "4.0.32", features = ["derive"] }
 csv                          = "1.2"
 anyhow                       = "1"
 dirs                         = "5.0.1"
-dotenv                     = { version = "0.15.0" }
+dotenv                       = { version = "0.15.0" }
 pretty_env_logger            = { version = "0.5.0" }
 env_logger                   = "0.10.0"
 log                          = "0.4.22"
@@ -53,9 +54,12 @@ serde                        = { version = "1.0.140", default-features = false, 
 serde_json                   = "1.0.79"
 tokio                        = "1.39.3"
 prost-types                  = "0.13.4"
-
+commonware-cryptography      = {version = "0.0.53" }
+cosmrs = "0.22.0"
+hex = "0.4.3"
 
 [dev-dependencies]
+
 
 # Cargo CLI commands
 [[bin]]
