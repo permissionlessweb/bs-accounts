@@ -29,7 +29,7 @@ impl CosmosArbitrary {
             StdError::generic_err("Must provide prefix for the public key".to_string())
         );
         Ok(sha256(
-            &preamble_msg_arb_036(
+            preamble_msg_arb_036(
                 pubkey_to_address(&self.pubkey, self.hrp.as_ref().unwrap())?.as_str(),
                 &self.message.to_string(),
             )
@@ -43,9 +43,9 @@ impl CosmosArbitrary {
 
     // generic object validations
     fn _validate(&self) -> Result<(), StdError> {
-        if !(self.signature.len() > 0
-            && self.message.to_string().len() > 0
-            && self.pubkey.len() > 0)
+        if !(!self.signature.is_empty()
+            && !self.message.to_string().is_empty()
+            && !self.pubkey.is_empty())
         {
             return Err(StdError::generic_err("Empty credential data".to_string()));
         }
@@ -69,10 +69,10 @@ impl CosmosArbitrary {
 
     pub fn verify_return_readable(&self) -> Result<String, StdError> {
         self.verify()?;
-        Ok(pubkey_to_address(
+        pubkey_to_address(
             &self.pubkey,
             &self.hrp().expect("must have prefix"),
-        )?)
+        )
     }
 }
 
@@ -149,7 +149,7 @@ mod tests {
         // `Signer` has many impls of the `Signer` trait (for both regular and
         // recoverable signature types).
         let signature: Signature = secret_key
-            .sign_prehash_recoverable(&msg_hash.to_vec())
+            .sign_prehash_recoverable(&msg_hash)
             .unwrap()
             .0;
 

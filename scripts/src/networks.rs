@@ -7,7 +7,7 @@ use reqwest::Url;
 use std::net::TcpStream;
 
 pub const SUPPORTED_CHAINS: &[ChainInfo] = &[BITSONG_MAINNET, OSMOSIS_1];
-pub const BITSONG_SUPPORTED_NETWORKS: &[ChainInfo] = &SUPPORTED_CHAINS;
+pub const BITSONG_SUPPORTED_NETWORKS: &[ChainInfo] = SUPPORTED_CHAINS;
 
 pub const GAS_TO_DEPLOY: u64 = 60_000_000;
 

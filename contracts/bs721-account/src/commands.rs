@@ -160,7 +160,7 @@ pub mod manifest {
         )?;
 
         // println!("// 6. update new manager in token metadata");
-        let canonv = deps.api.addr_canonicalize(&info.sender.as_str())?;
+        let canonv = deps.api.addr_canonicalize(info.sender.as_str())?;
         REVMAP_LIMIT.save(deps.storage, &canonv.to_string(), &0u32)?;
         // println!("// 7. save new reverse map entry");
         // println!("token_uri:{:#?}", token_uri);
@@ -190,7 +190,7 @@ pub mod manifest {
         let mut attr = vec![];
         nonpayable(&info)?;
         // the sender is always the value mapped to the store.
-        let canonv = deps.api.addr_canonicalize(&info.sender.as_str())?;
+        let canonv = deps.api.addr_canonicalize(info.sender.as_str())?;
 
         let max = SUDO_PARAMS.load(deps.storage)?.max_reverse_map_key_limit;
         let count = REVMAP_LIMIT.may_load(deps.storage, &canonv.to_string())?;
@@ -200,7 +200,7 @@ pub mod manifest {
         } else {
             let mut count = count.unwrap();
             // Calculate new count after adding and removing
-            let mut new_count = count as u32 + to_add.len() as u32;
+            let mut new_count = count + to_add.len() as u32;
             // println!("new_count: {:#?}", new_count);
             // println!("to_remove.len(): {:#?}", to_remove.len());
             // println!("max: {:#?}", max);
@@ -208,14 +208,12 @@ pub mod manifest {
             // Check if we're trying to remove more than we're going to have
             if new_count != 0 && new_count < to_remove.len() as u32 {
                 return Err(ContractError::CannotRemoveMoreThanWillExists {});
-            } else {
-                if to_remove.len() as u32 > max {
-                    return Err(ContractError::CannotRemoveMoreThanWillExists {});
-                }
+            } else if to_remove.len() as u32 > max {
+                return Err(ContractError::CannotRemoveMoreThanWillExists {});
             }
 
             if new_count != 0 {
-                new_count = new_count - to_remove.len() as u32;
+                new_count -= to_remove.len() as u32;
             }
 
             if new_count > max {
@@ -289,16 +287,13 @@ pub mod manifest {
                     .querier
                     .query_wasm_smart(tokenuri, &abstract_std::account::QueryMsg::Ownership {})?;
 
-                match owner.owner {
-                    ownership::GovernanceDetails::NFT {
+                if let ownership::GovernanceDetails::NFT {
                         collection_addr,
                         token_id,
-                    } => {
-                        if collection_addr == contract_addr.to_string() && token_id == account {
-                            extension = Metadata::default_with_account();
-                        }
+                    } = owner.owner {
+                    if collection_addr == contract_addr.to_string() && token_id == account {
+                        extension = Metadata::default_with_account();
                     }
-                    _ => {}
                 }
             }
         }
@@ -847,9 +842,9 @@ pub fn transcode(deps: Deps, addr: &str) -> StdResult<String> {
         let human = &CanonicalAddr::from(canonv);
         Ok(deps.api.addr_humanize(human)?.to_string())
     } else {
-        return Err(StdError::generic_err(
+        Err(StdError::generic_err(
             "no mappping set. Set a non `bitsong1...` addr mapped to your`bitsong1..` that owns this account token with UpdateMyReverseMapKey",
-        ));
+        ))
     }
 }
 
@@ -884,7 +879,7 @@ fn validate_address(deps: Deps, sender: &Addr, addr: Addr) -> Result<Addr, Contr
     } else {
         // If there is no admin and the creator is not the sender, check creator's admin
         let creator_info = deps.querier.query_wasm_contract_info(creator)?;
-        if creator_info.admin.map_or(true, |a| &a != sender) {
+        if creator_info.admin.is_none_or(|a| &a != sender) {
             return Err(ContractError::UnauthorizedCreatorOrAdmin {});
         }
     }
@@ -913,7 +908,7 @@ pub fn sudo_update_params(
 
 mod test {
     #[test]
-    pub fn test_transcode() -> () {
+    pub fn test_transcode() {
         let deps = cosmwasm_std::testing::mock_dependencies();
 
         let res = super::transcode(

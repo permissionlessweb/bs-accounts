@@ -34,7 +34,7 @@ mod execute {
         let token_id = "bobo";
 
         mock.wait_seconds(1)?;
-        suite.mint_and_list(mock.clone(), &token_id, &owner)?;
+        suite.mint_and_list(mock.clone(), token_id, &owner)?;
         // check operators
         assert_eq!(
             suite
@@ -56,7 +56,7 @@ mod execute {
         let token_id = "bobo";
 
         mock.wait_seconds(1)?;
-        suite.mint_and_list(mock.clone(), &token_id, &owner)?;
+        suite.mint_and_list(mock.clone(), token_id, &owner)?;
 
         // check if account is listed in marketplace
         let res = suite.market.ask(token_id.to_string())?.unwrap();
@@ -80,9 +80,9 @@ mod execute {
         let token_id = "bobo";
 
         mock.wait_seconds(1)?;
-        suite.mint_and_list(mock.clone(), &token_id, &owner)?;
+        suite.mint_and_list(mock.clone(), token_id, &owner)?;
 
-        suite.bid_w_funds(mock, &token_id, bidder, BID_AMOUNT)?;
+        suite.bid_w_funds(mock, token_id, bidder, BID_AMOUNT)?;
         Ok(())
     }
     #[test]
@@ -95,8 +95,8 @@ mod execute {
         let token_id = "bobo";
 
         mock.wait_seconds(1)?;
-        suite.mint_and_list(mock.clone(), &token_id, &owner)?;
-        suite.bid_w_funds(mock.clone(), &token_id, bidder.clone(), BID_AMOUNT)?;
+        suite.mint_and_list(mock.clone(), token_id, &owner)?;
+        suite.bid_w_funds(mock.clone(), token_id, bidder.clone(), BID_AMOUNT)?;
 
         // user (owner) starts off with 0 internet funny money
         assert_eq!(
@@ -136,10 +136,10 @@ mod execute {
         let token_id = "bobo";
         let market = suite.market.address()?;
         mock.wait_seconds(1)?;
-        suite.mint_and_list(mock.clone(), &token_id, &owner)?;
-        suite.bid_w_funds(mock.clone(), &token_id, bidder.clone(), BID_AMOUNT)?;
+        suite.mint_and_list(mock.clone(), token_id, &owner)?;
+        suite.bid_w_funds(mock.clone(), token_id, bidder.clone(), BID_AMOUNT)?;
         suite.market.accept_bid(bidder.clone(), token_id.into())?;
-        suite.bid_w_funds(mock.clone(), &token_id, bidder2.clone(), BID_AMOUNT)?;
+        suite.bid_w_funds(mock.clone(), token_id, bidder2.clone(), BID_AMOUNT)?;
         suite
             .account
             .call_as(&bidder)
@@ -162,7 +162,7 @@ mod execute {
         let admin2 = mock.addr_make("admin2");
         let token_id = "bobo";
 
-        suite.mint_and_list(mock.clone(), &token_id, &admin2)?;
+        suite.mint_and_list(mock.clone(), token_id, &admin2)?;
 
         // when no associated address, query should throw error
         suite
@@ -184,7 +184,7 @@ mod execute {
         mock.wait_seconds(60)?;
         // associate another
         let account2 = "exam";
-        suite.mint_and_list(mock.clone(), &account2, &admin2.clone())?;
+        suite.mint_and_list(mock.clone(), account2, &admin2.clone())?;
 
         suite
             .account
@@ -211,7 +211,7 @@ mod execute {
         let token_id = "bobo";
         println!("not-admin: {:#?}", addr);
         mock.wait_seconds(1)?;
-        suite.mint_and_list(mock.clone(), &token_id, &addr)?;
+        suite.mint_and_list(mock.clone(), token_id, &addr)?;
 
         suite
             .account
@@ -229,7 +229,7 @@ mod execute {
         let admin2 = mock.addr_make("admin2");
 
         mock.wait_seconds(1)?;
-        suite.mint_and_list(mock.clone(), &token_id, &admin2)?;
+        suite.mint_and_list(mock.clone(), token_id, &admin2)?;
 
         suite
             .account
@@ -247,7 +247,7 @@ mod execute {
         let admin2 = mock.addr_make("admin2");
 
         mock.wait_seconds(1)?;
-        suite.mint_and_list(mock.clone(), &token_id, &admin2)?;
+        suite.mint_and_list(mock.clone(), token_id, &admin2)?;
 
         // pause minting
         suite.minter.pause(true)?;
@@ -255,7 +255,7 @@ mod execute {
         // error trying to mint
         mock.wait_seconds(1)?;
         suite
-            .mint_and_list(mock.clone(), &token_id, &admin2)
+            .mint_and_list(mock.clone(), token_id, &admin2)
             .unwrap_err();
 
         Ok(())
@@ -269,7 +269,7 @@ mod execute {
         let admin2 = mock.addr_make("admin2");
 
         mock.wait_seconds(1)?;
-        suite.mint_and_list(mock.clone(), &token_id, &admin2)?;
+        suite.mint_and_list(mock.clone(), token_id, &admin2)?;
 
         // run sudo msg
         mock.app.borrow_mut().sudo(SudoMsg::Wasm(WasmSudo {
@@ -346,7 +346,7 @@ mod query {
         let token_id = "bobo";
 
         mock.wait_seconds(1)?;
-        suite.mint_and_list(mock.clone(), &token_id, &admin2)?;
+        suite.mint_and_list(mock.clone(), token_id, &admin2)?;
 
         assert_eq!(
             suite.market.ask(token_id.into())?.unwrap().token_id,
@@ -364,8 +364,8 @@ mod query {
         let token_id = "bobo";
 
         mock.wait_seconds(1)?;
-        suite.mint_and_list(mock.clone(), &token_id, &admin)?;
-        suite.mint_and_list(mock.clone(), &"hack", &admin2)?;
+        suite.mint_and_list(mock.clone(), token_id, &admin)?;
+        suite.mint_and_list(mock.clone(), "hack", &admin2)?;
 
         assert_eq!(suite.market.asks(None, None)?[0].id, 1);
 
@@ -381,8 +381,8 @@ mod query {
         let token_id = "bobo";
 
         mock.wait_seconds(1)?;
-        suite.mint_and_list(mock.clone(), &token_id, &admin)?;
-        suite.mint_and_list(mock.clone(), &"hack", &admin2)?;
+        suite.mint_and_list(mock.clone(), token_id, &admin)?;
+        suite.mint_and_list(mock.clone(), "hack", &admin2)?;
 
         assert_eq!(
             suite
@@ -403,8 +403,8 @@ mod query {
         let token_id = "bobo";
 
         mock.wait_seconds(1)?;
-        suite.mint_and_list(mock.clone(), &token_id, &admin)?;
-        suite.mint_and_list(mock.clone(), &"hack", &admin2)?;
+        suite.mint_and_list(mock.clone(), token_id, &admin)?;
+        suite.mint_and_list(mock.clone(), "hack", &admin2)?;
 
         assert_eq!(suite.market.ask_count()?, 2);
         Ok(())
@@ -420,10 +420,10 @@ mod query {
         let token_id = "bobo";
 
         mock.wait_seconds(1)?;
-        suite.mint_and_list(mock.clone(), &token_id, &admin)?;
+        suite.mint_and_list(mock.clone(), token_id, &admin)?;
 
-        suite.bid_w_funds(mock.clone(), &token_id, bidder1.clone(), BID_AMOUNT)?;
-        suite.bid_w_funds(mock.clone(), &token_id, bidder2.clone(), BID_AMOUNT * 5)?;
+        suite.bid_w_funds(mock.clone(), token_id, bidder1.clone(), BID_AMOUNT)?;
+        suite.bid_w_funds(mock.clone(), token_id, bidder2.clone(), BID_AMOUNT * 5)?;
 
         let res = suite.market.bids_for_seller(admin.clone(), None, None)?;
         assert_eq!(res.len(), 2);
@@ -450,7 +450,7 @@ mod query {
         let account: &str = "jump";
 
         mock.wait_seconds(1)?;
-        suite.mint_and_list(mock.clone(), &account, &admin)?;
+        suite.mint_and_list(mock.clone(), account, &admin)?;
 
         suite.bid_w_funds(mock.clone(), account, bidder1, BID_AMOUNT * 3)?;
         suite.bid_w_funds(mock.clone(), account, bidder2, BID_AMOUNT * 2)?;
@@ -471,10 +471,10 @@ mod query {
         let token_id = "bobo";
 
         mock.wait_seconds(1)?;
-        suite.mint_and_list(mock.clone(), &token_id, &admin)?;
+        suite.mint_and_list(mock.clone(), token_id, &admin)?;
 
-        suite.bid_w_funds(mock.clone(), &token_id, bidder1.clone(), BID_AMOUNT)?;
-        suite.bid_w_funds(mock.clone(), &token_id, bidder2.clone(), BID_AMOUNT * 5)?;
+        suite.bid_w_funds(mock.clone(), token_id, bidder1.clone(), BID_AMOUNT)?;
+        suite.bid_w_funds(mock.clone(), token_id, bidder2.clone(), BID_AMOUNT * 5)?;
 
         let res = suite.market.bids_for_seller(admin.clone(), None, None)?;
         assert_eq!(res.len(), 2);
@@ -496,7 +496,7 @@ mod query {
         mock.wait_seconds(60)?;
 
         let account = "jump";
-        suite.mint_and_list(mock.clone(), &account, &admin)?;
+        suite.mint_and_list(mock.clone(), account, &admin)?;
         suite.bid_w_funds(mock.clone(), account, bidder1.clone(), BID_AMOUNT * 3)?;
         suite.bid_w_funds(mock.clone(), account, bidder2, BID_AMOUNT * 2)?;
         // should be length 2 because there is token_id "jump" with 2 bids
@@ -524,10 +524,10 @@ mod query {
         let token_id = "bobo";
 
         mock.wait_seconds(1)?;
-        suite.mint_and_list(mock.clone(), &token_id, &admin)?;
+        suite.mint_and_list(mock.clone(), token_id, &admin)?;
 
-        suite.bid_w_funds(mock.clone(), &token_id, bidder1.clone(), BID_AMOUNT)?;
-        suite.bid_w_funds(mock.clone(), &token_id, bidder2.clone(), BID_AMOUNT * 5)?;
+        suite.bid_w_funds(mock.clone(), token_id, bidder1.clone(), BID_AMOUNT)?;
+        suite.bid_w_funds(mock.clone(), token_id, bidder2.clone(), BID_AMOUNT * 5)?;
 
         assert_eq!(
             suite
@@ -550,12 +550,12 @@ mod query {
         let token_id = "bobo";
 
         mock.wait_seconds(1)?;
-        suite.mint_and_list(mock.clone(), &token_id, &admin)?;
+        suite.mint_and_list(mock.clone(), token_id, &admin)?;
 
         // fails with "user" string, has to be a bech32 address
         suite.account.account(token_id).unwrap_err();
 
-        suite.mint_and_list(mock.clone(), &"yoyo", &admin)?;
+        suite.mint_and_list(mock.clone(), "yoyo", &admin)?;
 
         suite
             .account
@@ -753,7 +753,7 @@ mod collection {
 
         suite.account.transfer_nft(user1.clone(), token_id)?;
 
-        suite.bid_w_funds(mock.clone(), &token_id, bidder1.clone(), BID_AMOUNT * 3)?;
+        suite.bid_w_funds(mock.clone(), token_id, bidder1.clone(), BID_AMOUNT * 3)?;
 
         // user2 must approve the marketplace to transfer their account
         suite
@@ -926,7 +926,7 @@ mod associate_address {
 
         mock.wait_seconds(1)?;
         // mint and transfer to collection
-        suite.mint_and_list(mock.clone(), &token_id, &admin_user)?;
+        suite.mint_and_list(mock.clone(), token_id, &admin_user)?;
         suite.account.transfer_nft(nft_addr.clone(), token_id)?;
         assert_eq!(
             suite.account.owner_of(token_id, None)?.owner,
@@ -992,7 +992,7 @@ mod associate_address {
 
         mock.wait_seconds(1)?;
         // USER4 mints a account
-        suite.mint_and_list(mock.clone(), &token_id, &admin_user)?;
+        suite.mint_and_list(mock.clone(), token_id, &admin_user)?;
 
         // USER4 tries to associate the account with the collection contract that doesn't have an admin
         suite
@@ -1061,7 +1061,7 @@ mod associate_address {
 
         mock.wait_seconds(1)?;
         // USER4 mints a account
-        suite.mint_and_list(mock.clone(), &token_id, &user4)?;
+        suite.mint_and_list(mock.clone(), token_id, &user4)?;
 
         // USER4 tries to associate the account with the collection contract that doesn't have an admin
         let err = suite
@@ -1109,7 +1109,7 @@ mod associate_address {
             .instantiated_contract_address()?;
 
         mock.wait_seconds(1)?;
-        suite.mint_and_list(mock.clone(), &token_id, &user4)?;
+        suite.mint_and_list(mock.clone(), token_id, &user4)?;
 
         let err = suite
             .account

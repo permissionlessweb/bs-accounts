@@ -69,7 +69,7 @@ pub fn instantiate(
 
     let addr = instantiate2_address(
         code_info.checksum.as_slice(),
-        &deps.api.addr_canonicalize(&env.contract.address.as_str())?,
+        &deps.api.addr_canonicalize(env.contract.address.as_str())?,
         salt,
     )?;
 

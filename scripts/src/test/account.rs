@@ -277,7 +277,7 @@ fn test_reverse_map_key_limit() -> anyhow::Result<()> {
         let msg_hash = msg_digest.clone().finalize();
 
         let signature: Signature = secret_key
-            .sign_prehash_recoverable(&msg_hash.to_vec())
+            .sign_prehash_recoverable(&msg_hash)
             .unwrap()
             .0;
 
@@ -375,7 +375,7 @@ fn test_reverse_map_key_limit() -> anyhow::Result<()> {
         .account
         .reverse_map_account(&pubkey_to_address(
             &fifth_carb.carb.pubkey,
-            &fifth_carb.carb.hrp.as_ref().expect("hrp must be set"),
+            fifth_carb.carb.hrp.as_ref().expect("hrp must be set"),
         )?)
         .unwrap();
     assert_eq!(token_id, res);
@@ -388,7 +388,7 @@ fn test_reverse_map_key_limit() -> anyhow::Result<()> {
             .reverse_map_address(
                 btsg_account::verify_generic::pubkey_to_address(
                     &fifth_carb.carb.pubkey,
-                    &fifth_carb.carb.hrp.as_ref().expect("hrp must be set"),
+                    fifth_carb.carb.hrp.as_ref().expect("hrp must be set"),
                 )?
                 .to_string(),
             )
@@ -459,7 +459,7 @@ fn test_transcode() -> anyhow::Result<()> {
        "Generic error: no mappping set. Set a non `bitsong1...` addr mapped to your`bitsong1..` that owns this account token with UpdateMyReverseMapKey"    );
 
     //
-    let canon = deps.api.addr_canonicalize(&bitsong1.to_string()).unwrap();
+    let canon = deps.api.addr_canonicalize(bitsong1.as_ref()).unwrap();
 
     // save to store
     REVERSE_MAP_KEY
@@ -470,7 +470,7 @@ fn test_transcode() -> anyhow::Result<()> {
         )
         .unwrap();
 
-    let res = transcode(deps.as_ref(), &cosmos1.to_string()).unwrap();
+    let res = transcode(deps.as_ref(), cosmos1.as_ref()).unwrap();
     assert_eq!(bitsong1.to_string(), res);
     Ok(())
 }
