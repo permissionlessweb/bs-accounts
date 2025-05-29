@@ -2,9 +2,7 @@
 
 This implementation is a compatible instance of [sg-names](https://github.com/public-awesome/names) for Bitsong. To the stargaze contributors, thank you for setting the tone with these!
 <!-- ##  [API Docs](./API.md) -->
-
-<!-- ## TODO: 
- - generate tests for cosmos arbitrary signature   -->
+ 
  
 ## [Account Marketplace](./contracts/bs721-account-marketplace/README.md)
 The secondary marketplace for accounts. Accounts are automatically listed here once they are minted.
