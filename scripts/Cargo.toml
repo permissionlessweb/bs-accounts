@@ -26,7 +26,7 @@ cw-infuser                 = { git = "https://github.com/permissionlessweb/cw-in
 cosmwasm-schema            = { workspace = true }
 cosmwasm-std               = { workspace = true }
 cosmos-sdk-proto    = { workspace = true }
-cosmwasm-crypto              = { workspace = true,  default-features = false }
+cosmwasm-crypto              = { workspace = true }
 cw-ownable                 = { workspace = true }
 
 # Abstract Framework and CW-Orchestrator Dependencies

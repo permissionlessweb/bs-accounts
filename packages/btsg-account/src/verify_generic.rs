@@ -69,10 +69,7 @@ impl CosmosArbitrary {
 
     pub fn verify_return_readable(&self) -> Result<String, StdError> {
         self.verify()?;
-        pubkey_to_address(
-            &self.pubkey,
-            &self.hrp().expect("must have prefix"),
-        )
+        pubkey_to_address(&self.pubkey, &self.hrp().expect("must have prefix"))
     }
 }
 
@@ -148,10 +145,7 @@ mod tests {
         // Note: the signature type must be annotated or otherwise inferable as
         // `Signer` has many impls of the `Signer` trait (for both regular and
         // recoverable signature types).
-        let signature: Signature = secret_key
-            .sign_prehash_recoverable(&msg_hash)
-            .unwrap()
-            .0;
+        let signature: Signature = secret_key.sign_prehash_recoverable(&msg_hash).unwrap().0;
 
         // Verification (uncompressed public key)
         assert!(cosmwasm_crypto::secp256k1_verify(

@@ -276,10 +276,7 @@ fn test_reverse_map_key_limit() -> anyhow::Result<()> {
         let msg_digest = Sha256::new().chain(&adr036msgtohash);
         let msg_hash = msg_digest.clone().finalize();
 
-        let signature: Signature = secret_key
-            .sign_prehash_recoverable(&msg_hash)
-            .unwrap()
-            .0;
+        let signature: Signature = secret_key.sign_prehash_recoverable(&msg_hash).unwrap().0;
 
         assert!(cosmwasm_crypto::secp256k1_verify(
             &msg_hash,

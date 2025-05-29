@@ -288,9 +288,10 @@ pub mod manifest {
                     .query_wasm_smart(tokenuri, &abstract_std::account::QueryMsg::Ownership {})?;
 
                 if let ownership::GovernanceDetails::NFT {
-                        collection_addr,
-                        token_id,
-                    } = owner.owner {
+                    collection_addr,
+                    token_id,
+                } = owner.owner
+                {
                     if collection_addr == contract_addr.to_string() && token_id == account {
                         extension = Metadata::default_with_account();
                     }
