@@ -1,6 +1,6 @@
 [package]
-name          = "btsg-wavs"
-description   = "A custom authentication contract verifying BLS12-381 signature aggregations, used by WAVS operators."
+name          = "btsg-irl"
+description   = "A custom fantoken minter, being used as an event ticketing distribution."
 authors       = [""]
 version       = { workspace = true }
 edition       = { workspace = true }
@@ -18,7 +18,6 @@ library = []
 
 [dependencies]
 cosmwasm-schema    = { workspace = true }
-cosmos-sdk-proto   = { workspace = true, default-features = false }
 cw-storage-plus    = { workspace = true }
 cosmwasm-std       = { workspace = true }
 cw-ownable         = { workspace = true }
@@ -26,16 +25,9 @@ cw-orch            = { workspace = true }
 cw-utils           = { workspace = true }
 cw2                = { workspace = true }
 
- 
-btsg-auth  = { package = "btsg-auth", git = "https://github.com/permissionlessweb/bs-nfts", branch = "cosmwasm-std-v2" } 
-
 schemars           = { workspace = true }
 serde              = { workspace = true }
 thiserror          = { workspace = true }
 
 
 [dev-dependencies]
-prost = "0.11.9"
-cw-multi-test = {version = "2.2.0",features = ["stargate", "cosmwasm_2_1"]}
-derivative = "2.2"
-anyhow = "1"

@@ -1,6 +1,6 @@
 [workspace] 
 members = [ 
-"contracts/smart-accounts/*",
+    "contracts/smart-accounts/*",
     "contracts/bs721-account",
     "contracts/bs721-account-minter",
     "contracts/bs721-account-marketplace",
