@@ -14,14 +14,14 @@ k256 = { version = "0.13.3", default-features = false, features = ["ecdsa"] }
 ecdsa = "0.16.2"             
 
 btsg-wavs                  = { workspace = true }
-btsg-cw-orch               = { workspace = true }
+btsg-nft-scripts           = { workspace = true }
 bs721-base                 = { workspace = true }
 btsg-account               = { path = "../packages/btsg-account" }
 bs721-account              = { path = "../contracts/bs721-account", features = [ "interface"]}
 bs721-account-minter       = { path = "../contracts/bs721-account-minter"  }
 bs721-account-marketplace  = { path = "../contracts/bs721-account-marketplace"  }
 
-cw-infuser                 = { git = "https://github.com/permissionlessweb/cw-infuser", branch = "feat/wavs", features  =["library"] }
+cw-infuser = { git = "https://github.com/permissionlessweb/cw-infuser", branch = "feat/wavs", features  =["library"] }
 
 cosmwasm-schema            = { workspace = true }
 cosmwasm-std               = { workspace = true }

@@ -43,7 +43,7 @@ cw-utils = "2.0.0"
 bs721                        = { git = "https://github.com/permissionlessweb/bs-nfts", branch = "feat/wavs",package = "bs721" }
 bs721-base                   = { git = "https://github.com/permissionlessweb/bs-nfts", branch = "feat/wavs"}
 bs-controllers               = { git = "https://github.com/permissionlessweb/bs-nfts", branch = "feat/wavs", library = "bs-controllers" } 
-btsg-cw-orch                 = { git = "https://github.com/permissionlessweb/bs-nfts", branch = "feat/wavs", package = "btsg-cw-orch" }
+btsg-nft-scripts             = { git = "https://github.com/permissionlessweb/bs-nfts", branch = "feat/wavs", package = "btsg-nft-scripts" }
 btsg-account                 = { path = "packages/btsg-account" }
 btsg-wavs                    = { path = "contracts/smart-accounts/btsg-wavs" }
 btsg-auth                    = { path = "packages/btsg-auth" }
