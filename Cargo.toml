@@ -25,7 +25,6 @@ documentation = "https://docs.bitsong.io"
 license    = "Apache-2.0"
 
 [workspace.dependencies]
-abstract-std = "0.26.0"
 cosmwasm-schema = "2.2.0"
 cosmwasm-crypto = "2.2.2"
 cosmos-sdk-proto = { version = "0.26.1", default-features = false }
@@ -34,11 +33,14 @@ cosmwasm-std = { version = "2.2.0", features = [
   "cosmwasm_2_0",
 ] }
 cw2 = "2.0.0"
-cw-orch = "0.28.0"
-cw-orch-core = "2.1.4"
 cw-ownable = "2.1.0"
 cw-storage-plus = "2.0.0"
 cw-utils = "2.0.0"
+
+abstract-std = "0.26.0"
+abstract-client              = { version = "0.26.0",  features = ["interchain"] }
+abstract-interface           = { version = "0.26.0", features = [ "daemon"]}
+cw-orch = "0.28.0"
 
 bs721                        = { git = "https://github.com/permissionlessweb/bs-nfts", branch = "feat/wavs",package = "bs721" }
 bs721-base                   = { git = "https://github.com/permissionlessweb/bs-nfts", branch = "feat/wavs"}

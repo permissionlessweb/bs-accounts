@@ -2089,17 +2089,13 @@ dependencies = [
 name = "btsg-account"
 version = "0.2.0"
 dependencies = [
- "abstract-std",
  "bech32 0.11.0",
  "bs-controllers",
  "cosmwasm-crypto 2.2.2",
  "cosmwasm-schema 2.2.2",
  "cosmwasm-std 2.2.2",
- "cw-orch 0.28.0",
  "cw-ownable 2.1.0",
  "ecdsa",
- "hex",
- "hex-literal",
  "k256",
  "ripemd",
  "sha2 0.10.9",
@@ -2112,9 +2108,6 @@ dependencies = [
  "abstract-client",
  "abstract-cw-orch-polytone 6.0.1",
  "abstract-interface",
- "abstract-polytone 1.0.5",
- "abstract-polytone-note 3.0.0",
- "abstract-sdk",
  "abstract-std",
  "anyhow",
  "bech32 0.11.0",
@@ -6722,9 +6715,6 @@ name = "hex"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
-dependencies = [
- "serde",
-]
 
 [[package]]
 name = "hex-conservative"

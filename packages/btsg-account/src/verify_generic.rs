@@ -105,8 +105,9 @@ pub fn ripemd160(bytes: &[u8]) -> Vec<u8> {
 
 #[cfg(test)]
 mod tests {
+    use cosmwasm_std::StdError;
     use cosmwasm_std::{testing::mock_dependencies, Binary};
-    use cw_orch::anyhow;
+
     use ecdsa::signature::rand_core::OsRng;
 
     use k256::ecdsa::{Signature, SigningKey, VerifyingKey};
@@ -123,7 +124,7 @@ mod tests {
     // const MSG: &str = "Hello World!";
 
     #[test]
-    fn test_example() -> anyhow::Result<()> {
+    fn test_example() -> Result<(), StdError> {
         // Signing
         let secret_key: ecdsa::SigningKey<k256::Secp256k1> = SigningKey::random(&mut OsRng); // Serialize with `::to_bytes()`
         let public_key: ecdsa::VerifyingKey<k256::Secp256k1> = VerifyingKey::from(&secret_key); // Serialize with `::to_encoded_point()`
