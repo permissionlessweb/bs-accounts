@@ -17,7 +17,7 @@ where
     pub minter: BtsgAccountMinter<Chain>,
     pub market: BtsgAccountMarket<Chain>,
     pub wavs: BtsgWavsAuth<Chain>,
-    pub bs721base: Bs721Base<Chain, Empty, Empty>,
+    pub bs721base: Bs721Base<Chain, Empty>,
     // pub abs: Abstract<Chain>,
 }
 
