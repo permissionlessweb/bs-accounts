@@ -32,8 +32,8 @@ cw-ownable                 = { workspace = true }
 
 # Abstract Framework and CW-Orchestrator Dependencies
 abstract-std                  = { workspace = true }
-abstract-client               = { workspace = true }
-abstract-interface            = { workspace = true }
+# abstract-client               = { workspace = true }
+# abstract-interface            = { workspace = true }
 cw-orch-polytone             = { package = "abstract-cw-orch-polytone", version = "6.0.1" }
 
 cw-orch                      = { workspace = true, features = ["daemon"] }

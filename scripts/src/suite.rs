@@ -1,4 +1,4 @@
-use abstract_interface::Abstract;
+// use abstract_interface::Abstract;
 use btsg_account::Metadata;
 
 use crate::deploy::{
@@ -18,7 +18,7 @@ where
     pub market: BtsgAccountMarket<Chain>,
     pub wavs: BtsgWavsAuth<Chain>,
     pub bs721base: Bs721Base<Chain, Empty, Empty>,
-    pub abs: Abstract<Chain>,
+    // pub abs: Abstract<Chain>,
 }
 
 pub const BLS_PUBKEY: &str = "";
@@ -29,9 +29,9 @@ impl<Chain: CwEnv> BtsgAccountSuite<Chain> {
             account: BtsgAccountCollection::new("bs721_account", chain.clone()),
             minter: BtsgAccountMinter::new("bs721_account_minter", chain.clone()),
             market: BtsgAccountMarket::new("bs721_account_market", chain.clone()),
-            abs: Abstract::new(chain.clone()),
             wavs: BtsgWavsAuth::new("btsg_wavs", chain.clone()),
             bs721base: Bs721Base::new("bs721_base", chain.clone()),
+            // abs: Abstract::new(chain.clone()),
         }
     }
 

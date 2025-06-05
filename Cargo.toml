@@ -38,8 +38,8 @@ cw-storage-plus = "2.0.0"
 cw-utils = "2.0.0"
 
 abstract-std = "0.26.0"
-abstract-client              = { version = "0.26.0",  features = ["interchain"] }
-abstract-interface           = { version = "0.26.0", features = [ "daemon"]}
+# abstract-client              = { version = "0.26.0",  features = ["interchain"] }
+# abstract-interface           = { version = "0.26.0", features = [ "daemon"]}
 cw-orch = "0.28.0"
 
 bs721                        = { git = "https://github.com/permissionlessweb/bs-nfts", branch = "feat/wavs",package = "bs721" }
