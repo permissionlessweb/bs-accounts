@@ -5,7 +5,7 @@ use crate::deploy::{
     account::*, btsg_wavs::BtsgWavsAuth, market::BtsgAccountMarket, minter::BtsgAccountMinter,
 };
 use bs721_account_marketplace::msgs::ExecuteMsgFns as _;
-use btsg_cw_orch::base::Bs721Base;
+use btsg_nft_scripts::base::Bs721Base;
 use cosmwasm_std::Uint128;
 
 use cw_orch::prelude::*;
@@ -67,11 +67,11 @@ impl<Chain: CwEnv> cw_orch::contract::Deploy<Chain> for BtsgAccountSuite<Chain> 
     }
 
     fn deploy_on(chain: Chain, data: Self::DeployData) -> Result<Self, Self::Error> {
-        let abs: Abstract<Chain> = Abstract::deploy_on(chain.clone(), ())
-            .map_err(|e| CwOrchError::from(anyhow::anyhow!(e)))?;
+        // let abs: Abstract<Chain> = Abstract::deploy_on(chain.clone(), ())
+        //     .map_err(|e| CwOrchError::from(anyhow::anyhow!(e)))?;
         // ########### Upload ##############
         let mut suite: BtsgAccountSuite<Chain> = BtsgAccountSuite::store_on(chain.clone())?;
-        suite.abs = abs;
+        // suite.abs = abs;
 
         suite.market.instantiate(
             &bs721_account_marketplace::msgs::InstantiateMsg {
