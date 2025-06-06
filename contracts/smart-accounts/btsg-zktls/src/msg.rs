@@ -9,17 +9,17 @@ use crate::{
 #[cw_serde]
 pub struct InstantiateMsg {
     pub owner: String,
-    pub pubkey: String,
 }
 
 #[cw_serde]
 pub enum ExecuteMsg {
-    VerifyProof(ProofMsg),
     AddEpoch {
         witness: Vec<Witness>,
         minimum_witness: Uint128,
     },
 }
+
+pub type SudoMsg = btsg_auth::AuthenticatorSudoMsg;
 
 #[cw_serde]
 #[derive(QueryResponses)]

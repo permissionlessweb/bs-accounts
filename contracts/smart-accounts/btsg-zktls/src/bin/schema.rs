@@ -1,5 +1,5 @@
-use cosmwasm_schema::write_api;
 use btsg_zktls::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use cosmwasm_schema::write_api;
 
 fn main() {
     write_api! {

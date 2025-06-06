@@ -1675,6 +1675,7 @@ dependencies = [
  "bs721-base",
  "btsg-account",
  "btsg-auth 0.2.0",
+ "btsg-irl",
  "btsg-nft-scripts",
  "btsg-wavs 0.2.0",
  "clap",
@@ -1713,10 +1714,12 @@ dependencies = [
  "cosmwasm-schema 2.2.2",
  "cosmwasm-std 2.2.2",
  "cw-utils 2.0.0",
+ "rstest",
  "schemars",
  "serde",
  "serde_json",
  "sha2 0.10.9",
+ "thiserror 1.0.69",
 ]
 
 [[package]]
@@ -1791,6 +1794,7 @@ dependencies = [
 name = "btsg-irl"
 version = "0.2.0"
 dependencies = [
+ "btsg-auth 0.2.0",
  "cosmwasm-schema 2.2.2",
  "cosmwasm-std 2.2.2",
  "cw-orch 0.28.0",
@@ -1798,8 +1802,13 @@ dependencies = [
  "cw-storage-plus 2.0.0",
  "cw-utils 2.0.0",
  "cw2 2.0.0",
+ "digest 0.10.7",
+ "hex",
+ "k256",
  "schemars",
  "serde",
+ "sha2 0.10.9",
+ "sha3",
  "thiserror 1.0.69",
 ]
 
@@ -1898,6 +1907,7 @@ dependencies = [
 name = "btsg-zktls"
 version = "0.2.0"
 dependencies = [
+ "btsg-auth 0.2.0",
  "cosmwasm-schema 2.2.2",
  "cosmwasm-std 2.2.2",
  "cw-orch 0.28.0",
@@ -11749,6 +11759,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2b15c43186be67a4fd63bee50d0303afffcef381492ebe2c5d87f324e1b8815c"
 
 [[package]]
+name = "relative-path"
+version = "1.9.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ba39f3699c378cd8970968dcbff9c43159ea4cfbd88d43c00b22f2ef10a435d2"
+
+[[package]]
 name = "rend"
 version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -11997,6 +12013,35 @@ checksum = "ffc936cf8a7ea60c58f030fd36a612a48f440610214dc54bc36431f9ea0c3efb"
 dependencies = [
  "libc",
  "winapi",
+]
+
+[[package]]
+name = "rstest"
+version = "0.18.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "97eeab2f3c0a199bc4be135c36c924b6590b88c377d416494288c14f2db30199"
+dependencies = [
+ "futures",
+ "futures-timer",
+ "rstest_macros",
+ "rustc_version",
+]
+
+[[package]]
+name = "rstest_macros"
+version = "0.18.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d428f8247852f894ee1be110b375111b586d4fa431f6c46e64ba5a0dcccbe605"
+dependencies = [
+ "cfg-if",
+ "glob",
+ "proc-macro2 1.0.95",
+ "quote",
+ "regex",
+ "relative-path",
+ "rustc_version",
+ "syn 2.0.101",
+ "unicode-ident",
 ]
 
 [[package]]

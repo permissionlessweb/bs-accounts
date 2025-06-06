@@ -1,3 +1,4 @@
 # btsg-zktls
-on-chain.
+Authorize actions via zktls-proof verification.
+ 
 

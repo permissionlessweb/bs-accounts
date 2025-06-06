@@ -1,58 +1,158 @@
+use crate::claims::Proof;
 use crate::error::ContractError;
-use crate::{ExecuteMsg, InstantiateMsg, MintTicketObject, QueryMsg};
-use cosmwasm_schema::cw_serde;
-use cosmwasm_std::entry_point;
-use cosmwasm_std::{
-    coin, to_json_binary, AnyMsg, Binary, Coin, Deps, DepsMut, Env, MessageInfo, Reply, Response,
-    StdResult, SubMsg, Uint128,
+use crate::msg::{
+    CreateFantokenMsg, ExecuteMsg, FantokenInfo, GetAllEpochResponse, GetEpochResponse,
+    InstantiateMsg, MintFantokenMsg, MintTicketObject, QueryMsg, SetFantokenUriMsg, SudoMsg,
 };
+use crate::state::{
+    Config, Epoch, Witness, CONFIG, EPOCHS, FANTOKEN_INFO, MINTED_AMOUNTS, WAVS_SMART_ACCOUNT,
+    ZKTLS_ENABLED,
+};
+use btsg_auth::{
+    AuthenticationRequest, ConfirmExecutionRequest, OnAuthenticatorAddedRequest,
+    OnAuthenticatorRemovedRequest, TrackRequest,
+};
+use cosmwasm_schema::cw_serde;
+use cosmwasm_std::{
+    coin, from_json, to_json_binary, Addr, AnyMsg, Binary, Coin, Deps, DepsMut, Env, MessageInfo,
+    Reply, Response, StdError, StdResult, SubMsg, Uint128,
+};
+use cosmwasm_std::{entry_point, Event, Timestamp};
 use cw2::set_contract_version;
 use cw_storage_plus::{Item, Map};
-
-// Storage
-pub const WAVS_SMART_ACCOUNT: Item<String> = Item::new("wsa");
-pub const FANTOKEN_INFO: Item<FantokenInfo> = Item::new("fantoken_info");
-pub const MINTED_AMOUNTS: Map<&str, Uint128> = Map::new("minted_amounts");
+use sha2::{Digest, Sha256};
 
 // Constants
 const CONTRACT_NAME: &str = "crates.io:btsg-irl";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 const FANTOKEN_CREATE_REPLY_ID: u64 = 1;
 
-// Message types for the fantoken module
-#[cw_serde]
-pub struct CreateFantokenMsg {
-    pub symbol: String,
-    pub name: String,
-    pub max_supply: String, // Using String to handle sdk.Int serialization
-    pub authority: String,
-    pub uri: String,
-    pub minter: String,
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn instantiate(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    InstantiateMsg {
+        enable_zktls,
+        minter_params,
+    }: InstantiateMsg,
+) -> Result<Response, ContractError> {
+    let mut submsg = vec![];
+    set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+    let config = Config {
+        owner: info.sender.to_string(),
+        current_epoch: Uint128::zero(),
+    };
+    match minter_params {
+        Some(a) => {
+            // Store fantoken info (denom will be updated in reply)
+            let fantoken_info = FantokenInfo {
+                symbol: a.symbol.clone(),
+                name: a.name.clone(),
+                max_supply: a.max_supply,
+                authority: env.contract.address.to_string(),
+                uri: a.uri.clone(),
+                minter: env.contract.address.to_string(),
+                denom: String::new(), // Will be set in reply
+            };
+            // Create the fantoken creation message
+            let create_msg = AnyMsg {
+                type_url: "/bitsong.fantoken.v1beta1.MsgIssue".into(),
+                value: to_json_binary(&CreateFantokenMsg {
+                    symbol: a.symbol.clone(),
+                    name: a.name.clone(),
+                    max_supply: a.max_supply.to_string(),
+                    authority: env.contract.address.to_string(),
+                    uri: a.uri.clone(),
+                    minter: env.contract.address.to_string(),
+                })?,
+            };
+            FANTOKEN_INFO.save(deps.storage, &fantoken_info)?;
+            submsg.push(SubMsg::reply_on_success(
+                create_msg,
+                FANTOKEN_CREATE_REPLY_ID,
+            ))
+        }
+        _ => (),
+    }
+
+    CONFIG.save(deps.storage, &config)?;
+    WAVS_SMART_ACCOUNT.save(deps.storage, &info.sender.to_string())?;
+    ZKTLS_ENABLED.save(deps.storage, &enable_zktls)?;
+
+    Ok(Response::new()
+        .add_submessages(submsg)
+        .add_attribute("method", "instantiate")
+        .add_attribute("smart_account", info.sender))
 }
 
-#[cw_serde]
-pub struct MintFantokenMsg {
-    pub recipient: String,
-    pub coin: Coin,
-    pub minter: String,
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
+    match msg.id {
+        FANTOKEN_CREATE_REPLY_ID => {
+            let mut fantoken_info = FANTOKEN_INFO.load(deps.storage)?;
+            fantoken_info.denom = format!("ft{}", fantoken_info.symbol.to_lowercase());
+
+            FANTOKEN_INFO.save(deps.storage, &fantoken_info)?;
+
+            Ok(Response::new()
+                .add_attribute("method", "fantoken_created")
+                .add_attribute("denom", &fantoken_info.denom))
+        }
+        _ => Err(ContractError::UnknownReplyId {}),
+    }
 }
 
-#[cw_serde]
-pub struct SetFantokenUriMsg {
-    pub denom: String,
-    pub uri: String,
-    pub authority: String,
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn execute(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    msg: ExecuteMsg,
+) -> Result<Response, ContractError> {
+    match msg {
+        ExecuteMsg::MintFantokens { data } => handle_mint_fantokens(deps, env, info, data),
+        ExecuteMsg::SetUri { uri } => handle_set_uri(deps, env, info, uri),
+        ExecuteMsg::AddEpoch {
+            witness,
+            minimum_witness,
+        } => add_epoch(deps, env, witness, minimum_witness, info.sender.clone()),
+    }
 }
 
-#[cw_serde]
-pub struct FantokenInfo {
-    pub symbol: String,
-    pub name: String,
-    pub max_supply: Uint128,
-    pub authority: String,
-    pub uri: String,
-    pub minter: String,
-    pub denom: String,
+// @dev - add epoch
+pub fn add_epoch(
+    deps: DepsMut,
+    env: Env,
+    witness: Vec<Witness>,
+    minimum_witness: Uint128,
+    sender: Addr,
+) -> Result<Response, ContractError> {
+    // load configs
+    let mut config = CONFIG.load(deps.storage)?;
+
+    if config.owner != sender.to_string() {
+        return Err(ContractError::Unauthorized {});
+    }
+
+    //Increment Epoch number
+    let new_epoch = config.current_epoch + Uint128::one();
+    // Create the new epoch
+    let epoch = Epoch {
+        id: new_epoch,
+        witness,
+        timestamp_start: env.block.time.nanos(),
+        timestamp_end: env.block.time.plus_seconds(86400).nanos(),
+        minimum_witness_for_claim_creation: minimum_witness,
+    };
+
+    // Upsert the new epoch into memory
+    EPOCHS.save(deps.storage, new_epoch.into(), &epoch)?;
+
+    // Save the new epoch
+    config.current_epoch = new_epoch;
+    CONFIG.save(deps.storage, &config)?;
+    Ok(Response::default())
 }
 
 fn handle_mint_fantokens(
@@ -62,6 +162,7 @@ fn handle_mint_fantokens(
     mint_requests: Vec<MintTicketObject>,
 ) -> Result<Response, ContractError> {
     // Ensure only the smart account can mint fantokens
+
     if info.sender.to_string() != WAVS_SMART_ACCOUNT.load(deps.storage)? {
         return Err(ContractError::Unauthorized {});
     }
@@ -142,69 +243,6 @@ fn handle_set_uri(
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn instantiate(
-    deps: DepsMut,
-    env: Env,
-    info: MessageInfo,
-    InstantiateMsg {
-        symbol,
-        name,
-        max_supply,
-        uri,
-    }: InstantiateMsg,
-) -> Result<Response, ContractError> {
-    set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
-    WAVS_SMART_ACCOUNT.save(deps.storage, &info.sender.to_string())?;
-
-    // Store fantoken info (denom will be updated in reply)
-    let fantoken_info = FantokenInfo {
-        symbol: symbol.clone(),
-        name: name.clone(),
-        max_supply,
-        authority: env.contract.address.to_string(),
-        uri: uri.clone(),
-        minter: env.contract.address.to_string(),
-        denom: String::new(), // Will be set in reply
-    };
-
-    FANTOKEN_INFO.save(deps.storage, &fantoken_info)?;
-
-    // Create the fantoken creation message
-    let create_msg = AnyMsg {
-        type_url: "/bitsong.fantoken.v1beta1.MsgIssue".into(),
-        value: to_json_binary(&CreateFantokenMsg {
-            symbol,
-            name,
-            max_supply: max_supply.to_string(),
-            authority: env.contract.address.to_string(),
-            uri,
-            minter: env.contract.address.to_string(),
-        })?,
-    };
-
-    Ok(Response::new()
-        .add_submessage(SubMsg::reply_on_success(
-            create_msg,
-            FANTOKEN_CREATE_REPLY_ID,
-        ))
-        .add_attribute("method", "instantiate")
-        .add_attribute("smart_account", info.sender))
-}
-
-#[cfg_attr(not(feature = "library"), entry_point)]
-pub fn execute(
-    deps: DepsMut,
-    env: Env,
-    info: MessageInfo,
-    msg: ExecuteMsg,
-) -> Result<Response, ContractError> {
-    match msg {
-        ExecuteMsg::MintFantokens { data } => handle_mint_fantokens(deps, env, info, data),
-        ExecuteMsg::SetUri { uri } => handle_set_uri(deps, env, info, uri),
-    }
-}
-
-#[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::GetFantokenInfo {} => {
@@ -218,28 +256,182 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
                 .unwrap_or_default();
             to_json_binary(&minted)
         }
+        QueryMsg::GetEpoch { id } => to_json_binary(&query_epoch_id(deps, id)?),
+        QueryMsg::GetAllEpoch {} => to_json_binary(&query_all_epoch_ids(deps)?),
+    }
+}
+
+//NOTE: Unimplemented as secret doesn't allow to iterate via keys
+fn query_all_epoch_ids(_deps: Deps) -> StdResult<GetAllEpochResponse> {
+    Ok(GetAllEpochResponse { ids: vec![] })
+}
+
+fn query_epoch_id(deps: Deps, id: u128) -> StdResult<GetEpochResponse> {
+    match EPOCHS.may_load(deps.storage, id)? {
+        Some(epoch) => Ok(GetEpochResponse { epoch }),
+        None => Err(StdError::generic_err("No such epoch")),
     }
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
-    match msg.id {
-        FANTOKEN_CREATE_REPLY_ID => {
-            // Handle successful fantoken creation
-            // The denom should be in the response, but for now we'll construct it
-            // In a real implementation, you'd parse the response to get the actual denom
-            let mut fantoken_info = FANTOKEN_INFO.load(deps.storage)?;
-
-            // Construct denom based on typical fantoken module pattern
-            // This might need adjustment based on your specific fantoken module implementation
-            fantoken_info.denom = format!("ft{}", fantoken_info.symbol.to_lowercase());
-
-            FANTOKEN_INFO.save(deps.storage, &fantoken_info)?;
-
-            Ok(Response::new()
-                .add_attribute("method", "fantoken_created")
-                .add_attribute("denom", &fantoken_info.denom))
-        }
-        _ => Err(ContractError::UnknownReplyId {}),
+pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> Result<Response, ContractError> {
+    match ZKTLS_ENABLED.load(deps.storage)? {
+        true => match msg {
+            btsg_auth::AuthenticatorSudoMsg::OnAuthenticatorAdded(auth_add) => {
+                sudo_on_authenticator_added_request(deps, auth_add)
+            }
+            btsg_auth::AuthenticatorSudoMsg::OnAuthenticatorRemoved(auth_remove) => {
+                sudo_on_authenticator_removed_request(deps, auth_remove)
+            }
+            btsg_auth::AuthenticatorSudoMsg::Authenticate(auth_req) => {
+                sudo_authentication_request(deps, env, auth_req)
+            }
+            btsg_auth::AuthenticatorSudoMsg::Track(track_req) => {
+                sudo_track_request(deps, track_req)
+            }
+            btsg_auth::AuthenticatorSudoMsg::ConfirmExecution(conf_exec_req) => {
+                sudo_confirm_execution_request(deps, conf_exec_req)
+            }
+        },
+        false => Ok(Response::new()),
     }
+}
+
+fn sudo_on_authenticator_added_request(
+    _deps: DepsMut,
+    auth_added: OnAuthenticatorAddedRequest,
+) -> Result<Response, ContractError> {
+    // small storage writes, for example global contract entropy or count of registered accounts
+    match auth_added.authenticator_params {
+        Some(_) => Ok(Response::new().add_attribute("action", "auth_added_req")),
+        None => Err(ContractError::MissingAuthenticatorMetadata {}),
+    }
+}
+
+fn sudo_on_authenticator_removed_request(
+    _deps: DepsMut,
+    _auth_removed: OnAuthenticatorRemovedRequest,
+) -> Result<Response, ContractError> {
+    Ok(Response::new().add_attribute("action", "auth_removed_req"))
+}
+
+fn sudo_authentication_request(
+    deps: DepsMut,
+    env: Env,
+    auth_req: Box<AuthenticationRequest>,
+) -> Result<Response, ContractError> {
+    // let pubkeys = WAVS_PUBKEY.load(deps.storage)?;
+    let mut resp = Response::new().add_attribute("action", "auth_req");
+
+    // if auth_req.signature_data.signers.len() != pubkeys.len() {
+    //     return Err(ContractError::InvalidPubkeyCount { a, b });
+    // }
+
+    let Proof {
+        claimInfo,
+        signedClaim,
+    }: Proof = from_json(&auth_req.signature)?;
+    match EPOCHS.may_load(deps.storage, signedClaim.claim.epoch.into())? {
+        Some(epoch) => {
+            // Hash the claims, and verify with identifier hash
+            let hashed = claimInfo.hash();
+            if signedClaim.claim.identifier != hashed {
+                return Err(ContractError::HashMismatchErr {});
+            }
+
+            // Fetch witness for claim
+            let expected_witness = fetch_witness_for_claim(
+                epoch,
+                signedClaim.claim.identifier.clone(),
+                env.block.time,
+            );
+
+            let expected_witness_addresses = Witness::get_addresses(expected_witness);
+
+            // recover witness address from SignedClaims Object
+            let signed_witness = signedClaim.recover_signers_of_signed_claim(deps)?;
+
+            // make sure the minimum requirement for witness is satisfied
+            if expected_witness_addresses.len() != signed_witness.len() {
+                return Err(ContractError::WitnessMismatchErr {});
+            }
+
+            // Ensure for every signature in the sign, a expected witness exists from the database
+            for signed in signed_witness {
+                let signed_event = Event::new("signer").add_attribute("sig", signed.clone());
+                resp = resp.add_event(signed_event);
+                if !expected_witness_addresses.contains(&signed) {
+                    return Err(ContractError::SignatureErr {});
+                }
+            }
+        }
+        None => return Err(ContractError::NotFoundErr {}),
+    }
+
+    // // EXAMPLE IMPLEMENTATION FOR BLS12_381 VERIFICATION
+
+    Ok(resp)
+}
+
+pub fn fetch_witness_for_claim(
+    epoch: Epoch,
+    identifier: String,
+    timestamp: Timestamp,
+) -> Vec<Witness> {
+    let mut selected_witness = vec![];
+
+    // Create a hash from identifier+epoch+minimum+timestamp
+    let hash_str = format!(
+        "{}\n{}\n{}\n{}",
+        hex::encode(identifier),
+        epoch.minimum_witness_for_claim_creation.to_string(),
+        timestamp.nanos().to_string(),
+        epoch.id.to_string()
+    );
+    let result = hash_str.as_bytes().to_vec();
+    let mut hasher = Sha256::new();
+    hasher.update(result);
+    let hash_result = hasher.finalize().to_vec();
+    let witenesses_left_list = epoch.witness;
+    let mut byte_offset = 0;
+    let witness_left = witenesses_left_list.len();
+    for _i in 0..epoch.minimum_witness_for_claim_creation.into() {
+        let random_seed = generate_random_seed(hash_result.clone(), byte_offset) as usize;
+        let witness_index = random_seed % witness_left;
+        let witness = witenesses_left_list.get(witness_index);
+        match witness {
+            Some(data) => selected_witness.push(data.clone()),
+            None => {}
+        }
+        byte_offset = (byte_offset + 4) % hash_result.len();
+    }
+
+    selected_witness
+}
+
+fn generate_random_seed(bytes: Vec<u8>, offset: usize) -> u32 {
+    // Convert the hash result into a u32 using the offset
+    let hash_slice = &bytes[offset..offset + 4];
+    let mut seed = 0u32;
+    for (i, &byte) in hash_slice.iter().enumerate() {
+        seed |= u32::from(byte) << (i * 8);
+    }
+
+    seed
+}
+
+fn sudo_track_request(
+    _deps: DepsMut,
+    TrackRequest { .. }: TrackRequest,
+) -> Result<Response, ContractError> {
+    // this is where we handle any processes after authentication, regarding message contents, prep to track balances prior to msg execution, etc..
+    Ok(Response::new().add_attribute("action", "track_req"))
+}
+
+fn sudo_confirm_execution_request(
+    _deps: DepsMut,
+    _confirm_execution_req: ConfirmExecutionRequest,
+) -> Result<Response, ContractError> {
+    // here is were we compare balances post event execution, based on data saved from sudo_track_request,etc..
+    Ok(Response::new().add_attribute("action", "conf_exec_req"))
 }

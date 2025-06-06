@@ -39,7 +39,7 @@ pub fn instantiate(
         deps.api,
         Some(msg.owner.unwrap_or(info.sender).as_str()),
     )?;
-    
+
     WAVS_PUBKEY.save(deps.storage, &msg.wavs_operator_pubkeys)?;
     Ok(Response::new())
 }
@@ -107,41 +107,33 @@ fn sudo_authentication_request(
     if a != b {
         return Err(ContractError::InvalidPubkeyCount { a, b });
     }
-    // EXAMPLE IMPLEMENTATION FOR BLS12_381 VERIFICATION
-    let dst = b"QUUX-V01-CS02-with-BLS12381G1_XMD:SHA-256_SSWU_RO_";
-    // Aggregate public keys when registered (G1 points)
-    let wavs_ops_pubkeys: Vec<_> = pubkeys.iter().map(|a| a.to_vec()).collect();
-
-    // Aggregate signatures (G2 points)
-    let wavs_ops_signatures: Vec<_> = auth_req
-        .signature_data
-        .signatures
-        .into_iter()
-        .map(|a| a.clone().to_vec())
-        .collect();
-
-    let aggregated_signature = deps
-        .api
-        .bls12_381_aggregate_g2(&wavs_ops_signatures.concat())?;
-
-    // Aggregate the pubkey (G1 points)
-    let aggregated_pubkey = deps
-        .api
-        .bls12_381_aggregate_g1(&wavs_ops_pubkeys.concat())?;
-
-    // hash the json encoded Any (Stargate) msg ,into g2 (signature)
-    let hashed_message = deps.api.bls12_381_hash_to_g2(
-        HashFunction::Sha256,
-        &to_json_binary(&auth_req.tx_data.msgs)?,
-        dst,
-    )?;
-
-    // Verify the signature using pairing equality: e(g1, signature) == e(pubkey, H(message))
+    // EXAMPLE IMPLEMENTATION FOR BLS12_381 VERIFICATION COMMONWARE-CRYPTO -> COSMWASM_STD
     if !deps.api.bls12_381_pairing_equality(
         &BLS12_381_G1_GENERATOR,
-        &aggregated_signature,
-        &aggregated_pubkey,
-        &hashed_message,
+        &deps.api.bls12_381_aggregate_g2(
+            &auth_req
+                .clone()
+                .signature_data
+                .signatures
+                .into_iter()
+                .map(|a| a.clone().to_vec())
+                .collect::<Vec<_>>()
+                .concat(),
+        )?,
+        &deps.api.bls12_381_aggregate_g1(
+            &auth_req
+                .signature_data
+                .signatures
+                .iter()
+                .map(|a| a.to_vec())
+                .collect::<Vec<_>>()
+                .concat(),
+        )?,
+        &deps.api.bls12_381_hash_to_g2(
+            HashFunction::Sha256,
+            &to_json_binary(&auth_req.tx_data.msgs)?,
+            b"QUUX-V01-CS02-with-BLS12381G1_XMD:SHA-256_SSWU_RO_",
+        )?,
     )? {
         return Err(ContractError::VerificationError(
             cosmwasm_std::VerificationError::GenericErr,

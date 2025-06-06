@@ -3,6 +3,21 @@ use cosmwasm_std::{Addr, Binary, Coin};
 
 use crate::cw_serde_struct_allow_unknown_fields;
 
+#[cw_serde]
+pub struct AccountAuthenticator {
+    /// ID uniquely identifies the authenticator instance.
+    pub id: u64,
+    /// Type specifies the category of the AccountAuthenticator.
+    /// This type information is essential for differentiating authenticators
+    /// and ensuring precise data retrieval from the storage layer.
+    pub r#type: String,
+    /// Config is a versatile field used in conjunction with the specific type of
+    /// account authenticator to facilitate complex authentication processes.
+    /// The interpretation of this field is overloaded, enabling multiple
+    /// authenticators to utilize it for their respective purposes.
+    pub config: Vec<u8>,
+}
+
 cw_serde_struct_allow_unknown_fields! {
     // --- requests ---
 

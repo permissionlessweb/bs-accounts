@@ -15,9 +15,10 @@ ecdsa = "0.16.2"
 
 bs721-base                 = { workspace = true }
 btsg-nft-scripts           = { workspace = true }
-btsg-auth                     = { workspace = true }
-btsg-wavs                  = { workspace = true }
 btsg-account               = { path = "../packages/btsg-account" }
+btsg-auth                  = { workspace = true }
+btsg-irl                   = { workspace = true }
+btsg-wavs                  = { workspace = true }
 bs721-account              = { path = "../contracts/bs721-account", features = [ "interface"]}
 bs721-account-minter       = { path = "../contracts/bs721-account-minter"  }
 bs721-account-marketplace  = { path = "../contracts/bs721-account-marketplace"  }

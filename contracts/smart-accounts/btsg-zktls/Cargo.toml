@@ -1,6 +1,6 @@
 [package]
 name          = "btsg-zktls"
-description   = "A demo for authorizations using eth personal offline signatures"
+description   = "A demo for authorizations using zktls proofs as validation for actions"
 authors       = [""]
 version       = { workspace = true }
 edition       = { workspace = true }
@@ -23,8 +23,8 @@ cosmwasm-std       = { workspace = true }
 cw-ownable         = { workspace = true }
 cw-orch            = { workspace = true }
 cw-utils           = { workspace = true }
+btsg-auth          = { workspace = true }
 cw2                = { workspace = true }
-
 sha2         = { workspace = true }
 sha3 = { version = "0.10.8"}
 hex = "0.4.3"
@@ -35,5 +35,6 @@ digest = {version = "0.10", default-features = false }
 schemars           = { workspace = true }
 serde              = { workspace = true }
 thiserror          = { workspace = true }
+
 
 [dev-dependencies]

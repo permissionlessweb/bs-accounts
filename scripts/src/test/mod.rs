@@ -41,7 +41,7 @@ impl BtsgAccountSuite<MockBech32> {
         self.upload()?;
         // a.1 deploy abstract accounts
         // let abs = Abstract::deploy_on(mock.clone(), ())?;
-        self.abs = abs;
+        // self.abs = abs;
         // b. instantiates marketplace
         self.market.instantiate(
             &AccountMarketInitMsg {

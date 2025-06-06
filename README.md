@@ -3,16 +3,23 @@
 This implementation is a compatible instance of [sg-names](https://github.com/public-awesome/names) for Bitsong. To the stargaze contributors, thank you for setting the tone with these!
 <!-- ##  [API Docs](./API.md) -->
  
+| Contract | Description | 
+| --- | --- | 
+| [Account Marketplace](./contracts/bs721-account-marketplace/README.md) | The secondary marketplace for accounts. Accounts are automatically listed here once they are minted. | 
+| [Account Minter](./contracts/bs721-account-minter/README.md) | Account minter is responsible for minting, validating, and updating accounts and their metadata. | 
+| [Bs721-Account](./contracts/bs721-account/README.md) | A cw721 contract with on-chain metadata for an account. | 
 
-## [Account Marketplace](./contracts/bs721-account-marketplace/README.md)
-The secondary marketplace for accounts. Accounts are automatically listed here once they are minted.
+## Smart Accounts
+| Contract | Description | 
+| --- | --- | 
+| [btsg-ed25519](./contracts/smart-accounts/btsg-ed25519/README.md) |   | 
+| [btsg-eth](./contracts/smart-accounts/btsg-eth/README.md) |  | 
+| [btsg-irl](./contracts/smart-accounts/btsg-irl/README.md) |   | 
+| [btsg-passkey](./contracts/smart-accounts/btsg-passkey/README.md) |   | 
+| [btsg-wavs](./contracts/smart-accounts/btsg-wavs/README.md) |   | 
+| [btsg-zktls](./contracts/smart-accounts/btsg-zktls/README.md) |   | 
 
-## [Account Minter](./contracts/bs721-account-minter/README.md)
-Account minter is responsible for minting, validating, and updating accounts and their metadata.
-
-## [Bs721-Account](./contracts/bs721-account/README.md)
-A cw721 contract with on-chain metadata for an account.
-
+ 
 ## Scripting Library
 In this repo are [cw-orchestrator scripts](../../scripts/src/bin/manual_deploy.rs) that highlight this first step.
 

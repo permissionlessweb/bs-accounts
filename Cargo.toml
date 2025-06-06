@@ -47,8 +47,10 @@ bs721-base                   = { git = "https://github.com/permissionlessweb/bs-
 bs-controllers               = { git = "https://github.com/permissionlessweb/bs-nfts", branch = "feat/wavs", library = "bs-controllers" } 
 btsg-nft-scripts             = { git = "https://github.com/permissionlessweb/bs-nfts", branch = "feat/wavs", package = "btsg-nft-scripts" }
 btsg-account                 = { path = "packages/btsg-account" }
-btsg-wavs                    = { path = "contracts/smart-accounts/btsg-wavs" }
 btsg-auth                    = { path = "packages/btsg-auth" }
+btsg-irl                     = { path = "contracts/smart-accounts/btsg-irl"  }
+btsg-wavs                    = { path = "contracts/smart-accounts/btsg-wavs" }
+btsg-zktls                   = { path = "contracts/smart-accounts/btsg-zktls"  }
 
 bech32 = { version = "0.11.0", default-features = false, features = ["alloc"] }
 serde = { version = "1.0.197", default-features = false, features = ["derive"] }
