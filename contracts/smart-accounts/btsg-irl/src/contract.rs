@@ -12,14 +12,12 @@ use btsg_auth::{
     AuthenticationRequest, ConfirmExecutionRequest, OnAuthenticatorAddedRequest,
     OnAuthenticatorRemovedRequest, TrackRequest,
 };
-use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
-    coin, from_json, to_json_binary, Addr, AnyMsg, Binary, Coin, Deps, DepsMut, Env, MessageInfo,
-    Reply, Response, StdError, StdResult, SubMsg, Uint128,
+    coin, from_json, to_json_binary, Addr, AnyMsg, Binary, Deps, DepsMut, Env, MessageInfo, Reply,
+    Response, StdError, StdResult, SubMsg, Uint128,
 };
 use cosmwasm_std::{entry_point, Event, Timestamp};
 use cw2::set_contract_version;
-use cw_storage_plus::{Item, Map};
 use sha2::{Digest, Sha256};
 
 // Constants

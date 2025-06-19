@@ -27,7 +27,8 @@ cw-utils           = { workspace = true }
 cw2                = { workspace = true }
 
  
-btsg-auth  = { package = "btsg-auth", git = "https://github.com/permissionlessweb/bs-nfts", branch = "cosmwasm-std-v2" } 
+btsg-auth = { workspace = true }
+
 
 schemars           = { workspace = true }
 serde              = { workspace = true }

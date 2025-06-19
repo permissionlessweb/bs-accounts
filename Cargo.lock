@@ -1867,7 +1867,7 @@ name = "btsg-wavs"
 version = "0.2.0"
 dependencies = [
  "anyhow",
- "btsg-auth 0.3.0",
+ "btsg-auth 0.2.0",
  "cosmos-sdk-proto 0.26.1",
  "cosmwasm-schema 2.2.2",
  "cosmwasm-std 2.2.2",

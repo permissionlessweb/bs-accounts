@@ -4,7 +4,9 @@ use cosmwasm_std::{Coin, Uint128};
 
 #[cw_serde]
 pub struct InstantiateMsg {
+    /// if enabled, this contract is also being used as a x/smart-account authenticator, in order to be managed by an AVS.
     pub enable_zktls: bool,
+    /// Params for your events fungible token
     pub minter_params: Option<FantokenMinterParams>,
 }
 

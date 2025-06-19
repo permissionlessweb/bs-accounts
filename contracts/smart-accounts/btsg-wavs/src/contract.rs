@@ -10,7 +10,7 @@ use cw2::set_contract_version;
 
 use crate::{
     msg::{ExecuteMsg, InstantiateMsg, QueryMsg, SudoMsg},
-    state::WAVS_PUBKEY,
+    state::{BlsMetadata, WAVS_PUBKEY},
     ContractError,
 };
 
@@ -40,7 +40,13 @@ pub fn instantiate(
         Some(msg.owner.unwrap_or(info.sender).as_str()),
     )?;
 
-    WAVS_PUBKEY.save(deps.storage, &msg.wavs_operator_pubkeys)?;
+    WAVS_PUBKEY.save(
+        deps.storage,
+        &BlsMetadata {
+            operator_keys: msg.wavs_operator_pubkeys,
+            threshold: msg.threshold,
+        },
+    )?;
     Ok(Response::new())
 }
 
@@ -103,8 +109,8 @@ fn sudo_authentication_request(
     let pubkeys = WAVS_PUBKEY.load(deps.storage)?;
     // assert the wavs operator signature length
     let a = auth_req.signature_data.signers.len();
-    let b = pubkeys.len();
-    if a != b {
+    let b = pubkeys.threshold;
+    if a < b {
         return Err(ContractError::InvalidPubkeyCount { a, b });
     }
     // EXAMPLE IMPLEMENTATION FOR BLS12_381 VERIFICATION COMMONWARE-CRYPTO -> COSMWASM_STD

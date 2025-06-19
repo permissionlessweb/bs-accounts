@@ -4,7 +4,9 @@ use cosmwasm_std::Addr;
 
 #[cw_serde]
 pub struct InstantiateMsg {
+    /// address of account to make use of this authenticator
     pub owner: Option<Addr>,
+    /// ethereum wallet public key to sign
     pub pubkey: String,
 }
 

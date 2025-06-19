@@ -97,13 +97,15 @@ fn sudo_authentication_request(
     auth_req: Box<AuthenticationRequest>,
 ) -> Result<Response, ContractError> {
     let cred: PasskeyCredential = from_json(&auth_req.signature)?;
+    cw_ownable::is_owner(deps.storage, &auth_req.account)?;
 
     // assert client origin is same as one registered
-    // if let Some(origin) = PAYLOAD.load(deps.storage)?.origin {
-    //     if cred.client_data.origin != origin {
-    //         return Err(ContractError::Unauthorized {});
-    //     }
-    // }
+    if let Some(origin) = PAYLOAD.load(deps.storage)?.origin {
+        if cred.client_data.origin != origin {
+            return Err(ContractError::Unauthorized {});
+        }
+        if
+    }
 
     // verify passkey request
     cred.verify_cosmwasm(deps.api)?;
