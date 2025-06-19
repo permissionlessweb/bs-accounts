@@ -101,7 +101,7 @@ impl ToString for CompositeId {
 }
 
 pub trait CompositeAuthenticator {
-    fn _child_authenticator_data<T>(self, path: &[usize]) -> Result<T, CompositeAuthenticatorError>
+    fn child_authenticator_data<T>(self, path: &[usize]) -> Result<T, CompositeAuthenticatorError>
     where
         T: DeserializeOwned;
 }
