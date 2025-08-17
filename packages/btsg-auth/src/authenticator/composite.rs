@@ -196,7 +196,7 @@ mod tests {
 
     #[test]
     fn test_child_authenticator_data() {
-        let params = {};
+        {};
         // let params = SpendLimitParams {
         //     limit: 1000000u128.into(),
         //     reset_period: Period::Day,
@@ -205,7 +205,7 @@ mod tests {
         // no depth
         let target_data = CosmwasmAuthenticatorData {
             contract: "contract".to_string(),
-            params: to_json_vec(&params).unwrap(),
+            params: to_json_vec(&()).unwrap(),
         };
         let account_auth = AccountAuthenticator {
             config: to_json_vec(&target_data).unwrap(),
@@ -221,7 +221,7 @@ mod tests {
 
         let target_data = CosmwasmAuthenticatorData {
             contract: "contract".to_string(),
-            params: to_json_vec(&params).unwrap(),
+            params: to_json_vec(&()).unwrap(),
         };
         let account_auth = AccountAuthenticator {
             config: to_json_vec(&vec![
@@ -247,7 +247,7 @@ mod tests {
 
         let target_data = CosmwasmAuthenticatorData {
             contract: "contract".to_string(),
-            params: to_json_vec(&params).unwrap(),
+            params: to_json_vec(&()).unwrap(),
         };
 
         let account_auth = AccountAuthenticator {

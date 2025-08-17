@@ -2,8 +2,8 @@ use cosmwasm_schema::cw_serde;
 use cosmwasm_std::Uint128;
 use cw_storage_plus::{Item, Map};
 
-pub const EPOCHS: Map<u128, Epoch> = Map::new(&"epochs");
-pub const CONFIG: Item<Config> = Item::new(&"config");
+pub const EPOCHS: Map<u128, Epoch> = Map::new("epochs");
+pub const CONFIG: Item<Config> = Item::new("config");
 
 #[cw_serde]
 pub struct Config {
@@ -23,7 +23,7 @@ impl Witness {
         for wit in witness {
             vec_addresses.push(wit.address);
         }
-        return vec_addresses;
+        vec_addresses
     }
 }
 

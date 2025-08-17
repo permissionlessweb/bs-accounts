@@ -42,7 +42,7 @@ pub fn execute_mint_and_list(
     let price = validate_payment(acc_len, &info, params.base_price.u128())?;
     validate_staking(
         deps.as_ref(),
-        &info.sender.to_string(),
+        info.sender.as_ref(),
         acc_len,
         params.base_delegation,
     )?;

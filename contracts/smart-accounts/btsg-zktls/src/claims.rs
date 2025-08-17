@@ -24,8 +24,8 @@ pub fn keccak256(message: &str) -> Vec<u8> {
     let mut hasher = Keccak256::new();
     hasher.update(&eth_message);
 
-    let hash = hasher.finalize().to_vec();
-    hash
+    
+    hasher.finalize().to_vec()
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -97,7 +97,7 @@ impl SignedClaim {
             complete_signature.remove(0);
             complete_signature.remove(0);
             let rec_param = complete_signature
-                .get((complete_signature.len() as usize - 2)..(complete_signature.len() as usize))
+                .get((complete_signature.len() - 2)..complete_signature.len())
                 .unwrap();
             let mut mut_sig_str = complete_signature.clone();
             mut_sig_str.pop();

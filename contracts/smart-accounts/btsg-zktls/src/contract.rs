@@ -253,9 +253,9 @@ pub fn fetch_witness_for_claim(
     let hash_str = format!(
         "{}\n{}\n{}\n{}",
         hex::encode(identifier),
-        epoch.minimum_witness_for_claim_creation.to_string(),
-        timestamp.nanos().to_string(),
-        epoch.id.to_string()
+        epoch.minimum_witness_for_claim_creation,
+        timestamp.nanos(),
+        epoch.id
     );
     let result = hash_str.as_bytes().to_vec();
     let hash_result: [u8; 32] = Sha256::digest(&result).to_vec().try_into().unwrap();
@@ -267,10 +267,7 @@ pub fn fetch_witness_for_claim(
         let random_seed = generate_random_seed(hash_result.to_vec(), byte_offset) as usize;
         let witness_index = random_seed % witness_left;
         let witness = witenesses_left_list.get(witness_index);
-        match witness {
-            Some(data) => selected_witness.push(data.clone()),
-            None => {}
-        }
+        if let Some(data) = witness { selected_witness.push(data.clone()) }
         byte_offset = (byte_offset + 4) % hash_result.len();
     }
 

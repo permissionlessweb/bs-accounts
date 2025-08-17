@@ -41,37 +41,34 @@ pub fn instantiate(
         owner: info.sender.to_string(),
         current_epoch: Uint128::zero(),
     };
-    match minter_params {
-        Some(a) => {
-            // Store fantoken info (denom will be updated in reply)
-            let fantoken_info = FantokenInfo {
+    if let Some(a) = minter_params {
+        // Store fantoken info (denom will be updated in reply)
+        let fantoken_info = FantokenInfo {
+            symbol: a.symbol.clone(),
+            name: a.name.clone(),
+            max_supply: a.max_supply,
+            authority: env.contract.address.to_string(),
+            uri: a.uri.clone(),
+            minter: env.contract.address.to_string(),
+            denom: String::new(), // Will be set in reply
+        };
+        // Create the fantoken creation message
+        let create_msg = AnyMsg {
+            type_url: "/bitsong.fantoken.v1beta1.MsgIssue".into(),
+            value: to_json_binary(&CreateFantokenMsg {
                 symbol: a.symbol.clone(),
                 name: a.name.clone(),
-                max_supply: a.max_supply,
+                max_supply: a.max_supply.to_string(),
                 authority: env.contract.address.to_string(),
                 uri: a.uri.clone(),
                 minter: env.contract.address.to_string(),
-                denom: String::new(), // Will be set in reply
-            };
-            // Create the fantoken creation message
-            let create_msg = AnyMsg {
-                type_url: "/bitsong.fantoken.v1beta1.MsgIssue".into(),
-                value: to_json_binary(&CreateFantokenMsg {
-                    symbol: a.symbol.clone(),
-                    name: a.name.clone(),
-                    max_supply: a.max_supply.to_string(),
-                    authority: env.contract.address.to_string(),
-                    uri: a.uri.clone(),
-                    minter: env.contract.address.to_string(),
-                })?,
-            };
-            FANTOKEN_INFO.save(deps.storage, &fantoken_info)?;
-            submsg.push(SubMsg::reply_on_success(
-                create_msg,
-                FANTOKEN_CREATE_REPLY_ID,
-            ))
-        }
-        _ => (),
+            })?,
+        };
+        FANTOKEN_INFO.save(deps.storage, &fantoken_info)?;
+        submsg.push(SubMsg::reply_on_success(
+            create_msg,
+            FANTOKEN_CREATE_REPLY_ID,
+        ))
     }
 
     CONFIG.save(deps.storage, &config)?;
@@ -382,9 +379,9 @@ pub fn fetch_witness_for_claim(
     let hash_str = format!(
         "{}\n{}\n{}\n{}",
         hex::encode(identifier),
-        epoch.minimum_witness_for_claim_creation.to_string(),
-        timestamp.nanos().to_string(),
-        epoch.id.to_string()
+        epoch.minimum_witness_for_claim_creation,
+        timestamp.nanos(),
+        epoch.id
     );
     let result = hash_str.as_bytes().to_vec();
     let mut hasher = Sha256::new();
@@ -397,10 +394,7 @@ pub fn fetch_witness_for_claim(
         let random_seed = generate_random_seed(hash_result.clone(), byte_offset) as usize;
         let witness_index = random_seed % witness_left;
         let witness = witenesses_left_list.get(witness_index);
-        match witness {
-            Some(data) => selected_witness.push(data.clone()),
-            None => {}
-        }
+        if let Some(data) = witness { selected_witness.push(data.clone()) }
         byte_offset = (byte_offset + 4) % hash_result.len();
     }
 

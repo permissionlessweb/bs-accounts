@@ -104,7 +104,6 @@ fn sudo_authentication_request(
         if cred.client_data.origin != origin {
             return Err(ContractError::Unauthorized {});
         }
-        if
     }
 
     // verify passkey request
