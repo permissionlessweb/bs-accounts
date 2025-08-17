@@ -7,11 +7,13 @@
     "title": "InstantiateMsg",
     "type": "object",
     "required": [
+      "threshold",
       "wavs_operator_pubkeys",
       "wavs_pubkey_type"
     ],
     "properties": {
       "owner": {
+        "description": "Owner of this contract. Expected to be address that is making use of this custom authenticator.",
         "anyOf": [
           {
             "$ref": "#/definitions/Addr"
@@ -21,13 +23,21 @@
           }
         ]
       },
+      "threshold": {
+        "description": "The minimum amount of `wavs_operator_pubkeys` required in authentication requests",
+        "type": "integer",
+        "format": "uint",
+        "minimum": 0.0
+      },
       "wavs_operator_pubkeys": {
+        "description": "Array of BLS12-381 pubkeys that are to be authorizing actions",
         "type": "array",
         "items": {
           "$ref": "#/definitions/Binary"
         }
       },
       "wavs_pubkey_type": {
+        "description": "Description of pubkey type for future support of different aggregate key algos.",
         "type": "string"
       }
     },

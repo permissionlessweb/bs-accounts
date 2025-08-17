@@ -11,6 +11,7 @@
     ],
     "properties": {
       "owner": {
+        "description": "address of account to make use of this authenticator",
         "anyOf": [
           {
             "$ref": "#/definitions/Addr"
@@ -21,6 +22,7 @@
         ]
       },
       "pubkey": {
+        "description": "ethereum wallet public key to sign",
         "type": "string"
       }
     },

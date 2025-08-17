@@ -1,12 +1,13 @@
 {
   "contract_name": "bs721-account-minter",
-  "contract_version": "0.1.0",
+  "contract_version": "0.2.0",
   "idl_version": "1.0.0",
   "instantiate": {
     "$schema": "http://json-schema.org/draft-07/schema#",
     "title": "InstantiateMsg",
     "type": "object",
     "required": [
+      "base_delegation",
       "base_price",
       "collection_code_id",
       "marketplace_addr",
@@ -19,6 +20,14 @@
         "type": [
           "string",
           "null"
+        ]
+      },
+      "base_delegation": {
+        "description": "Base delegated tokens for an account. Used to calculate minimum required to mint a name",
+        "allOf": [
+          {
+            "$ref": "#/definitions/Uint128"
+          }
         ]
       },
       "base_price": {
@@ -49,6 +58,15 @@
         "description": "Minimum length an account id can be",
         "type": "integer",
         "format": "uint32",
+        "minimum": 0.0
+      },
+      "mint_start_delay": {
+        "title": "of seconds to delay allowing minting to occur from contract creation. Defaults to 1 second",
+        "type": [
+          "integer",
+          "null"
+        ],
+        "format": "uint64",
         "minimum": 0.0
       },
       "verifier": {
@@ -483,11 +501,20 @@
       "title": "SudoParams",
       "type": "object",
       "required": [
+        "base_delegation",
         "base_price",
         "max_account_length",
         "min_account_length"
       ],
       "properties": {
+        "base_delegation": {
+          "description": "100_000_000 (5+ ASCII char price)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Uint128"
+            }
+          ]
+        },
         "base_price": {
           "description": "100_000_000 (5+ ASCII char price)",
           "allOf": [

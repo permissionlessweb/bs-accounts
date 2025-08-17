@@ -3,13 +3,14 @@
 fmt:
 	cargo fmt --all --check
 schema:
-    #!/usr/bin/env bash
-    sh scripts/tools/schema.sh
+	sh scripts/sh/schema-and-codegen.sh
 
 lint:
 	cargo clippy --fix --tests -- -D warnings
    
 build:
+	sh scripts/sh/optimize.sh
+	
  
 test:
     cargo test --locked
