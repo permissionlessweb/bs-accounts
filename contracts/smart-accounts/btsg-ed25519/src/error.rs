@@ -14,7 +14,7 @@ pub enum ContractError {
 
     #[error("{0}")]
     OwnershipError(#[from] OwnershipError),
-    
+
     #[error("{0}")]
     AuthError(#[from] AuthError),
 

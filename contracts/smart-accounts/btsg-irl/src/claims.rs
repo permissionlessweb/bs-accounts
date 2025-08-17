@@ -24,7 +24,6 @@ pub fn keccak256(message: &str) -> Vec<u8> {
     let mut hasher = Keccak256::new();
     hasher.update(&eth_message);
 
-    
     hasher.finalize().to_vec()
 }
 

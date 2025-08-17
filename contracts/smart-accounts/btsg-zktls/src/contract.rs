@@ -267,7 +267,9 @@ pub fn fetch_witness_for_claim(
         let random_seed = generate_random_seed(hash_result.to_vec(), byte_offset) as usize;
         let witness_index = random_seed % witness_left;
         let witness = witenesses_left_list.get(witness_index);
-        if let Some(data) = witness { selected_witness.push(data.clone()) }
+        if let Some(data) = witness {
+            selected_witness.push(data.clone())
+        }
         byte_offset = (byte_offset + 4) % hash_result.len();
     }
 
