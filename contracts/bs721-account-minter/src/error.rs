@@ -39,6 +39,9 @@ pub enum ContractError {
     #[error("Account too long")]
     AccountTooLong {},
 
+    #[error("Incorrect delegation.  got: {got}, expected {expected}")]
+    IncorrectDelegation { got: u128, expected: u128 },
+
     #[error("Incorrect payment, got: {got}, expected {expected}")]
     IncorrectPayment { got: u128, expected: u128 },
 

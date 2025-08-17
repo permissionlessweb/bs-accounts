@@ -22,6 +22,9 @@ pub fn init() -> anyhow::Result<()> {
 
 mod execute {
 
+    use bs721_account_minter::ContractError;
+    use cosmwasm_std::coin;
+
     use super::*;
 
     #[test]
@@ -33,7 +36,7 @@ mod execute {
         let owner = mock.sender.clone();
         let token_id = "bobo";
 
-        mock.wait_seconds(1)?;
+        mock.wait_seconds(200)?;
         suite.mint_and_list(mock.clone(), token_id, &owner)?;
         // check operators
         assert_eq!(
@@ -55,7 +58,7 @@ mod execute {
         let owner = mock.sender.clone();
         let token_id = "bobo";
 
-        mock.wait_seconds(1)?;
+        mock.wait_seconds(200)?;
         suite.mint_and_list(mock.clone(), token_id, &owner)?;
 
         // check if account is listed in marketplace
@@ -79,7 +82,7 @@ mod execute {
         let bidder = mock.addr_make("bidder");
         let token_id = "bobo";
 
-        mock.wait_seconds(1)?;
+        mock.wait_seconds(200)?;
         suite.mint_and_list(mock.clone(), token_id, &owner)?;
 
         suite.bid_w_funds(mock, token_id, bidder, BID_AMOUNT)?;
@@ -94,7 +97,7 @@ mod execute {
         let bidder = mock.addr_make("bidder");
         let token_id = "bobo";
 
-        mock.wait_seconds(1)?;
+        mock.wait_seconds(200)?;
         suite.mint_and_list(mock.clone(), token_id, &owner)?;
         suite.bid_w_funds(mock.clone(), token_id, bidder.clone(), BID_AMOUNT)?;
 
@@ -135,7 +138,7 @@ mod execute {
         let bidder2 = mock.addr_make("bidder2");
         let token_id = "bobo";
         let market = suite.market.address()?;
-        mock.wait_seconds(1)?;
+        mock.wait_seconds(200)?;
         suite.mint_and_list(mock.clone(), token_id, &owner)?;
         suite.bid_w_funds(mock.clone(), token_id, bidder.clone(), BID_AMOUNT)?;
         suite.market.accept_bid(bidder.clone(), token_id.into())?;
@@ -154,13 +157,16 @@ mod execute {
     }
     #[test]
     fn test_reverse_map() -> anyhow::Result<()> {
+        let token_id = "bobo";
+
         let mock = MockBech32::new("bitsong");
         let mut suite = BtsgAccountSuite::new(mock.clone());
         suite.default_setup(mock.clone(), None, None)?;
-        mock.wait_seconds(1)?;
+        mock.wait_seconds(200)?;
 
         let admin2 = mock.addr_make("admin2");
-        let token_id = "bobo";
+        mock.add_balance(&admin2, vec![coin(10000000000u128, "ubtsg")])?;
+        suite.delegate_to_val(mock.clone(), admin2.clone(), 10000000000u128)?;
 
         suite.mint_and_list(mock.clone(), token_id, &admin2)?;
 
@@ -206,12 +212,15 @@ mod execute {
         let mut suite = BtsgAccountSuite::new(mock.clone());
         suite.default_setup(mock.clone(), None, None)?;
 
-        let addr = mock.addr_make_with_balance("not-admin", coins(1000000000, "ubtsg"))?;
+        let not_admin = mock.addr_make_with_balance("not-admin", coins(1000000000, "ubtsg"))?;
+        mock.add_balance(&not_admin, vec![coin(10000000000u128, "ubtsg")])?;
+        suite.delegate_to_val(mock.clone(), not_admin.clone(), 10000000000u128)?;
+
         let minter = suite.minter.address()?;
         let token_id = "bobo";
-        println!("not-admin: {:#?}", addr);
-        mock.wait_seconds(1)?;
-        suite.mint_and_list(mock.clone(), token_id, &addr)?;
+        println!("not-admin: {:#?}", not_admin);
+        mock.wait_seconds(200)?;
+        suite.mint_and_list(mock.clone(), token_id, &not_admin)?;
 
         suite
             .account
@@ -227,8 +236,11 @@ mod execute {
         suite.default_setup(mock.clone(), None, None)?;
         let token_id = "bobo";
         let admin2 = mock.addr_make("admin2");
+        // delegate
+        mock.add_balance(&admin2, vec![coin(10000000000u128, "ubtsg")])?;
+        suite.delegate_to_val(mock.clone(), admin2.clone(), 10000000000u128)?;
 
-        mock.wait_seconds(1)?;
+        mock.wait_seconds(200)?;
         suite.mint_and_list(mock.clone(), token_id, &admin2)?;
 
         suite
@@ -245,15 +257,18 @@ mod execute {
 
         let token_id = "bobo";
         let admin2 = mock.addr_make("admin2");
+        // delegate
+        mock.add_balance(&admin2, vec![coin(10000000000u128, "ubtsg")])?;
+        suite.delegate_to_val(mock.clone(), admin2.clone(), 10000000000u128)?;
 
-        mock.wait_seconds(1)?;
+        mock.wait_seconds(200)?;
         suite.mint_and_list(mock.clone(), token_id, &admin2)?;
 
         // pause minting
         suite.minter.pause(true)?;
 
         // error trying to mint
-        mock.wait_seconds(1)?;
+        mock.wait_seconds(200)?;
         suite
             .mint_and_list(mock.clone(), token_id, &admin2)
             .unwrap_err();
@@ -267,8 +282,11 @@ mod execute {
         suite.default_setup(mock.clone(), None, None)?;
         let token_id = "bobo";
         let admin2 = mock.addr_make("admin2");
+        // delegate
+        mock.add_balance(&admin2, vec![coin(10000000000u128, "ubtsg")])?;
+        suite.delegate_to_val(mock.clone(), admin2.clone(), 10000000000u128)?;
 
-        mock.wait_seconds(1)?;
+        mock.wait_seconds(200)?;
         suite.mint_and_list(mock.clone(), token_id, &admin2)?;
 
         // run sudo msg
@@ -286,6 +304,69 @@ mod execute {
         assert_eq!(res.trading_fee_percent, Decimal::percent(10));
         assert_eq!(res.min_price, Uint128::from(1000u128));
         assert_eq!(res.ask_interval, 1000);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_mint_with_delegation_tiers() -> anyhow::Result<()> {
+        let mock = MockBech32::new("bitsong");
+        let mut suite = BtsgAccountSuite::new(mock.clone());
+        suite.default_setup(mock.clone(), None, Some(mock.sender.clone()))?;
+
+        mock.wait_seconds(200)?;
+        let user = mock.addr_make("user");
+        mock.add_balance(&user, vec![coin(10000000000u128, "ubtsg")])?;
+
+        let id_3 = "rep";
+        let id_4 = "repe";
+        let id_5 = "repea";
+        let id_6 = "repeat";
+        let base_delegation = Uint128::new(2100_000_000); // assuming this is the base delegation amount
+
+        // Test with account length 3
+        let user3 = mock.addr_make("user3");
+        mock.add_balance(&user3, vec![coin(10500000000u128, "ubtsg")])?;
+        suite.delegate_to_val(
+            mock.clone(),
+            user3.clone(),
+            (base_delegation * Uint128::new(5u128)).into(),
+        )?;
+        suite.mint_and_list(mock.clone(), id_3, &user3)?;
+
+        // Test with account length 4
+        let user4 = mock.addr_make("user4abcd");
+        mock.add_balance(&user4, vec![coin(10000000000u128, "ubtsg")])?;
+        suite.delegate_to_val(
+            mock.clone(),
+            user4.clone(),
+            (base_delegation * Uint128::new(3u128)).into(),
+        )?;
+        suite.mint_and_list(mock.clone(), id_4, &user4)?;
+
+        // Test with account length 5 or more
+        let user5 = mock.addr_make("user5abcde");
+        mock.add_balance(&user5, vec![coin(10000000000u128, "ubtsg")])?;
+        suite.delegate_to_val(mock.clone(), user5.clone(), base_delegation.u128())?;
+        suite.mint_and_list(mock.clone(), id_5, &user5)?;
+
+        // Test with insufficient delegation for account length 3
+        let user3_insufficient = mock.addr_make("user3_insufficient");
+        mock.add_balance(&user3_insufficient, vec![coin(10000440u128, "ubtsg")])?;
+        suite.delegate_to_val(mock.clone(), user3_insufficient.clone(), 10000440u128)?;
+        assert_eq!(
+            suite
+                .mint_and_list(mock.clone(), id_6, &user3_insufficient)
+                .unwrap_err()
+                .source()
+                .unwrap()
+                .to_string(),
+            ContractError::IncorrectDelegation {
+                got: 10000440u128,
+                expected: base_delegation.u128()
+            }
+            .to_string()
+        );
 
         Ok(())
     }
@@ -334,18 +415,22 @@ mod admin {
 }
 mod query {
     use bs721_account_marketplace::{msgs::BidOffset, state::Bid};
+    use cosmwasm_std::coin;
 
     use super::*;
 
     #[test]
     fn test_query_ask() -> anyhow::Result<()> {
+        let token_id = "bobo";
         let mock = MockBech32::new("bitsong");
         let mut suite = BtsgAccountSuite::new(mock.clone());
         suite.default_setup(mock.clone(), None, Some(mock.sender.clone()))?;
         let admin2 = mock.addr_make("admin2");
-        let token_id = "bobo";
+        // delegate
+        mock.add_balance(&admin2, vec![coin(10000000000u128, "ubtsg")])?;
+        suite.delegate_to_val(mock.clone(), admin2.clone(), 10000000000u128)?;
 
-        mock.wait_seconds(1)?;
+        mock.wait_seconds(200)?;
         suite.mint_and_list(mock.clone(), token_id, &admin2)?;
 
         assert_eq!(
@@ -356,14 +441,18 @@ mod query {
     }
     #[test]
     fn test_query_asks() -> anyhow::Result<()> {
+        let token_id = "bobo";
         let mock = MockBech32::new("bitsong");
         let mut suite = BtsgAccountSuite::new(mock.clone());
         suite.default_setup(mock.clone(), None, Some(mock.sender.clone()))?;
         let admin = mock.sender.clone();
         let admin2 = mock.addr_make("admin2");
-        let token_id = "bobo";
 
-        mock.wait_seconds(1)?;
+        // delegate
+        mock.add_balance(&admin2, vec![coin(10000000000u128, "ubtsg")])?;
+        suite.delegate_to_val(mock.clone(), admin2.clone(), 10000000000u128)?;
+
+        mock.wait_seconds(200)?;
         suite.mint_and_list(mock.clone(), token_id, &admin)?;
         suite.mint_and_list(mock.clone(), "hack", &admin2)?;
 
@@ -380,7 +469,11 @@ mod query {
         let admin2 = mock.addr_make("admin2");
         let token_id = "bobo";
 
-        mock.wait_seconds(1)?;
+        // delegate
+        mock.add_balance(&admin2, vec![coin(10000000000u128, "ubtsg")])?;
+        suite.delegate_to_val(mock.clone(), admin2.clone(), 10000000000u128)?;
+
+        mock.wait_seconds(200)?;
         suite.mint_and_list(mock.clone(), token_id, &admin)?;
         suite.mint_and_list(mock.clone(), "hack", &admin2)?;
 
@@ -402,7 +495,11 @@ mod query {
         let admin2 = mock.addr_make("admin2");
         let token_id = "bobo";
 
-        mock.wait_seconds(1)?;
+        // delegate
+        mock.add_balance(&admin2, vec![coin(10000000000u128, "ubtsg")])?;
+        suite.delegate_to_val(mock.clone(), admin2.clone(), 10000000000u128)?;
+
+        mock.wait_seconds(200)?;
         suite.mint_and_list(mock.clone(), token_id, &admin)?;
         suite.mint_and_list(mock.clone(), "hack", &admin2)?;
 
@@ -419,7 +516,7 @@ mod query {
         let bidder2 = mock.addr_make("bidder2");
         let token_id = "bobo";
 
-        mock.wait_seconds(1)?;
+        mock.wait_seconds(200)?;
         suite.mint_and_list(mock.clone(), token_id, &admin)?;
 
         suite.bid_w_funds(mock.clone(), token_id, bidder1.clone(), BID_AMOUNT)?;
@@ -449,7 +546,7 @@ mod query {
         // test pagination with multiple accounts and bids
         let account: &str = "jump";
 
-        mock.wait_seconds(1)?;
+        mock.wait_seconds(200)?;
         suite.mint_and_list(mock.clone(), account, &admin)?;
 
         suite.bid_w_funds(mock.clone(), account, bidder1, BID_AMOUNT * 3)?;
@@ -470,7 +567,7 @@ mod query {
         let bidder2 = mock.addr_make("bidder2");
         let token_id = "bobo";
 
-        mock.wait_seconds(1)?;
+        mock.wait_seconds(200)?;
         suite.mint_and_list(mock.clone(), token_id, &admin)?;
 
         suite.bid_w_funds(mock.clone(), token_id, bidder1.clone(), BID_AMOUNT)?;
@@ -523,7 +620,7 @@ mod query {
         let bidder2 = mock.addr_make("bidder2");
         let token_id = "bobo";
 
-        mock.wait_seconds(1)?;
+        mock.wait_seconds(200)?;
         suite.mint_and_list(mock.clone(), token_id, &admin)?;
 
         suite.bid_w_funds(mock.clone(), token_id, bidder1.clone(), BID_AMOUNT)?;
@@ -549,7 +646,7 @@ mod query {
         let admin = mock.sender.clone();
         let token_id = "bobo";
 
-        mock.wait_seconds(1)?;
+        mock.wait_seconds(200)?;
         suite.mint_and_list(mock.clone(), token_id, &admin)?;
 
         // fails with "user" string, has to be a bech32 address
@@ -576,6 +673,7 @@ mod query {
 }
 mod collection {
     use btsg_account::TextRecord;
+    use cosmwasm_std::coin;
 
     use super::*;
     #[test]
@@ -584,7 +682,7 @@ mod collection {
         let mut suite = BtsgAccountSuite::new(mock.clone());
         suite.default_setup(mock.clone(), None, Some(mock.sender.clone()))?;
 
-        mock.wait_seconds(1)?;
+        mock.wait_seconds(200)?;
 
         let admin_user = mock.sender.clone();
         let verifier = mock.addr_make("verifier");
@@ -628,7 +726,7 @@ mod collection {
         let mut suite = BtsgAccountSuite::new(mock.clone());
         suite.default_setup(mock.clone(), None, Some(mock.sender.clone()))?;
 
-        mock.wait_seconds(1)?;
+        mock.wait_seconds(200)?;
 
         let admin_user = mock.sender.clone();
         let verifier = mock.addr_make("verifier");
@@ -662,7 +760,7 @@ mod collection {
         let mut suite = BtsgAccountSuite::new(mock.clone());
         suite.default_setup(mock.clone(), None, Some(mock.sender.clone()))?;
 
-        mock.wait_seconds(1)?;
+        mock.wait_seconds(200)?;
 
         let admin_user = mock.sender.clone();
         let token_id = "bobo";
@@ -710,7 +808,7 @@ mod collection {
         let admin_user = mock.sender.clone();
         let token_id = "bobo";
 
-        mock.wait_seconds(1)?;
+        mock.wait_seconds(200)?;
         suite.mint_and_list(mock.clone(), token_id, &admin_user)?;
 
         suite
@@ -728,7 +826,7 @@ mod collection {
         let admin_user = mock.sender.clone();
         let token_id = "bobo";
 
-        mock.wait_seconds(1)?;
+        mock.wait_seconds(200)?;
         suite.mint_and_list(mock.clone(), token_id, &admin_user)?;
 
         suite
@@ -748,7 +846,7 @@ mod collection {
         let admin_user = mock.sender.clone();
         let token_id = "bobo";
 
-        mock.wait_seconds(1)?;
+        mock.wait_seconds(200)?;
         suite.mint_and_list(mock.clone(), token_id, &admin_user)?;
 
         suite.account.transfer_nft(user1.clone(), token_id)?;
@@ -778,7 +876,11 @@ mod collection {
         let user2 = mock.addr_make("user2");
         let token_id = "bobo";
 
-        mock.wait_seconds(1)?;
+        // delegate
+        mock.add_balance(&user, vec![coin(10000000000u128, "ubtsg")])?;
+        suite.delegate_to_val(mock.clone(), user.clone(), 10000000000u128)?;
+
+        mock.wait_seconds(200)?;
         suite.mint_and_list(mock.clone(), token_id, &user)?;
 
         suite
@@ -843,6 +945,7 @@ mod collection {
 mod public_start_time {
 
     use btsg_account::minter::Config;
+    use cosmwasm_std::coin;
 
     use super::*;
 
@@ -856,6 +959,10 @@ mod public_start_time {
         let token_id = "bobo";
         let user4 = mock.addr_make("user4");
 
+        // delegate
+        mock.add_balance(&user4, vec![coin(10000000000u128, "ubtsg")])?;
+        suite.delegate_to_val(mock.clone(), user4.clone(), 10000000000u128)?;
+
         suite
             .mint_and_list(mock.clone(), token_id, &admin_user)
             .unwrap_err();
@@ -864,6 +971,7 @@ mod public_start_time {
             .unwrap_err();
         Ok(())
     }
+
     #[test]
     fn test_update_start_time() -> anyhow::Result<()> {
         let mock = MockBech32::new("bitsong");
@@ -873,7 +981,7 @@ mod public_start_time {
         let res = suite.minter.config()?;
         assert_eq!(
             res.public_mint_start_time,
-            mock.block_info()?.time.plus_seconds(1)
+            mock.block_info()?.time.plus_seconds(200)
         );
 
         suite.minter.update_config(Config {
@@ -891,6 +999,8 @@ mod public_start_time {
 }
 
 mod associate_address {
+
+    use cosmwasm_std::coin;
 
     use super::*;
 
@@ -924,7 +1034,7 @@ mod associate_address {
             )?
             .instantiated_contract_address()?;
 
-        mock.wait_seconds(1)?;
+        mock.wait_seconds(200)?;
         // mint and transfer to collection
         suite.mint_and_list(mock.clone(), token_id, &admin_user)?;
         suite.account.transfer_nft(nft_addr.clone(), token_id)?;
@@ -990,7 +1100,7 @@ mod associate_address {
             )?
             .instantiated_contract_address()?;
 
-        mock.wait_seconds(1)?;
+        mock.wait_seconds(200)?;
         // USER4 mints a account
         suite.mint_and_list(mock.clone(), token_id, &admin_user)?;
 
@@ -1000,7 +1110,7 @@ mod associate_address {
             .call_as(&admin_user)
             .associate_address(token_id, Some(collection_with_no_admin_addr.to_string()))?;
 
-        mock.wait_seconds(1)?;
+        mock.wait_seconds(200)?;
         Ok(())
     }
     #[test]
@@ -1014,6 +1124,10 @@ mod associate_address {
 
         let admin_user = mock.addr_make("admin-user");
         let user4 = mock.addr_make("user4");
+
+        // delegate
+        mock.add_balance(&user4, vec![coin(10000000000u128, "ubtsg")])?;
+        suite.delegate_to_val(mock.clone(), user4.clone(), 10000000000u128)?;
 
         let cw721_id = suite.account.code_id()?;
 
@@ -1059,7 +1173,7 @@ mod associate_address {
             )?
             .instantiated_contract_address()?;
 
-        mock.wait_seconds(1)?;
+        mock.wait_seconds(200)?;
         // USER4 mints a account
         suite.mint_and_list(mock.clone(), token_id, &user4)?;
 
@@ -1085,6 +1199,10 @@ mod associate_address {
         let admin_user = mock.addr_make("admin-user");
         let user4 = mock.addr_make("user4");
 
+        // delegate
+        mock.add_balance(&user4, vec![coin(10000000000u128, "ubtsg")])?;
+        suite.delegate_to_val(mock.clone(), user4.clone(), 10000000000u128)?;
+
         let cw721_id = suite.account.code_id()?;
 
         let token_id = "bobo";
@@ -1108,7 +1226,7 @@ mod associate_address {
             )?
             .instantiated_contract_address()?;
 
-        mock.wait_seconds(1)?;
+        mock.wait_seconds(200)?;
         suite.mint_and_list(mock.clone(), token_id, &user4)?;
 
         let err = suite

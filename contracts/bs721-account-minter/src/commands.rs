@@ -28,6 +28,7 @@ pub fn execute_mint_and_list(
     let sender = &info.sender.to_string();
     let config = CONFIG.load(deps.storage)?;
     let params = SUDO_PARAMS.load(deps.storage)?;
+    let acc_len = account.len();
 
     if env.block.time < config.public_mint_start_time {
         return Err(ContractError::MintingNotStarted {});
@@ -38,7 +39,13 @@ pub fn execute_mint_and_list(
         params.min_account_length,
         params.max_account_length,
     )?;
-    let price = validate_payment(account.len(), &info, params.base_price.u128())?;
+    let price = validate_payment(acc_len, &info, params.base_price.u128())?;
+    validate_staking(
+        deps.as_ref(),
+        &info.sender.to_string(),
+        acc_len,
+        params.base_delegation,
+    )?;
 
     let mut res = Response::new();
     // burns any tokens sent as fees if required (only ubtsg supported currently)
@@ -153,6 +160,33 @@ pub fn validate_account(account: &str, min: u32, max: u32) -> Result<(), Contrac
 
     Ok(())
 }
+// This follows the same rules as Internet domain accounts
+pub fn validate_staking(
+    deps: Deps,
+    delegator: &str,
+    account_len: usize,
+    base_delegation: Uint128,
+) -> Result<(), ContractError> {
+    let sum = deps
+        .querier
+        .query_all_delegations(delegator)?
+        .into_iter()
+        .map(|d| d.amount.amount)
+        .sum::<Uint128>();
+    let expected = match account_len {
+        // never 3 or less, already checked earlier
+        3 => base_delegation * Uint128::new(5u128),
+        4 => base_delegation * Uint128::new(3u128),
+        _ => base_delegation,
+    };
+    if sum < expected {
+        return Err(ContractError::IncorrectDelegation {
+            got: sum.u128(),
+            expected: expected.u128(),
+        });
+    };
+    Ok(())
+}
 
 pub fn execute_update_owner(
     deps: DepsMut,
@@ -222,7 +256,7 @@ pub fn sudo_update_params(
     min_account_length: u32,
     max_account_length: u32,
     base_price: Uint128,
-    // fair_burn_bps: u64,
+    base_delegation: Uint128,
 ) -> Result<Response, ContractError> {
     SUDO_PARAMS.save(
         deps.storage,
@@ -230,7 +264,7 @@ pub fn sudo_update_params(
             min_account_length,
             max_account_length,
             base_price,
-            // fair_burn_percent: Decimal::percent(fair_burn_bps) / Uint128::from(100u128),
+            base_delegation,
         },
     )?;
 

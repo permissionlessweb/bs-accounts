@@ -44,13 +44,17 @@ pub fn instantiate(
             min_account_length: msg.min_account_length,
             max_account_length: msg.max_account_length,
             base_price: msg.base_price,
+            base_delegation: msg.base_delegation,
         },
     )?;
 
     CONFIG.save(
         deps.storage,
         &Config {
-            public_mint_start_time: env.block.time.plus_seconds(1),
+            public_mint_start_time: env
+                .block
+                .time
+                .plus_seconds(msg.mint_start_delay.unwrap_or(1)),
         },
     )?;
 
@@ -138,13 +142,14 @@ pub fn sudo(deps: DepsMut, _env: Env, msg: SudoMsg) -> Result<Response, Contract
             min_account_length,
             max_account_length,
             base_price,
+            base_delegation,
             // fair_burn_bps,
         } => sudo_update_params(
             deps,
             min_account_length,
             max_account_length,
             base_price,
-            // fair_burn_bps,
+            base_delegation,
         ),
         SudoMsg::UpdateAccountCollection { collection } => {
             sudo_update_account_collection(deps, api.addr_validate(&collection)?)

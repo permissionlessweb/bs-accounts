@@ -16,6 +16,7 @@ use cosmwasm_std::{Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult}
 
 // version info for migration info
 use cw2::set_contract_version;
+use sha2::{Digest, Sha256};
 const CONTRACT_NAME: &str = "crates.io:btsg-zktls";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -257,12 +258,13 @@ pub fn fetch_witness_for_claim(
         epoch.id.to_string()
     );
     let result = hash_str.as_bytes().to_vec();
-    let hash_result = btsg_auth::sha256(&result);
+    let hash_result: [u8; 32] = Sha256::digest(&result).to_vec().try_into().unwrap();
+
     let witenesses_left_list = epoch.witness;
     let mut byte_offset = 0;
     let witness_left = witenesses_left_list.len();
     for _i in 0..epoch.minimum_witness_for_claim_creation.into() {
-        let random_seed = generate_random_seed(hash_result.clone(), byte_offset) as usize;
+        let random_seed = generate_random_seed(hash_result.to_vec(), byte_offset) as usize;
         let witness_index = random_seed % witness_left;
         let witness = witenesses_left_list.get(witness_index);
         match witness {
