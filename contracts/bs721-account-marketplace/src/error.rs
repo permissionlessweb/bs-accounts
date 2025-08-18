@@ -1,9 +1,9 @@
 use bs_controllers::HookError;
-use cosmwasm_std::{Coin, Instantiate2AddressError, StdError, Uint128};
+use cosmwasm_std::{Coin, Instantiate2AddressError, StdError, Uint128, Uint256};
 use cw_utils::PaymentError;
 use thiserror::Error;
 
-#[derive(Error, Debug, PartialEq)]
+#[derive(Error, Debug)]
 pub enum ContractError {
     #[error("{0}")]
     Std(#[from] StdError),
@@ -60,7 +60,7 @@ pub enum ContractError {
     ExistingBids {},
 
     #[error("PriceTooSmall: {0}")]
-    PriceTooSmall(Uint128),
+    PriceTooSmall(Uint256),
 
     #[error("InvalidListingFee: {0}")]
     InvalidListingFee(Uint128),

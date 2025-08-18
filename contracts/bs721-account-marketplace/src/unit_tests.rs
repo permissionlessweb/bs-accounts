@@ -55,7 +55,7 @@ fn bid_indexed_map() {
     let bid = Bid {
         token_id: TOKEN_ID.to_string(),
         bidder: bidder.clone(),
-        amount: Uint128::from(500u128),
+        amount: Uint128::from(500u128).into(),
         created_time: Timestamp::from_seconds(6),
     };
     let key = bid_key(TOKEN_ID, &bidder);
@@ -65,7 +65,7 @@ fn bid_indexed_map() {
     let bid2 = Bid {
         token_id: TOKEN_ID_NEXT.to_string(),
         bidder: bidder.clone(),
-        amount: Uint128::from(500u128),
+        amount: Uint128::from(500u128).into(),
         created_time: Timestamp::from_seconds(6),
     };
     let key2 = bid_key(TOKEN_ID_NEXT, &bidder);

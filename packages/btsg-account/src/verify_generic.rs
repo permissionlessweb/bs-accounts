@@ -26,7 +26,7 @@ impl CosmosArbitrary {
     pub fn message_digest(&self) -> Result<Vec<u8>, StdError> {
         ensure!(
             self.hrp.is_some(),
-            StdError::generic_err("Must provide prefix for the public key".to_string())
+            StdError::msg("Must provide prefix for the public key".to_string())
         );
         Ok(sha256(
             preamble_msg_arb_036(
@@ -47,7 +47,7 @@ impl CosmosArbitrary {
             && !self.message.to_string().is_empty()
             && !self.pubkey.is_empty())
         {
-            return Err(StdError::generic_err("Empty credential data".to_string()));
+            return Err(StdError::msg("Empty credential data".to_string()));
         }
         Ok(())
     }
@@ -59,10 +59,10 @@ impl CosmosArbitrary {
             &self.signature,
             &self.pubkey,
         )
-        .map_err(|e| StdError::generic_err(e.to_string()))?;
+        .map_err(|e| StdError::msg(e.to_string()))?;
         ensure!(
             success,
-            StdError::generic_err("Signature verification failed".to_string())
+            StdError::msg("Signature verification failed".to_string())
         );
         Ok(())
     }
@@ -84,10 +84,10 @@ pub fn preamble_msg_arb_036(signer: &str, data: &str) -> String {
 pub fn pubkey_to_address(pubkey: &[u8], hrp: &str) -> Result<String, StdError> {
     let base32_addr = ripemd160(&sha256(pubkey));
     let account: String = bech32::encode::<Bech32>(
-        Hrp::parse(hrp).map_err(|e| StdError::generic_err(e.to_string()))?,
+        Hrp::parse(hrp).map_err(|e| StdError::msg(e.to_string()))?,
         &base32_addr,
     )
-    .map_err(|e| StdError::generic_err(e.to_string()))?;
+    .map_err(|e| StdError::msg(e.to_string()))?;
     Ok(account)
 }
 

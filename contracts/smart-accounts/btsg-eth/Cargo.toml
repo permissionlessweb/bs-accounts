@@ -26,7 +26,7 @@ cw-utils           = { workspace = true }
 cw2                = { workspace = true }
 
 
-btsg-auth  = { package = "btsg-auth", git = "https://github.com/permissionlessweb/bs-nfts", branch = "cosmwasm-std-v2" } 
+btsg-auth  = { workspace = true }
 saa-passkeys  = { library = "passkeys", git = "https://github.com/MegaRockLabs/smart-account-auth",  features = ["cosmwasm"]}
 saa  = { package = "smart-account-auth", git = "https://github.com/MegaRockLabs/smart-account-auth",  features = ["cosmwasm", "native", "curves", "session", "utils", "types"]}
 saa-common  = {  git = "https://github.com/MegaRockLabs/smart-account-auth",  features = [ ]}

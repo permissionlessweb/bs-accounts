@@ -264,7 +264,7 @@ fn query_all_epoch_ids(_deps: Deps) -> StdResult<GetAllEpochResponse> {
 fn query_epoch_id(deps: Deps, id: u128) -> StdResult<GetEpochResponse> {
     match EPOCHS.may_load(deps.storage, id)? {
         Some(epoch) => Ok(GetEpochResponse { epoch }),
-        None => Err(StdError::generic_err("No such epoch")),
+        None => Err(StdError::msg("No such epoch")),
     }
 }
 

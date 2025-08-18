@@ -1,3 +1,5 @@
+use cosmwasm_std::Coin;
+
 pub mod minter;
 pub mod verify_generic;
 
@@ -74,11 +76,11 @@ impl TextRecord {
     }
 }
 
-pub fn charge_fees(res: &mut cosmwasm_std::Response, fee: cosmwasm_std::Uint128) {
-    if fee > cosmwasm_std::Uint128::zero() {
+pub fn charge_fees(res: &mut cosmwasm_std::Response, fee: cosmwasm_std::Uint256) {
+    if fee > cosmwasm_std::Uint256::zero() {
         res.messages
             .push(cosmwasm_std::SubMsg::new(cosmwasm_std::BankMsg::Burn {
-                amount: cosmwasm_std::coins(fee.u128(), NATIVE_DENOM),
+                amount: vec![Coin::new(fee, NATIVE_DENOM)],
             }));
     }
 }

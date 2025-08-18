@@ -3,9 +3,8 @@ use btsg_account::minter::Config;
 use btsg_account::minter::SudoParams;
 use btsg_account::Metadata;
 use btsg_account::NATIVE_DENOM;
-use cosmwasm_std::{
-    coin, Coin, Decimal, DepsMut, Env, Event, MessageInfo, Response, Uint128, WasmMsg,
-};
+use cosmwasm_std::Uint256;
+use cosmwasm_std::{coin, Coin, Decimal, DepsMut, Env, Event, MessageInfo, Response, WasmMsg};
 use cosmwasm_std::{to_json_binary, Addr, Deps, StdResult};
 use cw_utils::must_pay;
 
@@ -39,12 +38,12 @@ pub fn execute_mint_and_list(
         params.min_account_length,
         params.max_account_length,
     )?;
-    let price = validate_payment(acc_len, &info, params.base_price.u128())?;
+    let price = validate_payment(acc_len, &info, params.base_price)?;
     validate_staking(
         deps.as_ref(),
         info.sender.as_ref(),
         acc_len,
-        params.base_delegation,
+        params.base_delegation.into(),
     )?;
 
     let mut res = Response::new();
@@ -165,24 +164,24 @@ pub fn validate_staking(
     deps: Deps,
     delegator: &str,
     account_len: usize,
-    base_delegation: Uint128,
+    base_delegation: Uint256,
 ) -> Result<(), ContractError> {
     let sum = deps
         .querier
         .query_all_delegations(delegator)?
         .into_iter()
         .map(|d| d.amount.amount)
-        .sum::<Uint128>();
+        .sum::<Uint256>();
     let expected = match account_len {
         // never 3 or less, already checked earlier
-        3 => base_delegation * Uint128::new(5u128),
-        4 => base_delegation * Uint128::new(3u128),
+        3 => base_delegation * Uint256::new(5u128),
+        4 => base_delegation * Uint256::new(3u128),
         _ => base_delegation,
     };
     if sum < expected {
         return Err(ContractError::IncorrectDelegation {
-            got: sum.u128(),
-            expected: expected.u128(),
+            got: sum.to_string(),
+            expected: expected.to_string(),
         });
     };
     Ok(())
@@ -205,16 +204,16 @@ pub enum Discount {
 pub fn validate_payment(
     account_len: usize,
     info: &MessageInfo,
-    base_price: u128,
+    base_price: Uint256,
     // discount: Option<Discount>,
 ) -> Result<Option<Coin>, ContractError> {
     // Because we know we are left with ASCII chars, a simple byte count is enough
-    let amount: Uint128 = (match account_len {
+    let amount: Uint256 = (match account_len {
         0..=2 => {
             return Err(ContractError::AccountTooShort {});
         }
-        3 => base_price * 100,
-        4 => base_price * 10,
+        3 => base_price * Uint256::new(100u128),
+        4 => base_price * Uint256::new(10u128),
         _ => base_price,
     })
     .into();
@@ -226,12 +225,12 @@ pub fn validate_payment(
     let payment = must_pay(info, NATIVE_DENOM)?;
     if payment != amount {
         return Err(ContractError::IncorrectPayment {
-            got: payment.u128(),
-            expected: amount.u128(),
+            got: payment.to_string(),
+            expected: amount.to_string(),
         });
     }
 
-    Ok(Some(coin(amount.u128(), NATIVE_DENOM)))
+    Ok(Some(Coin::new(amount, NATIVE_DENOM)))
 }
 
 pub fn invalid_char(c: char) -> bool {
@@ -255,8 +254,8 @@ pub fn sudo_update_params(
     deps: DepsMut,
     min_account_length: u32,
     max_account_length: u32,
-    base_price: Uint128,
-    base_delegation: Uint128,
+    base_price: Uint256,
+    base_delegation: Uint256,
 ) -> Result<Response, ContractError> {
     SUDO_PARAMS.save(
         deps.storage,

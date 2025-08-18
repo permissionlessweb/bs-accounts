@@ -18,97 +18,99 @@ pub struct AccountAuthenticator {
     pub config: Vec<u8>,
 }
 
-cw_serde_struct_allow_unknown_fields! {
-    // --- requests ---
+// cw_serde_struct_allow_unknown_fields! {
+// --- requests ---
+#[cw_serde]
+pub struct OnAuthenticatorAddedRequest {
+    pub account: Addr,
+    pub authenticator_id: String,
+    pub authenticator_params: Option<Binary>,
+}
+#[cw_serde]
+pub struct OnAuthenticatorRemovedRequest {
+    pub account: Addr,
+    pub authenticator_id: String,
+    pub authenticator_params: Option<Binary>,
+}
+#[cw_serde]
+pub struct AuthenticationRequest {
+    pub authenticator_id: String,
+    pub account: Addr,
+    pub fee_payer: Addr,
+    pub fee_granter: Option<Addr>,
+    pub fee: Vec<Coin>,
+    pub msg: Any,
+    pub msg_index: u64,
+    pub signature: Binary,
+    pub sign_mode_tx_data: SignModeTxData,
+    pub tx_data: TxData,
+    pub signature_data: SignatureData,
+    pub simulate: bool,
+    pub authenticator_params: Option<Binary>,
+}
+#[cw_serde]
+pub struct TrackRequest {
+    pub authenticator_id: String,
+    pub account: Addr,
+    pub fee_payer: Addr,
+    pub fee_granter: Option<Addr>,
+    pub fee: Vec<Coin>,
+    pub msg: Any,
+    pub msg_index: u64,
+    pub authenticator_params: Option<Binary>,
+}
 
-    pub struct OnAuthenticatorAddedRequest {
-        pub account: Addr,
-        pub authenticator_id: String,
-        pub authenticator_params: Option<Binary>,
-    }
+#[cw_serde]
+pub struct ConfirmExecutionRequest {
+    pub authenticator_id: String,
+    pub account: Addr,
+    pub fee_payer: Addr,
+    pub fee_granter: Option<Addr>,
+    pub fee: Vec<Coin>,
+    pub msg: Any,
+    pub msg_index: u64,
+    pub authenticator_params: Option<Binary>,
+}
 
-    pub struct OnAuthenticatorRemovedRequest {
-        pub account: Addr,
-        pub authenticator_id: String,
-        pub authenticator_params: Option<Binary>,
-    }
-
-    pub struct AuthenticationRequest {
-        pub authenticator_id: String,
-        pub account: Addr,
-        pub fee_payer: Addr,
-        pub fee_granter: Option<Addr>,
-        pub fee: Vec<Coin>,
-        pub msg: Any,
-        pub msg_index: u64,
-        pub signature: Binary,
-        pub sign_mode_tx_data: SignModeTxData,
-        pub tx_data: TxData,
-        pub signature_data: SignatureData,
-        pub simulate: bool,
-        pub authenticator_params: Option<Binary>,
-    }
-
-    pub struct TrackRequest {
-        pub authenticator_id: String,
-        pub account: Addr,
-        pub fee_payer: Addr,
-        pub fee_granter: Option<Addr>,
-        pub fee: Vec<Coin>,
-        pub msg: Any,
-        pub msg_index: u64,
-        pub authenticator_params: Option<Binary>,
-    }
-
-    pub struct ConfirmExecutionRequest {
-        pub authenticator_id: String,
-        pub account: Addr,
-        pub fee_payer: Addr,
-        pub fee_granter: Option<Addr>,
-        pub fee: Vec<Coin>,
-        pub msg: Any,
-        pub msg_index: u64,
-        pub authenticator_params: Option<Binary>,
-    }
-
-    // --- data ---
-
-    pub struct SignModeTxData {
-        pub sign_mode_direct: Binary,
-        pub sign_mode_textual: Option<String>, // Assuming it's a string or null
-    }
-
-    pub struct TxData {
-        pub chain_id: String,
-        pub account_number: u64,
-        pub sequence: u64,
-        pub timeout_height: u64,
-        pub msgs: Vec<Any>,
-        pub memo: String,
-    }
-
-    pub struct SignatureData {
-        pub signers: Vec<Addr>,
-        pub signatures: Vec<Binary>,
-    }
-
-    pub struct Any {
-        pub type_url: String,
-        pub value: cosmwasm_std::Binary,
-    }
-
-    pub struct MsgAddAuthenticator {
+// --- data ---
+#[cw_serde]
+pub struct SignModeTxData {
+    pub sign_mode_direct: Binary,
+    pub sign_mode_textual: Option<String>, // Assuming it's a string or null
+}
+#[cw_serde]
+pub struct TxData {
+    pub chain_id: String,
+    pub account_number: u64,
+    pub sequence: u64,
+    pub timeout_height: u64,
+    pub msgs: Vec<Any>,
+    pub memo: String,
+}
+#[cw_serde]
+pub struct SignatureData {
+    pub signers: Vec<Addr>,
+    pub signatures: Vec<Binary>,
+}
+#[cw_serde]
+pub struct Any {
+    pub type_url: String,
+    pub value: cosmwasm_std::Binary,
+}
+#[cw_serde]
+pub struct MsgAddAuthenticator {
     pub sender: String,
     pub authenticator_type: String,
     pub data: Vec<u8>,
-    }
-
-    pub struct CosmwasmAuthenticatorInitData {
-        pub contract: String,
-        pub params: Vec<u8>,
-    }
-
 }
+
+#[cw_serde]
+pub struct CosmwasmAuthenticatorInitData {
+    pub contract: String,
+    pub params: Vec<u8>,
+}
+
+// }
 
 /// `AuthenticatorSudoMsg` contains variants of messages that can be sent to the authenticator contract
 /// from smart account module through `CosmWasmAuthenticator`.

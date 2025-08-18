@@ -3,7 +3,7 @@ use cosmwasm_std::{StdError, VerificationError};
 use cw_ownable::OwnershipError;
 use thiserror::Error;
 
-#[derive(Error, Debug, PartialEq)]
+#[derive(Error, Debug)]
 pub enum ContractError {
     #[error("{0}")]
     Std(#[from] StdError),

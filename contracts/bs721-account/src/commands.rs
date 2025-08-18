@@ -16,6 +16,7 @@ use bs721_base::msg::ExecuteMsg as Bs721ExecuteMsg;
 use btsg_account::{TextRecord, MAX_TEXT_LENGTH, NFT};
 
 pub mod manifest {
+    #[cfg(feature = "abstract")]
     use abstract_std::objects::{
         gov_type::GovernanceDetails,
         ownership::{self, Ownership},
@@ -32,11 +33,13 @@ pub mod manifest {
     pub fn associate_address(
         deps: DepsMut,
         info: MessageInfo,
-        this: Addr,
+        _ownership_collection_addr: Addr,
         account: String,
         address: Option<String>,
     ) -> Result<Response, ContractError> {
+        let mut abstract_in_use = false;
         only_owner(deps.as_ref(), &info.sender, &account)?;
+        #[cfg(feature = "abstract")]
         let mut ownership: Ownership<String> = Ownership {
             owner: ownership::GovernanceDetails::Renounced {},
             pending_owner: None,
@@ -52,31 +55,35 @@ pub mod manifest {
                         REVERSE_MAP.remove(deps.storage, &Addr::unchecked(address));
                         Ok(())
                     } else {
-                        // token_uri has been set to the abstract-account address. Query who it has set as its current owner.
-                        let current_owner: Ownership<String> = deps.querier.query_wasm_smart(
-                            &address,
-                            &abstract_std::account::QueryMsg::Ownership {},
-                        )?;
-                        // if it has the same nft & token-id set as its owner,
-                        // we must also have this address associated to the account in our reverse map,
-                        // so we musst remove.
-                        match current_owner.owner.clone() {
-                            ownership::GovernanceDetails::NFT {
-                                collection_addr,
-                                token_id,
-                            } => {
-                                if address != token_id || collection_addr != this.to_string() {
+                        abstract_in_use = true;
+                        #[cfg(feature = "abstract")]
+                        {
+                            let current_owner: Ownership<String> = deps.querier.query_wasm_smart(
+                                &address,
+                                &abstract_std::account::QueryMsg::Ownership {},
+                            )?;
+                            // if it has the same nft & token-id set as its owner,
+                            // we must also have this address associated to the account in our reverse map,
+                            // so we musst remove.
+                            match current_owner.owner.clone() {
+                                ownership::GovernanceDetails::NFT {
+                                    collection_addr,
+                                    token_id,
+                                } => {
+                                    if address != token_id
+                                        || collection_addr != _ownership_collection_addr.to_string()
+                                    {
+                                        // removes mapping
+                                        REVERSE_MAP.remove(deps.storage, &Addr::unchecked(address));
+                                    } else {
+                                        // keeps mapping
+                                        ownership = current_owner
+                                    }
+                                }
+                                _ => {
                                     // removes mapping
                                     REVERSE_MAP.remove(deps.storage, &Addr::unchecked(address));
-                                } else {
-                                    // keeps mapping
-                                    ownership = current_owner
                                 }
-                            }
-
-                            _ => {
-                                // removes mapping
-                                REVERSE_MAP.remove(deps.storage, &Addr::unchecked(address));
                             }
                         }
                         Ok(())
@@ -88,33 +95,44 @@ pub mod manifest {
             .unwrap_or(());
 
         // println!("// 2. validate the new address, prepare to save into token_uri")
-        let token_uri = address
-            .clone()
-            .map(|address| match ownership.owner.clone() {
-                ownership::GovernanceDetails::NFT {
-                    collection_addr,
-                    token_id,
-                } => {
-                    if account != token_id || collection_addr != this.to_string() {
-                        return Err(ContractError::IncorrectBitsongAccountOwnershipToken {
-                            got: ownership.owner.to_string(),
-                            wanted: ownership::GovernanceDetails::NFT {
-                                collection_addr,
-                                token_id,
+        let token_uri = address.clone();
+
+        match &token_uri {
+            Some(turi) => match abstract_in_use {
+                true =>
+                {
+                    #[cfg(feature = "abstract")]
+                    match ownership.owner.clone() {
+                        ownership::GovernanceDetails::NFT {
+                            collection_addr,
+                            token_id,
+                        } => {
+                            if account != token_id
+                                || collection_addr != _ownership_collection_addr.to_string()
+                            {
+                                return Err(ContractError::IncorrectBitsongAccountOwnershipToken {
+                                    got: ownership.owner.to_string(),
+                                    wanted: ownership::GovernanceDetails::NFT {
+                                        collection_addr,
+                                        token_id,
+                                    }
+                                    .to_string(),
+                                });
                             }
-                            .to_string(),
-                        });
+                        }
+                        _ => {
+                            let addr = deps.api.addr_validate(&turi)?;
+                            validate_address(deps.as_ref(), &info.sender, addr)?;
+                        }
                     }
-                    Ok(address)
                 }
-                _ => {
-                    let addr = deps.api.addr_validate(&address)?;
-                    // println!("2.account:{:#?}", account);
-                    // println!("2.addr:{:#?}", addr);
-                    Ok(validate_address(deps.as_ref(), &info.sender, addr).map(|_| address)?)
+                false => {
+                    let addr = deps.api.addr_validate(&turi)?;
+                    validate_address(deps.as_ref(), &info.sender, addr)?;
                 }
-            })
-            .transpose()?;
+            },
+            None => {}
+        }
 
         // println!("// 3. look up prev account if it exists for the new address");
         let old_account = token_uri.clone().and_then(|addr: String| {
@@ -146,6 +164,7 @@ pub mod manifest {
                 Some(mut token_info) => {
                     token_info.token_uri = token_uri.clone().map(|addr| addr.to_string());
                     // save ownership metadata if set
+                    #[cfg(feature = "abstract")]
                     match ownership.owner {
                         GovernanceDetails::NFT { .. } => {
                             token_info.extension.account_ownership = true
@@ -271,7 +290,7 @@ pub mod manifest {
 
     fn reset_token_metadata_and_reverse_map(
         deps: &mut DepsMut,
-        contract_addr: Addr,
+        _contract_addr: Addr,
         account: &str,
     ) -> StdResult<()> {
         let mut extension = Metadata::default();
@@ -279,19 +298,20 @@ pub mod manifest {
             .tokens
             .load(deps.storage, account)?;
 
-        if let Some(tokenuri) = token.token_uri.clone() {
+        if let Some(_tokenuri) = token.token_uri.clone() {
+            #[cfg(feature = "abstract")]
             if token.extension.account_ownership {
                 // confirm this token is still set as owner of account
                 let owner: Ownership<String> = deps
                     .querier
-                    .query_wasm_smart(tokenuri, &abstract_std::account::QueryMsg::Ownership {})?;
+                    .query_wasm_smart(_tokenuri, &abstract_std::account::QueryMsg::Ownership {})?;
 
                 if let ownership::GovernanceDetails::NFT {
                     collection_addr,
                     token_id,
                 } = owner.owner
                 {
-                    if collection_addr == contract_addr.to_string() && token_id == account {
+                    if collection_addr == _contract_addr.to_string() && token_id == account {
                         extension = Metadata::default_with_account();
                     }
                 }
@@ -598,7 +618,7 @@ pub mod manifest {
             return Err(ContractError::UnauthorizedMinter {});
         }
 
-        let (token_id, owner, _, extension, _, _) = match msg {
+        let (token_id, owner, _, mut extension, _, _) = match msg {
             Bs721ExecuteMsg::Mint {
                 token_id,
                 owner,
@@ -616,6 +636,11 @@ pub mod manifest {
             ),
             _ => return Err(ContractError::NotImplemented {}),
         };
+
+        #[cfg(not(feature = "abstract"))]
+        {
+            extension.account_ownership = false;
+        }
 
         // create the token
         let token = TokenInfo {
@@ -786,9 +811,7 @@ pub mod queries {
 
         REVERSE_MAP
             .load(deps.storage, &deps.api.addr_validate(&address)?)
-            .map_err(|_| {
-                StdError::generic_err(format!("No account associated with address {}", address))
-            })
+            .map_err(|_| StdError::msg(format!("No account associated with address {}", address)))
     }
 
     pub fn query_params(deps: Deps) -> StdResult<SudoParams> {
@@ -800,7 +823,7 @@ pub mod queries {
             .tokens
             .load(deps.storage, account)?
             .token_uri
-            .ok_or_else(|| StdError::generic_err("No associated address"))
+            .ok_or_else(|| StdError::msg("No associated address"))
     }
 
     pub fn query_image_nft(deps: Deps, account: &str) -> StdResult<Option<NFT>> {
@@ -840,16 +863,16 @@ pub fn transcode(deps: Deps, addr: &str) -> StdResult<String> {
         let human = &CanonicalAddr::from(canonv);
         Ok(deps.api.addr_humanize(human)?.to_string())
     } else {
-        Err(StdError::generic_err(
+        Err(StdError::msg(
             "no mappping set. Set a non `bitsong1...` addr mapped to your`bitsong1..` that owns this account token with UpdateMyReverseMapKey",
         ))
     }
 }
 
-fn validate_address(deps: Deps, sender: &Addr, addr: Addr) -> Result<Addr, ContractError> {
+fn validate_address(deps: Deps, sender: &Addr, addr: Addr) -> Result<(), ContractError> {
     // no need to validate if sender is address
     if sender == addr {
-        return Ok(addr);
+        return Ok(());
     }
 
     let contract_details = cw2::query_contract_info(&deps.querier, addr.to_string())?;
@@ -861,7 +884,7 @@ fn validate_address(deps: Deps, sender: &Addr, addr: Addr) -> Result<Addr, Contr
             .query_wasm_smart(&addr, &Bs721AccountsQueryMsg::Minter {})?;
         if let Some(col_owner) = &collection_info.owner {
             if col_owner == sender {
-                return Ok(addr);
+                return Ok(());
             }
         }
     }
@@ -883,7 +906,7 @@ fn validate_address(deps: Deps, sender: &Addr, addr: Addr) -> Result<Addr, Contr
     }
 
     // we have a contract registration
-    Ok(addr)
+    Ok(())
 }
 
 pub fn sudo_update_params(
@@ -916,7 +939,7 @@ mod test {
         .unwrap_err();
 
         assert_eq!(
-            res.to_string(),
-            "Generic error: no mappping set. Set a non `bitsong1...` addr mapped to your`bitsong1..` that owns this account token with UpdateMyReverseMapKey"        )
+            &res.to_string(),
+            "kind: Other, error: no mappping set. Set a non `bitsong1...` addr mapped to your`bitsong1..` that owns this account token with UpdateMyReverseMapKey")
     }
 }

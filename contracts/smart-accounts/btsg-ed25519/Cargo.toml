@@ -17,6 +17,7 @@ crate-type = ["cdylib", "rlib"]
 library = []
 
 [dependencies]
+btsg-auth         = { workspace = true }
 cosmwasm-schema    = { workspace = true }
 cw-storage-plus    = { workspace = true }
 cosmwasm-std       = { workspace = true }
@@ -24,16 +25,15 @@ cw-ownable         = { workspace = true }
 cw-orch            = { workspace = true }
 cw-utils           = { workspace = true }
 cw2                = { workspace = true }
-
-
-btsg-auth  = { package = "btsg-auth", git = "https://github.com/permissionlessweb/bs-nfts", branch = "cosmwasm-std-v2" } 
-saa-passkeys  = { library = "passkeys", git = "https://github.com/MegaRockLabs/smart-account-auth",  features = ["cosmwasm"]}
-saa  = { package = "smart-account-auth", git = "https://github.com/MegaRockLabs/smart-account-auth",  features = ["cosmwasm", "native", "curves", "session", "utils", "types"]}
-saa-common  = {  git = "https://github.com/MegaRockLabs/smart-account-auth",  features = [ ]}
-
-
 schemars           = { workspace = true }
 serde              = { workspace = true }
 thiserror          = { workspace = true }
+
+
+saa-passkeys         = { library = "passkeys", git = "https://github.com/MegaRockLabs/smart-account-auth",  features = ["cosmwasm"]}
+saa                  = { package = "smart-account-auth", git = "https://github.com/MegaRockLabs/smart-account-auth",  features = ["cosmwasm", "native", "curves", "session", "utils", "types"]}
+saa-common           = {  git = "https://github.com/MegaRockLabs/smart-account-auth",  features = [ ]}
+
+
 
 [dev-dependencies]

@@ -17,7 +17,6 @@ btsg-auth                     = { workspace = true }
 btsg-irl                      = { workspace = true }
 btsg-nft-scripts              = { workspace = true }
 btsg-wavs                     = { workspace = true }
-
 cosmos-sdk-proto              = { workspace = true }
 cosmrs                        = { version = "0.22.0" }
 cosmwasm-crypto               = { workspace = true }
@@ -28,7 +27,6 @@ anyhow                        = { version = "1" }
 clap                          = { version = "4.0.32", features = ["derive"] }
 bech32                        = { workspace = true }
 csv                           = { version = "1.2" }
-cw-orch                       = { workspace = true, features = ["daemon"] }
 cw-ownable                    = { workspace = true }
 dirs                          = { version = "5.0.1" }
 dotenv                        = { version = "0.15.0" }

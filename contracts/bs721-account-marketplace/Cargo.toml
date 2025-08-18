@@ -1,13 +1,36 @@
 [package]
 name = "bs721-account-marketplace"
 version  = { workspace = true }
-authors = ["hard-nett <hardnettt@proton.me>"]
-edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+authors  = { workspace = true }
+edition  = { workspace = true }
 
 [lib]
 crate-type = ["cdylib", "rlib"]
+
+[features]
+# use library feature to disable all instantiate/execute/query exports
+library = []
+
+[dependencies]
+bs721            = { workspace = true }
+bs721-base       = { workspace = true, features = ["library"] }
+cosmwasm-schema  = { workspace = true }
+cosmwasm-std     = { workspace = true }
+cw2              = { workspace = true }
+cw-storage-plus  = { workspace = true }
+cw-storage-macro = { workspace = true }
+cw-utils         = { workspace = true }
+cw-orch          = { workspace = true }
+cw-ownable       = { workspace = true }
+schemars         = { workspace = true }
+semver           = { workspace = true }
+bs-controllers   = { workspace = true }
+serde            = { workspace = true }
+btsg-account     = { workspace = true }
+thiserror        = { workspace = true }
+
+[dev-dependencies]
+cw-multi-test = {version = "2.2.0",features = ["stargate", "cosmwasm_2_1"]}
 
 [profile.release]
 opt-level = 3
@@ -19,35 +42,3 @@ codegen-units = 1
 panic = 'abort'
 incremental = false
 overflow-checks = true
-
-[features]
-# use library feature to disable all instantiate/execute/query exports
-library = []
-
-[package.metadata.scripts]
-optimize = """docker run --rm -v "$(pwd)":/code \
-  --mount type=volume,source="$(basename "$(pwd)")_cache",target=/target \
-  --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-  cosmwasm/optimizer:0.15.0
-"""
-
-[dependencies]
-bs721            = { workspace = true }
-bs721-base       = { workspace = true, features = ["library"] }
-cosmwasm-schema  = { workspace = true }
-cosmwasm-std     = { workspace = true }
-cw2              = { workspace = true }
-cw-storage-plus  = { workspace = true }
-cw-storage-macro             = "1.2.0"
-cw-utils         = { workspace = true }
-cw-orch          = { workspace = true }
-cw-ownable       = { workspace = true }
-schemars         = { workspace = true }
-semver                       = "1.0"
-bs-controllers.workspace = true
-serde            = { workspace = true }
-btsg-account     = { path = "../../packages/btsg-account"}
-thiserror        = { workspace = true }
-
-[dev-dependencies]
-cw-multi-test = {version = "2.2.0",features = ["stargate", "cosmwasm_2_1"]}

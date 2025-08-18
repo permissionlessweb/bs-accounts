@@ -109,7 +109,7 @@ impl SignedClaim {
             let id = match rec_norm {
                 0 => RecoveryId::new(false, false),
                 1 => RecoveryId::new(true, false),
-                _ => return Err(ContractError::Std(StdError::generic_err("ayo lets go"))),
+                _ => return Err(ContractError::Std(StdError::msg("ayo lets go"))),
             };
 
             let signature = Signature::from_bytes(r_s.as_slice().into()).unwrap();
