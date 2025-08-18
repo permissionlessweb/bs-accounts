@@ -5,7 +5,8 @@ members = [
     "contracts/bs721-account-marketplace",
     #"contracts/smart-accounts/*",
     "packages/*",
-    "scripts", # commented out until cw@v3 support for cw-orch
+    # "scripts", # commented out until cw@v3 support for cw-orch
+    "test-suite",
     ]
 exclude = ["contracts/smart-accounts/*"]
 
@@ -23,6 +24,7 @@ license    = "Apache-2.0"
 [workspace.dependencies]
 btsg-account                 = { path = "packages/btsg-account" }
 btsg-auth                    = { path = "packages/btsg-auth" }
+easy-addr                    = { path = "packages/easy-addr" }
 bs721-account-marketplace    = { path = "contracts/bs721-account-marketplace" }
 bs721-account-minter         = { path = "contracts/bs721-account-minter" }
 bs721-account                = { path = "contracts/bs721-account" }

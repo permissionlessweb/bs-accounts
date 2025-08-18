@@ -147,3 +147,21 @@ pub fn bids<'a>() -> IndexedMap<BidKey, Bid, BidIndicies<'a>> {
     };
     IndexedMap::new("b2", indexes)
 }
+
+/// Offset for bid pagination
+#[cosmwasm_schema::cw_serde]
+pub struct BidOffset {
+    pub price: Uint128,
+    pub token_id: TokenId,
+    pub bidder: Addr,
+}
+
+impl BidOffset {
+    pub fn new(price: Uint128, token_id: TokenId, bidder: Addr) -> Self {
+        BidOffset {
+            price,
+            token_id,
+            bidder,
+        }
+    }
+}

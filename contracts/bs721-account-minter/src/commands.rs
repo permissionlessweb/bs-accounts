@@ -3,6 +3,7 @@ use btsg_account::minter::Config;
 use btsg_account::minter::SudoParams;
 use btsg_account::Metadata;
 use btsg_account::NATIVE_DENOM;
+use cosmwasm_std::StdError;
 use cosmwasm_std::Uint256;
 use cosmwasm_std::{coin, Coin, Decimal, DepsMut, Env, Event, MessageInfo, Response, WasmMsg};
 use cosmwasm_std::{to_json_binary, Addr, Deps, StdResult};
@@ -201,6 +202,17 @@ pub enum Discount {
     Percent(Decimal),
 }
 
+pub fn get_ascii_cost(account_len: usize, base_price: Uint256) -> StdResult<Uint256> {
+    Ok(match account_len {
+        0..=2 => {
+            return Err(StdError::msg(ContractError::AccountTooShort {}.to_string()));
+        }
+        3 => base_price * Uint256::new(100u128),
+        4 => base_price * Uint256::new(10u128),
+        _ => base_price,
+    })
+}
+
 pub fn validate_payment(
     account_len: usize,
     info: &MessageInfo,
@@ -208,20 +220,11 @@ pub fn validate_payment(
     // discount: Option<Discount>,
 ) -> Result<Option<Coin>, ContractError> {
     // Because we know we are left with ASCII chars, a simple byte count is enough
-    let amount: Uint256 = (match account_len {
-        0..=2 => {
-            return Err(ContractError::AccountTooShort {});
-        }
-        3 => base_price * Uint256::new(100u128),
-        4 => base_price * Uint256::new(10u128),
-        _ => base_price,
-    })
-    .into();
+    let amount: Uint256 = get_ascii_cost(account_len, base_price)?;
 
     if amount.is_zero() {
         return Ok(None);
     }
-
     let payment = must_pay(info, NATIVE_DENOM)?;
     if payment != amount {
         return Err(ContractError::IncorrectPayment {

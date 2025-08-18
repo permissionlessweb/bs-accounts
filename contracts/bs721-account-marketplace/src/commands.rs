@@ -1,5 +1,5 @@
 use crate::hooks::{prepare_ask_hook, prepare_bid_hook, prepare_sale_hook};
-use crate::msgs::{BidOffset, Bidder, ConfigResponse, HookAction};
+use crate::msgs::{Bidder, ConfigResponse, HookAction};
 use crate::{
     error::ContractError,
     // hooks::{prepare_ask_hook, prepare_bid_hook, prepare_sale_hook},

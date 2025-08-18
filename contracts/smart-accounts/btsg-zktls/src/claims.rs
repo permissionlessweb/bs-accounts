@@ -1,6 +1,7 @@
 #![allow(non_snake_case)]
 
 use crate::error::ContractError;
+use cosmwasm_schema::cw_serde;
 use k256::{
     ecdsa::{RecoveryId, Signature, VerifyingKey}, // type aliases
 };
@@ -27,7 +28,7 @@ pub fn keccak256(message: &str) -> Vec<u8> {
     hasher.finalize().to_vec()
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[cw_serde]
 #[serde(rename_all = "snake_case")]
 pub struct ClaimInfo {
     pub provider: String,
@@ -49,7 +50,7 @@ impl ClaimInfo {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[cw_serde]
 pub struct CompleteClaimData {
     pub identifier: String,
     pub owner: String,
@@ -69,7 +70,7 @@ impl CompleteClaimData {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[cw_serde]
 #[serde(rename_all = "snake_case")]
 pub struct SignedClaim {
     pub claim: CompleteClaimData,
@@ -109,7 +110,7 @@ impl SignedClaim {
             let id = match rec_norm {
                 0 => RecoveryId::new(false, false),
                 1 => RecoveryId::new(true, false),
-                _ => return Err(ContractError::Std(StdError::generic_err("ayo lets go"))),
+                _ => return Err(ContractError::Std(StdError::msg("ayo lets go"))),
             };
 
             let signature = Signature::from_bytes(r_s.as_slice().into()).unwrap();
@@ -130,7 +131,7 @@ impl SignedClaim {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[cw_serde]
 #[serde(rename_all = "snake_case")]
 pub struct Proof {
     pub claimInfo: ClaimInfo,

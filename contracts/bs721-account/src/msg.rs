@@ -24,7 +24,7 @@ pub struct InstantiateMsg {
 pub enum ExecuteMsg<T> {
     /// Set account marketplace contract address
     SetMarketplace { address: String },
-    /// Set an address for account reverse lookup and updates token_uri
+    /// Set or remove an address for account reverse lookup and updates token_uri
     /// Can be an EOA or a contract address.
     AssociateAddress {
         // namespace of the account token (token-id)
