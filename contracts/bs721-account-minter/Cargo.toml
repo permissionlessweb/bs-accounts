@@ -31,4 +31,3 @@ serde                  = { workspace = true, default-features = false, features 
 thiserror              = { workspace = true }
 
 [dev-dependencies]
-cw-multi-test = {version = "3.0.1",features = ["stargate", "cosmwasm_2_1"]}

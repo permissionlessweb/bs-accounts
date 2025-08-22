@@ -1,11 +1,12 @@
 use crate::commands::{query_asks_by_seller, query_bids_by_bidder};
 use crate::contract::{execute, instantiate};
 use crate::msgs::{ExecuteMsg, InstantiateMsg};
-#[cfg(test)]
 use crate::state::*;
 use btsg_account::NATIVE_DENOM;
-use cosmwasm_std::testing::{message_info, mock_dependencies, mock_env};
 use cosmwasm_std::{coins, Addr, DepsMut, Timestamp, Uint128};
+
+#[cfg(test)]
+use cosmwasm_std::testing::{message_info, mock_dependencies, mock_env};
 
 const CREATOR: &str = "creator";
 const TOKEN_ID: &str = "account";

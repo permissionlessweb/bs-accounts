@@ -41,5 +41,8 @@ serde                         = { workspace = true }
 serde_json                    = { workspace = true }
 bech32                        = { workspace = true }
 
+[dev-dependencies]
+cw-multi-test                 = { version = "3.0.0", features = ["stargate", "cosmwasm_2_1", "staking"] }
+
 [lib]
 crate-type = ["cdylib", "rlib"]

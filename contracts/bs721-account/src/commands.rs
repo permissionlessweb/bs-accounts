@@ -293,6 +293,7 @@ pub mod manifest {
         _contract_addr: Addr,
         account: &str,
     ) -> StdResult<()> {
+        // By default, the abstract account feature is disabled. 
         let mut extension = Metadata::default();
         let token = Bs721AccountContract::default()
             .tokens
@@ -637,6 +638,7 @@ pub mod manifest {
             _ => return Err(ContractError::NotImplemented {}),
         };
 
+        // override this value if we are not enabling this feature
         #[cfg(not(feature = "abstract"))]
         {
             extension.account_ownership = false;

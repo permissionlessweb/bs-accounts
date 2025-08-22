@@ -8,7 +8,7 @@ members = [
     # "scripts", # commented out until cw@v3 support for cw-orch
     "test-suite",
     ]
-exclude = ["contracts/smart-accounts/*"]
+exclude = ["contracts/smart-accounts/*",  "test-suite"]
 
 resolver = "2"
 

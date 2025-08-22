@@ -37,6 +37,5 @@ thiserror          = { workspace = true }
 
 [dev-dependencies]
 prost = "0.11.9"
-cw-multi-test = {version = "3.0.1",features = ["stargate", "cosmwasm_2_1"]}
 derivative = "2.2"
 anyhow = "1"

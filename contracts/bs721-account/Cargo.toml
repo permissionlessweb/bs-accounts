@@ -36,4 +36,3 @@ subtle-encoding           = { workspace = true, features = ["bech32-preview"] }
 thiserror                 = { workspace = true }
 
 [dev-dependencies]
-cw-multi-test = {version = "3.0.1",features = ["stargate", "cosmwasm_2_1"]}

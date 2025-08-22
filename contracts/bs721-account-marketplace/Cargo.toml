@@ -30,15 +30,3 @@ btsg-account     = { workspace = true }
 thiserror        = { workspace = true }
 
 [dev-dependencies]
-cw-multi-test = {version = "3.0.1",features = ["stargate", "cosmwasm_2_1"]}
-
-[profile.release]
-opt-level = 3
-debug = false
-rpath = false
-lto = true
-debug-assertions = false
-codegen-units = 1
-panic = 'abort'
-incremental = false
-overflow-checks = true
