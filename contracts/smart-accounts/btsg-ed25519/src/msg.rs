@@ -14,5 +14,3 @@ pub enum ExecuteMsg {}
 #[cw_serde]
 #[derive(QueryResponses, cw_orch::QueryFns)]
 pub enum QueryMsg {}
-
-pub type SudoMsg = AuthenticatorSudoMsg;

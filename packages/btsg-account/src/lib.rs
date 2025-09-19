@@ -1,6 +1,7 @@
 use cosmwasm_std::Coin;
 
 pub mod minter;
+pub mod traits;
 pub mod verify_generic;
 
 pub const MAX_TEXT_LENGTH: u32 = 512;

@@ -4,7 +4,7 @@ use cw_ownable::OwnershipError;
 use saa::AuthError;
 use thiserror::Error;
 
-#[derive(Error, Debug, PartialEq)]
+#[derive(Error, Debug)]
 pub enum ContractError {
     #[error("{0}")]
     Std(#[from] StdError),

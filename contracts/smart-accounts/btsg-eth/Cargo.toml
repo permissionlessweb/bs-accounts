@@ -27,9 +27,10 @@ cw2                = { workspace = true }
 
 
 btsg-auth  = { workspace = true }
-saa-passkeys  = { library = "passkeys", git = "https://github.com/MegaRockLabs/smart-account-auth",  features = ["cosmwasm"]}
-saa  = { package = "smart-account-auth", git = "https://github.com/MegaRockLabs/smart-account-auth",  features = ["cosmwasm", "native", "curves", "session", "utils", "types"]}
-saa-common  = {  git = "https://github.com/MegaRockLabs/smart-account-auth",  features = [ ]}
+btsg-account              = { workspace = true }
+
+saa   = { workspace = true }
+saa-common    = { workspace = true }
 
 
 schemars           = { workspace = true }

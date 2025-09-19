@@ -64,10 +64,10 @@ pub fn execute(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> Result<Response, ContractError> {
     match msg {
-        btsg_auth::AuthenticatorSudoMsg::OnAuthenticatorAdded(auth_add) => {
+        btsg_auth::AuthenticatorSudoMsg::OnAuthAdded(auth_add) => {
             sudo_on_authenticator_added_request(deps, auth_add)
         }
-        btsg_auth::AuthenticatorSudoMsg::OnAuthenticatorRemoved(auth_remove) => {
+        btsg_auth::AuthenticatorSudoMsg::OnAuthRemoved(auth_remove) => {
             sudo_on_authenticator_removed_request(deps, auth_remove)
         }
         btsg_auth::AuthenticatorSudoMsg::Authenticate(auth_req) => {

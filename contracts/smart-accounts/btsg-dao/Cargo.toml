@@ -1,6 +1,6 @@
 [package]
-name          = "btsg-wavs"
-description   = "A custom authentication contract verifying BLS12-381 signature aggregations, used by WAVS operators."
+name          = "btsg-dao"
+description   = "A custom fantoken minter, being used as an event ticketing distribution."
 authors       = [""]
 version       = { workspace = true }
 edition       = { workspace = true }
@@ -18,16 +18,20 @@ library = []
 
 [dependencies]
 cosmwasm-schema    = { workspace = true }
-cosmos-sdk-proto   = { workspace = true, default-features = false }
 cw-storage-plus    = { workspace = true }
 cosmwasm-std       = { workspace = true }
 cw-ownable         = { workspace = true }
 cw-orch            = { workspace = true }
 cw-utils           = { workspace = true }
-cw2                = { workspace = true }
-
 btsg-auth          = { workspace = true }
+bitsong-rs          = { workspace = true }
 btsg-account       = { workspace = true }
+cw2                = { workspace = true }
+sha2               = { workspace = true }
+sha3               = { version = "0.10.8"}
+hex = "0.4.3"
+k256 = { version = "0.13.3", default-features = false, features = ["ecdsa-core", "ecdsa"] }
+digest = {version = "0.10", default-features = false }
 
 
 schemars           = { workspace = true }
@@ -36,6 +40,3 @@ thiserror          = { workspace = true }
 
 
 [dev-dependencies]
-prost = "0.14.1"
-derivative = "2.2"
-anyhow = "1"

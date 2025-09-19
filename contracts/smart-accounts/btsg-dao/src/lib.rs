@@ -1,50 +1,47 @@
-pub mod contract;
-mod error;
-pub mod msg;
-mod state;
-
-use cosmwasm_std::{Env, Response};
-use saa::{EthPersonalSign, Verifiable};
+use cosmwasm_std::Response;
 use serde::{Deserialize, Serialize};
 
-pub use crate::error::ContractError;
-use crate::state::PUBLIC_KEY;
+use crate::error::ContractError;
+
+// pub mod claims;
+// pub mod contract;
+// pub mod digest;
+// mod error;
+// pub mod msg;
+// pub mod state;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct BtsgAccountEthStructs {}
-
+pub struct BtsgAccountDaoStructs {}
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct BtsgAccountEd25519 {}
-impl btsg_account::traits::default::BtsgAccountTrait for BtsgAccountEd25519 {
+pub struct BtsgAccountDao {}
+impl btsg_account::traits::default::BtsgAccountTrait for BtsgAccountDao {
     type InstantiateMsg = crate::msg::InstantiateMsg;
     type ExecuteMsg = crate::msg::ExecuteMsg;
     type QueryMsg = crate::msg::QueryMsg;
     type SudoMsg = btsg_auth::AuthenticatorSudoMsg;
-    type ContractError = ContractError;
-    type AuthMethodStructs = BtsgAccountEthStructs;
-    type AuthProcessResult = Result<cosmwasm_std::Response, ContractError>;
+    type ContractError = crate::error::ContractError;
+    type AuthMethodStructs = BtsgAccountDaoStructs;
+    type AuthProcessResult = Result<Response, ContractError>;
 
     fn process_sudo_auth(
         deps: cosmwasm_std::DepsMut,
-        env: Env,
         msg: &Self::SudoMsg,
     ) -> Self::AuthProcessResult {
         match msg {
-            Self::SudoMsg::OnAuthAdded(auth_add) => Self::on_auth_added(deps, env, &auth_add),
+            Self::SudoMsg::OnAuthAdded(auth_add) => Self::on_auth_added(deps, &auth_add),
             Self::SudoMsg::OnAuthRemoved(auth_remove) => {
-                Self::on_auth_removed(deps, env, &auth_remove)
+                Self::on_auth_removed(deps, &auth_remove)
             }
-            Self::SudoMsg::Authenticate(auth_req) => Self::on_auth_request(deps, env, &auth_req),
-            Self::SudoMsg::Track(track_req) => Self::on_auth_track(deps, env, &track_req),
+            Self::SudoMsg::Authenticate(auth_req) => Self::on_auth_request(deps, &auth_req),
+            Self::SudoMsg::Track(track_req) => Self::on_auth_track(deps, &track_req),
             Self::SudoMsg::ConfirmExecution(conf_exec_req) => {
-                Self::on_auth_confirm(deps, env, &conf_exec_req)
+                Self::on_auth_confirm(deps, &conf_exec_req)
             }
         }
     }
 
     fn on_auth_added(
         deps: cosmwasm_std::DepsMut,
-        env: Env,
         req: &btsg_auth::OnAuthenticatorAddedRequest,
     ) -> Self::AuthProcessResult {
         //TODO: check member is a part of all DAOS registering for membership check
@@ -54,7 +51,6 @@ impl btsg_account::traits::default::BtsgAccountTrait for BtsgAccountEd25519 {
 
     fn on_auth_removed(
         deps: cosmwasm_std::DepsMut,
-        env: Env,
         req: &btsg_auth::OnAuthenticatorRemovedRequest,
     ) -> Self::AuthProcessResult {
         //TODO: remove data set
@@ -63,24 +59,13 @@ impl btsg_account::traits::default::BtsgAccountTrait for BtsgAccountEd25519 {
 
     fn on_auth_request(
         deps: cosmwasm_std::DepsMut,
-        env: Env,
         req: &Box<btsg_auth::AuthenticationRequest>,
     ) -> Self::AuthProcessResult {
-        let cred = EthPersonalSign {
-            message: req.sign_mode_tx_data.sign_mode_direct.clone(),
-            signature: req.signature.clone(),
-            signer: PUBLIC_KEY.load(deps.storage)?,
-        };
-
-        // verify ethereum personal signature
-        cred.verify(deps.as_ref())?;
-
-        Ok(Response::new().add_attribute("action", "auth_req"))
+        Ok(Response::new())
     }
 
     fn on_auth_track(
         deps: cosmwasm_std::DepsMut,
-        env: Env,
         req: &btsg_auth::TrackRequest,
     ) -> Self::AuthProcessResult {
         Ok(Response::new())
@@ -88,20 +73,12 @@ impl btsg_account::traits::default::BtsgAccountTrait for BtsgAccountEd25519 {
 
     fn on_auth_confirm(
         deps: cosmwasm_std::DepsMut,
-        env: Env,
         req: &btsg_auth::ConfirmExecutionRequest,
     ) -> Self::AuthProcessResult {
         Ok(Response::new())
     }
 
-    fn on_hooks(deps: cosmwasm_std::DepsMut, env: Env) -> Self::AuthProcessResult {
+    fn on_hooks(deps: cosmwasm_std::DepsMut) -> Self::AuthProcessResult {
         Ok(Response::new())
-    }
-
-    fn authenticate(
-        deps: cosmwasm_std::DepsMut,
-        auth: Self::AuthMethodStructs,
-    ) -> Self::AuthProcessResult {
-        todo!()
     }
 }

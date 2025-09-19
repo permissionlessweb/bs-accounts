@@ -11,6 +11,7 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 bs-controllers = { workspace = true }
+btsg-auth       = { workspace = true }
 cosmwasm-std    = { workspace = true }
 cosmwasm-crypto = { workspace = true }
 cosmwasm-schema = { workspace = true }

@@ -1,6 +1,4 @@
 use crate::state::{Epoch, Witness};
-use crate::BtsgAccountIrl;
-use btsg_account::traits::default::BtsgAccountTrait;
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Coin, Uint128};
 
@@ -74,6 +72,8 @@ pub struct FantokenInfo {
     pub minter: String,
     pub denom: String,
 }
+
+
 
 // Message types for the fantoken module
 #[cw_serde]

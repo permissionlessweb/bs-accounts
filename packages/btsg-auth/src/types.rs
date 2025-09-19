@@ -110,16 +110,14 @@ pub struct CosmwasmAuthenticatorInitData {
     pub params: Vec<u8>,
 }
 
-// }
-
 /// `AuthenticatorSudoMsg` contains variants of messages that can be sent to the authenticator contract
 /// from smart account module through `CosmWasmAuthenticator`.
 ///
 /// `AuthenticateRequest` is `Box`-ed due to large size difference between other variants
 #[cw_serde]
 pub enum AuthenticatorSudoMsg {
-    OnAuthenticatorAdded(OnAuthenticatorAddedRequest),
-    OnAuthenticatorRemoved(OnAuthenticatorRemovedRequest),
+    OnAuthAdded(OnAuthenticatorAddedRequest),
+    OnAuthRemoved(OnAuthenticatorRemovedRequest),
     Authenticate(Box<AuthenticationRequest>),
     Track(TrackRequest),
     ConfirmExecution(ConfirmExecutionRequest),

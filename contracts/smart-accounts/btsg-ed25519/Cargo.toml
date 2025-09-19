@@ -17,7 +17,8 @@ crate-type = ["cdylib", "rlib"]
 library = []
 
 [dependencies]
-btsg-auth         = { workspace = true }
+btsg-auth          = { workspace = true }
+btsg-account       = { workspace = true }
 cosmwasm-schema    = { workspace = true }
 cw-storage-plus    = { workspace = true }
 cosmwasm-std       = { workspace = true }
@@ -30,10 +31,9 @@ serde              = { workspace = true }
 thiserror          = { workspace = true }
 
 
-saa-passkeys         = { library = "passkeys", git = "https://github.com/MegaRockLabs/smart-account-auth",  features = ["cosmwasm"]}
-saa                  = { package = "smart-account-auth", git = "https://github.com/MegaRockLabs/smart-account-auth",  features = ["cosmwasm", "native", "curves", "session", "utils", "types"]}
-saa-common           = {  git = "https://github.com/MegaRockLabs/smart-account-auth",  features = [ ]}
-
+saa-passkeys  = { workspace = true }
+saa   = { workspace = true }
+saa-common    = { workspace = true }
 
 
 [dev-dependencies]

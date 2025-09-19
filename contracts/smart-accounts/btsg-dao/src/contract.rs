@@ -2,13 +2,14 @@ use crate::claims::Proof;
 use crate::error::ContractError;
 use crate::msg::{
     CreateFantokenMsg, ExecuteMsg, FantokenInfo, GetAllEpochResponse, GetEpochResponse,
-    InstantiateMsg, MintFantokenMsg, MintTicketObject, QueryMsg, SetFantokenUriMsg,
+    InstantiateMsg, MintFantokenMsg, MintTicketObject, QueryMsg, SetFantokenUriMsg, SudoMsg,
 };
 use crate::state::{
     Config, Epoch, Witness, CONFIG, EPOCHS, FANTOKEN_INFO, MINTED_AMOUNTS, WAVS_SMART_ACCOUNT,
     ZKTLS_ENABLED,
 };
-use crate::BtsgAccountIrl;
+use crate::BtsgAccountDao;
+use bitsong_rs::types::bitsong::fantoken::v1beta1::*;
 use btsg_account::traits::default::BtsgAccountTrait;
 use btsg_auth::{
     AuthenticationRequest, ConfirmExecutionRequest, OnAuthenticatorAddedRequest,
@@ -43,39 +44,6 @@ pub fn instantiate(
         owner: info.sender.to_string(),
         current_epoch: Uint128::zero(),
     };
-    if let Some(a) = minter_params {
-        // Store fantoken info (denom will be updated in reply)
-        let fantoken_info = FantokenInfo {
-            symbol: a.symbol.clone(),
-            name: a.name.clone(),
-            max_supply: a.max_supply,
-            authority: env.contract.address.to_string(),
-            uri: a.uri.clone(),
-            minter: env.contract.address.to_string(),
-            denom: String::new(), // Will be set in reply
-        };
-        // Create the fantoken creation message
-        let create_msg = AnyMsg {
-            type_url: "/bitsong.fantoken.v1beta1.MsgIssue".into(),
-            value: to_json_binary(&CreateFantokenMsg {
-                symbol: a.symbol.clone(),
-                name: a.name.clone(),
-                max_supply: a.max_supply.to_string(),
-                authority: env.contract.address.to_string(),
-                uri: a.uri.clone(),
-                minter: env.contract.address.to_string(),
-            })?,
-        };
-        FANTOKEN_INFO.save(deps.storage, &fantoken_info)?;
-        submsg.push(SubMsg::reply_on_success(
-            create_msg,
-            FANTOKEN_CREATE_REPLY_ID,
-        ))
-    }
-
-    CONFIG.save(deps.storage, &config)?;
-    WAVS_SMART_ACCOUNT.save(deps.storage, &info.sender.to_string())?;
-    ZKTLS_ENABLED.save(deps.storage, &enable_zktls)?;
 
     Ok(Response::new()
         .add_submessages(submsg)
@@ -132,7 +100,7 @@ pub fn add_epoch(
         return Err(ContractError::Unauthorized {});
     }
 
-    //Increment Epoch number
+    // Increment Epoch number
     let new_epoch = config.current_epoch + Uint128::one();
     // Create the new epoch
     let epoch = Epoch {
@@ -151,93 +119,7 @@ pub fn add_epoch(
     CONFIG.save(deps.storage, &config)?;
     Ok(Response::default())
 }
-
-fn handle_mint_fantokens(
-    deps: DepsMut,
-    env: Env,
-    info: MessageInfo,
-    mint_requests: Vec<MintTicketObject>,
-) -> Result<Response, ContractError> {
-    // Ensure only the smart account can mint fantokens
-
-    if info.sender.to_string() != WAVS_SMART_ACCOUNT.load(deps.storage)? {
-        return Err(ContractError::Unauthorized {});
-    }
-    let fantoken_info = FANTOKEN_INFO.load(deps.storage)?;
-    if fantoken_info.denom.is_empty() {
-        return Err(ContractError::FantokenNotCreated {});
-    }
-
-    let mut mint_msgs = Vec::new();
-    let mut total_to_mint = Uint128::zero();
-
-    for mint_request in mint_requests {
-        let amount = Uint128::from(mint_request.amount);
-        total_to_mint += amount;
-
-        let mint_msg = AnyMsg {
-            type_url: "/bitsong.fantoken.v1beta1.MsgMint".into(),
-            value: to_json_binary(&MintFantokenMsg {
-                recipient: mint_request.ticket, // recipient address
-                coin: coin(amount.u128(), fantoken_info.denom.clone()),
-                minter: env.contract.address.to_string(),
-            })?,
-        };
-
-        mint_msgs.push(mint_msg);
-    }
-
-    // Check if minting would exceed max supply
-    let current_minted = MINTED_AMOUNTS
-        .may_load(deps.storage, &fantoken_info.denom)?
-        .unwrap_or_default();
-
-    if current_minted + total_to_mint > fantoken_info.max_supply {
-        return Err(ContractError::ExceedsMaxSupply {});
-    }
-
-    // Update minted amount
-    MINTED_AMOUNTS.save(
-        deps.storage,
-        &fantoken_info.denom,
-        &(current_minted + total_to_mint),
-    )?;
-
-    Ok(Response::new().add_messages(mint_msgs))
-}
-
-fn handle_set_uri(
-    deps: DepsMut,
-    env: Env,
-    info: MessageInfo,
-    new_uri: String,
-) -> Result<Response, ContractError> {
-    // Ensure only the smart account can update URI
-    if info.sender.to_string() != WAVS_SMART_ACCOUNT.load(deps.storage)? {
-        return Err(ContractError::Unauthorized {});
-    }
-
-    let mut fantoken_info = FANTOKEN_INFO.load(deps.storage)?;
-
-    if fantoken_info.denom.is_empty() {
-        return Err(ContractError::FantokenNotCreated {});
-    }
-
-    // Update stored URI
-    fantoken_info.uri = new_uri.clone();
-    FANTOKEN_INFO.save(deps.storage, &fantoken_info)?;
-
-    let set_uri_msg = AnyMsg {
-        type_url: "/bitsong.fantoken.v1beta1.MsgSetUri".into(),
-        value: to_json_binary(&SetFantokenUriMsg {
-            denom: fantoken_info.denom,
-            uri: new_uri,
-            authority: env.contract.address.to_string(),
-        })?,
-    };
-
-    Ok(Response::new().add_message(set_uri_msg))
-}
+  
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
@@ -271,9 +153,67 @@ fn query_epoch_id(deps: Deps, id: u128) -> StdResult<GetEpochResponse> {
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn sudo(deps: DepsMut, env: Env, msg: crate::SudoMsg) -> Result<Response, ContractError> {
+pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> Result<Response, ContractError> {
     match ZKTLS_ENABLED.load(deps.storage)? {
-        true => BtsgAccountIrl::process_sudo_auth(deps, env, &msg),
+        true => BtsgAccountDao::process_sudo_auth(deps, &msg),
         false => Ok(Response::new()),
     }
+}
+
+fn sudo_authentication_request(
+    deps: DepsMut,
+    env: Env,
+    auth_req: Box<AuthenticationRequest>,
+) -> Result<Response, ContractError> {
+    // let pubkeys = WAVS_PUBKEY.load(deps.storage)?;
+    let mut resp = Response::new().add_attribute("action", "auth_req");
+
+    // if auth_req.signature_data.signers.len() != pubkeys.len() {
+    //     return Err(ContractError::InvalidPubkeyCount { a, b });
+    // }
+
+    let Proof {
+        claimInfo,
+        signedClaim,
+    }: Proof = from_json(&auth_req.signature)?;
+    match EPOCHS.may_load(deps.storage, signedClaim.claim.epoch.into())? {
+        Some(epoch) => {
+            // Hash the claims, and verify with identifier hash
+            let hashed = claimInfo.hash();
+            if signedClaim.claim.identifier != hashed {
+                return Err(ContractError::HashMismatchErr {});
+            }
+
+            // Fetch witness for claim
+            let expected_witness = fetch_witness_for_claim(
+                epoch,
+                signedClaim.claim.identifier.clone(),
+                env.block.time,
+            );
+
+            let expected_witness_addresses = Witness::get_addresses(expected_witness);
+
+            // recover witness address from SignedClaims Object
+            let signed_witness = signedClaim.recover_signers_of_signed_claim(deps)?;
+
+            // make sure the minimum requirement for witness is satisfied
+            if expected_witness_addresses.len() != signed_witness.len() {
+                return Err(ContractError::WitnessMismatchErr {});
+            }
+
+            // Ensure for every signature in the sign, a expected witness exists from the database
+            for signed in signed_witness {
+                let signed_event = Event::new("signer").add_attribute("sig", signed.clone());
+                resp = resp.add_event(signed_event);
+                if !expected_witness_addresses.contains(&signed) {
+                    return Err(ContractError::SignatureErr {});
+                }
+            }
+        }
+        None => return Err(ContractError::NotFoundErr {}),
+    }
+
+    // // EXAMPLE IMPLEMENTATION FOR BLS12_381 VERIFICATION
+
+    Ok(resp)
 }
