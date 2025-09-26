@@ -34,8 +34,7 @@ btsg-zktls                   = { path = "contracts/smart-accounts/btsg-zktls"  }
 
 bs721                        = { git = "https://github.com/permissionlessweb/bs-nfts", branch = "feat/cosmwasm@v3",package = "bs721" }
 bs721-base                   = { git = "https://github.com/permissionlessweb/bs-nfts", branch = "feat/cosmwasm@v3"}
-# bitsong-rs                   = { git = "https://github.com/permissionlessweb/rs-bitsong", default-features = false, features = ["cosmwasm"]}
-bitsong-rs                   = { path = "../../rs-bitsong/bitsong-rs", default-features = false, features = ["cosmwasm"]}
+bitsong-rs                   = { git = "https://github.com/permissionlessweb/rs-bitsong", default-features = false, features = ["cosmwasm"]}
 bs-controllers               = { git = "https://github.com/permissionlessweb/bs-nfts", branch = "feat/cosmwasm@v3", library = "bs-controllers" } 
 btsg-nft-scripts             = { git = "https://github.com/permissionlessweb/bs-nfts", branch = "feat/cosmwasm@v3", package = "btsg-nft-scripts" }
 saa                          = { package = "smart-account-auth", git = "https://github.com/permissionlessweb/smart-account-auth",  branch = "feat/cosmwasm@v3", features = ["cosmwasm", "native", "curves", "session", "utils", "types"]}
