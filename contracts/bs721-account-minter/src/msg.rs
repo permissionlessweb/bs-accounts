@@ -1,6 +1,6 @@
 use btsg_account::minter::{Config, SudoParams};
 use cosmwasm_schema::{cw_serde, QueryResponses};
-use cosmwasm_std::{Addr, Uint128};
+use cosmwasm_std::{Addr, Uint256};
 
 use cw_ownable::cw_ownable_execute;
 
@@ -19,9 +19,9 @@ pub struct InstantiateMsg {
     /// Maximum length an account id can be
     pub max_account_length: u32,
     /// Base price for a account. Used to calculate premium for small account accounts
-    pub base_price: Uint128,
+    pub base_price: Uint256,
     /// Base delegated tokens for an account. Used to calculate minimum required to mint a name
-    pub base_delegation: Uint128,
+    pub base_delegation: Uint256,
     /// # of seconds to delay allowing minting to occur from contract creation. Defaults to 1 second
     pub mint_start_delay: Option<u64>,
 }
@@ -43,8 +43,8 @@ pub enum SudoMsg {
     UpdateParams {
         min_account_length: u32,
         max_account_length: u32,
-        base_price: Uint128,
-        base_delegation: Uint128,
+        base_price: Uint256,
+        base_delegation: Uint256,
     },
     UpdateAccountCollection {
         collection: String,

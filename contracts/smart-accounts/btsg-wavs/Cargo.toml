@@ -26,8 +26,8 @@ cw-orch            = { workspace = true }
 cw-utils           = { workspace = true }
 cw2                = { workspace = true }
 
- 
-btsg-auth = { workspace = true }
+btsg-auth          = { workspace = true }
+btsg-account       = { workspace = true }
 
 
 schemars           = { workspace = true }
@@ -36,7 +36,6 @@ thiserror          = { workspace = true }
 
 
 [dev-dependencies]
-prost = "0.11.9"
-cw-multi-test = {version = "2.2.0",features = ["stargate", "cosmwasm_2_1"]}
+prost = "0.14.1"
 derivative = "2.2"
 anyhow = "1"

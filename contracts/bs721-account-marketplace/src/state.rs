@@ -1,5 +1,5 @@
 use bs_controllers::Hooks;
-use cosmwasm_std::{Addr, Decimal, StdResult, Storage, Timestamp, Uint128};
+use cosmwasm_std::{Addr, Decimal, StdResult, Storage, Timestamp, Uint128, Uint256};
 use cw_storage_macro::index_list;
 use cw_storage_plus::{IndexedMap, Item, MultiIndex, UniqueIndex};
 
@@ -100,12 +100,12 @@ pub fn asks<'a>() -> IndexedMap<AskKey, Ask, AskIndicies<'a>> {
 pub struct Bid {
     pub token_id: TokenId,
     pub bidder: Addr,
-    pub amount: Uint128,
+    pub amount: Uint256,
     pub created_time: Timestamp,
 }
 
 impl Bid {
-    pub fn new(token_id: &str, bidder: Addr, amount: Uint128, created_time: Timestamp) -> Self {
+    pub fn new(token_id: &str, bidder: Addr, amount: Uint256, created_time: Timestamp) -> Self {
         Bid {
             token_id: token_id.to_string(),
             bidder,
@@ -126,7 +126,8 @@ pub fn bid_key(token_id: &str, bidder: &Addr) -> BidKey {
 #[index_list(Bid)]
 pub struct BidIndicies<'a> {
     pub bidder: MultiIndex<'a, Addr, Bid, BidKey>,
-    pub price: MultiIndex<'a, (String, u128), Bid, BidKey>,
+    // (String,Uint256 [as string])
+    pub price: MultiIndex<'a, (String, String), Bid, BidKey>,
     pub created_time: MultiIndex<'a, (String, u64), Bid, BidKey>,
 }
 
@@ -134,7 +135,7 @@ pub fn bids<'a>() -> IndexedMap<BidKey, Bid, BidIndicies<'a>> {
     let indexes = BidIndicies {
         bidder: MultiIndex::new(|_pk: &[u8], b: &Bid| b.bidder.clone(), "b2", "b2__b"),
         price: MultiIndex::new(
-            |_pk: &[u8], b: &Bid| (b.token_id.clone(), b.amount.u128()),
+            |_pk: &[u8], b: &Bid| (b.token_id.clone(), b.amount.into()),
             "b2", // Change this to match the primary key namespace
             "b2__price",
         ),
@@ -145,4 +146,22 @@ pub fn bids<'a>() -> IndexedMap<BidKey, Bid, BidIndicies<'a>> {
         ),
     };
     IndexedMap::new("b2", indexes)
+}
+
+/// Offset for bid pagination
+#[cosmwasm_schema::cw_serde]
+pub struct BidOffset {
+    pub price: Uint128,
+    pub token_id: TokenId,
+    pub bidder: Addr,
+}
+
+impl BidOffset {
+    pub fn new(price: Uint128, token_id: TokenId, bidder: Addr) -> Self {
+        BidOffset {
+            price,
+            token_id,
+            bidder,
+        }
+    }
 }

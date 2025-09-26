@@ -6,6 +6,7 @@ use bs721_account_marketplace::msgs::{
     ExecuteMsgFns as _, QueryMsgFns, SudoMsg as MarketplaceSudoMsg,
 };
 use bs721_account_minter::msg::{ExecuteMsgFns as _, QueryMsgFns as _};
+use bs721_account_minter::ContractError;
 use cosmwasm_std::Uint128;
 use cosmwasm_std::{coins, to_json_binary, Decimal};
 use cw_orch::mock::cw_multi_test::{SudoMsg, WasmSudo};
@@ -21,10 +22,6 @@ pub fn init() -> anyhow::Result<()> {
 }
 
 mod execute {
-
-    use bs721_account_minter::ContractError;
-    use cosmwasm_std::coin;
-
     use super::*;
 
     #[test]

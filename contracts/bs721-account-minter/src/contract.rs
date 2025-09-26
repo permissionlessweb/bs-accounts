@@ -162,7 +162,7 @@ pub fn sudo(deps: DepsMut, _env: Env, msg: SudoMsg) -> Result<Response, Contract
 
 #[cfg(test)]
 mod tests {
-    use cosmwasm_std::{coin, Addr, MessageInfo};
+    use cosmwasm_std::{Addr, Coin, MessageInfo, Uint256};
 
     use crate::commands::{validate_account, validate_payment};
 
@@ -200,45 +200,42 @@ mod tests {
 
     #[test]
     fn check_validate_payment() {
-        let base_price = 100_000_000;
+        let base_price: Uint256 = Uint256::new(100_000_000);
 
         let info = MessageInfo {
             sender: Addr::unchecked("sender"),
-            funds: vec![coin(base_price, "ubtsg")],
+            funds: vec![Coin::new(base_price, "ubtsg")],
         };
         assert_eq!(
             validate_payment(5, &info, base_price)
                 .unwrap()
                 .unwrap()
-                .amount
-                .u128(),
+                .amount,
             base_price
         );
 
         let info = MessageInfo {
             sender: Addr::unchecked("sender"),
-            funds: vec![coin(base_price * 10, "ubtsg")],
+            funds: vec![Coin::new(base_price * Uint256::new(10u128), "ubtsg")],
         };
         assert_eq!(
             validate_payment(4, &info, base_price)
                 .unwrap()
                 .unwrap()
-                .amount
-                .u128(),
-            base_price * 10
+                .amount,
+            base_price * Uint256::new(10u128)
         );
 
         let info = MessageInfo {
             sender: Addr::unchecked("sender"),
-            funds: vec![coin(base_price * 100, "ubtsg")],
+            funds: vec![Coin::new(base_price * Uint256::new(100u128), "ubtsg")],
         };
         assert_eq!(
             validate_payment(3, &info, base_price)
                 .unwrap()
                 .unwrap()
-                .amount
-                .u128(),
-            base_price * 100
+                .amount,
+            base_price * Uint256::new(100u128)
         );
     }
 }

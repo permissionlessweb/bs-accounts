@@ -9,48 +9,30 @@ edition = "2021"
 [lib]
 crate-type = ["cdylib", "rlib"]
 
-[profile.release]
-opt-level = 3
-debug = false
-rpath = false
-lto = true
-debug-assertions = false
-codegen-units = 1
-panic = 'abort'
-incremental = false
-overflow-checks = true
-
 [features]
+default = []
 # use library feature to disable all instantiate/execute/query exports
 library = []
+abstract = ["dep:abstract-std"]
 interface = ["dep:cw-orch"]
 
-[package.metadata.scripts]
-optimize = """docker run --rm -v "$(pwd)":/code \
-  --mount type=volume,source="$(basename "$(pwd)")_cache",target=/target \
-  --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-  cosmwasm/optimizer:0.15.0
-"""
-
 [dependencies]
-abstract-std  = { workspace = true }
-bs721 = { workspace = true}
-bs721-base   = { workspace = true, features = ["library"]}
-bs721-account-marketplace = { path = "../bs721-account-marketplace", features = ["library"] }
-btsg-account = { path = "../../packages/btsg-account"}
-cosmwasm-schema = { workspace = true }
-cosmwasm-std = { workspace = true}
-cw2 = { workspace = true}
-
-bs-controllers = { workspace = true }
-cw-orch = { workspace = true, optional = true }
-cw-ownable = { workspace = true }
-cw-storage-plus = { workspace = true }
-cw-utils = { workspace = true }
-schemars = { workspace = true }
-serde = { workspace = true, default-features = false, features = ["derive"] }
-subtle-encoding = { workspace = true, features = ["bech32-preview"] }
-thiserror = { workspace = true }
+bs721                     = { workspace = true}
+bs721-base                = { workspace = true, features = ["library"]}
+bs721-account-marketplace = { workspace = true, features = ["library"] }
+bs-controllers            = { workspace = true }
+btsg-account              = { workspace = true }
+cosmwasm-schema           = { workspace = true }
+cosmwasm-std              = { workspace = true}
+abstract-std              = { workspace = true, optional = true }
+cw-orch                   = { workspace = true, optional = true }
+cw-ownable                = { workspace = true }
+cw-storage-plus           = { workspace = true }
+cw2                       = { workspace = true}
+cw-utils                  = { workspace = true }
+schemars                  = { workspace = true }
+serde                     = { workspace = true, default-features = false, features = ["derive"] }
+subtle-encoding           = { workspace = true, features = ["bech32-preview"] }
+thiserror                 = { workspace = true }
 
 [dev-dependencies]
-cw-multi-test = {version = "2.2.0",features = ["stargate", "cosmwasm_2_1"]}

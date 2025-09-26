@@ -141,18 +141,18 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
 pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, ContractError> {
     let current_version = cw2::get_contract_version(deps.storage)?;
     if current_version.contract != ACCOUNT_MARKETPLACE {
-        return Err(StdError::generic_err("Cannot upgrade to a different contract").into());
+        return Err(StdError::msg("Cannot upgrade to a different contract").into());
     }
     let version: Version = current_version
         .version
         .parse()
-        .map_err(|_| StdError::generic_err("Invalid contract version"))?;
+        .map_err(|_| StdError::msg("Invalid contract version"))?;
     let new_version: Version = CONTRACT_VERSION
         .parse()
-        .map_err(|_| StdError::generic_err("Invalid contract version"))?;
+        .map_err(|_| StdError::msg("Invalid contract version"))?;
 
     if version > new_version {
-        return Err(StdError::generic_err("Cannot upgrade to a previous contract version").into());
+        return Err(StdError::msg("Cannot upgrade to a previous contract version").into());
     }
     // if same version return
     if version == new_version {

@@ -1,5 +1,5 @@
 use crate::hooks::{prepare_ask_hook, prepare_bid_hook, prepare_sale_hook};
-use crate::msgs::{BidOffset, Bidder, ConfigResponse, HookAction};
+use crate::msgs::{Bidder, ConfigResponse, HookAction};
 use crate::{
     error::ContractError,
     // hooks::{prepare_ask_hook, prepare_bid_hook, prepare_sale_hook},
@@ -8,11 +8,10 @@ use crate::{
 use btsg_account::{charge_fees, Metadata, NATIVE_DENOM};
 
 use cosmwasm_std::{
-    coin, to_json_binary, Addr, BankMsg, Decimal, Deps, DepsMut, Empty, Env, Event, Fraction,
+    to_json_binary, Addr, BankMsg, Coin, Decimal, Deps, DepsMut, Empty, Env, Event, Fraction,
     MessageInfo, Order, Response, StdError, StdResult, Storage, SubMsg, SubMsgResult, Uint128,
-    WasmMsg,
+    Uint256, WasmMsg,
 };
-use std::marker::PhantomData;
 
 use bs721::{Bs721ExecuteMsg, OwnerOfResponse};
 use bs721_base::helpers::Bs721Contract;
@@ -63,7 +62,7 @@ pub fn execute_set_ask(
     let collection = ACCOUNT_COLLECTION.load(deps.storage)?;
 
     // check if collection is approved to transfer on behalf of the seller
-    let ops = Bs721Contract::<Empty, Empty>(collection, PhantomData, PhantomData).all_operators(
+    let ops = Bs721Contract::<Empty, Empty>(collection, Empty {}, Empty {}).all_operators(
         &deps.querier,
         seller.to_string(),
         false,
@@ -103,7 +102,6 @@ pub fn execute_remove_ask(
     token_id: &str,
 ) -> Result<Response, ContractError> {
     nonpayable(&info)?;
-
     // `ask` can only be removed by burning from the collection
     let collection = ACCOUNT_COLLECTION.load(deps.storage)?;
     if info.sender != collection {
@@ -168,7 +166,7 @@ pub fn execute_set_bid(
     asks().load(deps.storage, ask_key)?;
 
     let bid_price = must_pay(&info, NATIVE_DENOM)?;
-    if bid_price < params.min_price {
+    if bid_price < params.min_price.into() {
         return Err(ContractError::PriceTooSmall(bid_price));
     }
 
@@ -180,7 +178,7 @@ pub fn execute_set_bid(
         bids().remove(deps.storage, bid_key)?;
         let refund_bidder = BankMsg::Send {
             to_address: bidder.to_string(),
-            amount: vec![coin(existing_bid.amount.u128(), NATIVE_DENOM)],
+            amount: vec![Coin::new(existing_bid.amount, NATIVE_DENOM)],
         };
         res = res.add_message(refund_bidder)
     }
@@ -214,7 +212,7 @@ pub fn execute_remove_bid(
 
     let refund_bidder_msg = BankMsg::Send {
         to_address: bid.bidder.to_string(),
-        amount: vec![coin(bid.amount.u128(), NATIVE_DENOM)],
+        amount: vec![Coin::new(bid.amount, NATIVE_DENOM)],
     };
 
     let hook = prepare_bid_hook(deps.as_ref(), &bid, HookAction::Delete)?;
@@ -252,7 +250,7 @@ pub fn execute_accept_bid(
     let bid = bids().load(deps.storage, bid_key.clone())?;
 
     // Check if token is approved for transfer
-    Bs721Contract::<Empty, Empty>(collection, PhantomData, PhantomData).approval(
+    Bs721Contract::<Empty, Empty>(collection, Empty {}, Empty {}).approval(
         &deps.querier,
         token_id,
         info.sender.as_ref(),
@@ -293,7 +291,7 @@ pub fn execute_accept_bid(
 fn finalize_sale(
     deps: Deps,
     ask: Ask,
-    price: Uint128,
+    price: Uint256,
     buyer: Addr,
     res: &mut Response,
 ) -> StdResult<()> {
@@ -330,7 +328,7 @@ fn finalize_sale(
 /// Payout a bid
 fn payout(
     deps: Deps,
-    payment: Uint128,
+    payment: Uint256,
     payment_recipient: Addr,
     res: &mut Response,
 ) -> StdResult<()> {
@@ -341,14 +339,14 @@ fn payout(
         params.trading_fee_percent.denominator(),
     );
     if fee > payment {
-        return Err(StdError::generic_err("Fees exceed payment"));
+        return Err(StdError::msg("Fees exceed payment"));
     }
     charge_fees(res, fee);
 
     // pay seller
     let seller_share_msg = BankMsg::Send {
         to_address: payment_recipient.to_string(),
-        amount: vec![coin((payment - fee).u128(), NATIVE_DENOM.to_string())],
+        amount: vec![Coin::new(payment - fee, NATIVE_DENOM.to_string())],
     };
     res.messages.push(SubMsg::new(seller_share_msg));
 
@@ -370,8 +368,11 @@ fn only_owner(
     collection: &Addr,
     token_id: &str,
 ) -> Result<OwnerOfResponse, ContractError> {
-    let res = Bs721Contract::<Empty, Empty>(collection.clone(), PhantomData, PhantomData)
-        .owner_of(&deps.querier, token_id, false)?;
+    let res = Bs721Contract::<Empty, Empty>(collection.clone(), Empty {}, Empty {}).owner_of(
+        &deps.querier,
+        token_id,
+        false,
+    )?;
     if res.owner != info.sender.to_string() {
         return Err(ContractError::UnauthorizedOwner {});
     }
@@ -539,7 +540,7 @@ pub fn query_bids_sorted_by_price(
 
     let start = start_after.map(|offset| {
         Bound::exclusive((
-            (offset.token_id.clone(), offset.price.u128()),
+            (offset.token_id.clone(), offset.price.into()),
             bid_key(&offset.token_id, &offset.bidder),
         ))
     });
@@ -562,7 +563,7 @@ pub fn reverse_query_bids_sorted_by_price(
 
     let end = start_before.map(|offset| {
         Bound::exclusive((
-            (offset.token_id.clone(), offset.price.u128()),
+            (offset.token_id.clone(), offset.price.into()),
             bid_key(&offset.token_id, &offset.bidder),
         ))
     });

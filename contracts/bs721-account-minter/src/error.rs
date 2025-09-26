@@ -40,10 +40,10 @@ pub enum ContractError {
     AccountTooLong {},
 
     #[error("Incorrect delegation.  got: {got}, expected {expected}")]
-    IncorrectDelegation { got: u128, expected: u128 },
+    IncorrectDelegation { got: String, expected: String },
 
     #[error("Incorrect payment, got: {got}, expected {expected}")]
-    IncorrectPayment { got: u128, expected: u128 },
+    IncorrectPayment { got: String, expected: String },
 
     #[error("InvalidTradingStartTime {0} < {1}")]
     InvalidTradingStartTime(Timestamp, Timestamp),

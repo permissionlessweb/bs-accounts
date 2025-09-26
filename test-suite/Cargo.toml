@@ -1,0 +1,48 @@
+[package]
+name = "btsg-account-test-suite"
+edition    = { workspace = true }
+license    = { workspace = true } 
+repository = { workspace = true }
+version    = { workspace = true }
+
+[dependencies]
+# Contract dependencies
+bs721                         = { workspace = true }
+bs721-account                 = { workspace = true }
+bs721-account-marketplace     = { workspace = true }
+bs721-account-minter          = { workspace = true }
+bs721-base                    = { workspace = true }
+btsg-account                  = { workspace = true }
+btsg-auth                     = { workspace = true }
+btsg-irl                      = { workspace = true }
+btsg-wavs                     = { workspace = true }
+btsg-zktls                    = { workspace = true }
+easy-addr                     = { workspace = true }
+
+# CosmWasm dependencies
+cosmwasm-std                  = { workspace = true }
+cosmwasm-schema               = { workspace = true }
+cw-multi-test                 = { version = "3.0.1", features = ["stargate", "cosmwasm_2_1", "staking"] }
+cw-ownable                    = { workspace = true }
+cw-utils                      = { workspace = true }
+cw2                           = { workspace = true }
+cw-storage-plus               = { workspace = true }
+
+# Crypto dependencies
+cosmwasm-crypto               = { workspace = true }
+ecdsa                         = { workspace = true }
+k256                          = { workspace = true }
+sha2                          = { workspace = true }
+ripemd                        = { workspace = true }
+
+# Utility dependencies
+anyhow                        = { version = "1.0" }
+serde                         = { workspace = true }
+serde_json                    = { workspace = true }
+bech32                        = { workspace = true }
+
+[dev-dependencies]
+cw-multi-test                 = { version = "3.0.0", features = ["stargate", "cosmwasm_2_1", "staking"] }
+
+[lib]
+crate-type = ["cdylib", "rlib"]

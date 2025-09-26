@@ -71,6 +71,7 @@ pub mod entry {
             .add_attribute("action", "instantiate")
             .add_attribute("bs721_account_address", env.contract.address.to_string()))
     }
+    
     #[cfg_attr(not(feature = "library"), entry_point)]
     pub fn execute(
         deps: DepsMut,

@@ -1,20 +1,13 @@
-use btsg_auth::{
-    AuthenticationRequest, ConfirmExecutionRequest, OnAuthenticatorAddedRequest,
-    OnAuthenticatorRemovedRequest, TrackRequest,
-};
-use cosmwasm_std::{to_json_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
-use cw2::set_contract_version;
-use saa_common::Verifiable;
-
-use crate::{
-    msg::{ExecuteMsg, InstantiateMsg, QueryMsg, SudoMsg},
-    state::PUBLIC_KEY,
-    ContractError,
-};
+use btsg_account::traits::default::BtsgAccountTrait;
 
 use cosmwasm_std::entry_point;
+use cosmwasm_std::{Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
+use cw2::set_contract_version;
 
-use saa::Ed25519;
+use crate::{
+    state::PUBLIC_KEY,
+    BtsgAccountEd25519, ContractError, {ExecuteMsg, InstantiateMsg, QueryMsg},
+};
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:btsg-ed25519";
@@ -56,72 +49,12 @@ pub fn execute(
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn sudo(deps: DepsMut, _env: Env, msg: SudoMsg) -> Result<Response, ContractError> {
-    match msg {
-        btsg_auth::AuthenticatorSudoMsg::OnAuthenticatorAdded(auth_add) => {
-            sudo_on_authenticator_added_request(deps, auth_add)
-        }
-        btsg_auth::AuthenticatorSudoMsg::OnAuthenticatorRemoved(auth_remove) => {
-            sudo_on_authenticator_removed_request(deps, auth_remove)
-        }
-        btsg_auth::AuthenticatorSudoMsg::Authenticate(auth_req) => {
-            sudo_authentication_request(deps, auth_req)
-        }
-        btsg_auth::AuthenticatorSudoMsg::Track(track_req) => sudo_track_request(deps, track_req),
-        btsg_auth::AuthenticatorSudoMsg::ConfirmExecution(conf_exec_req) => {
-            sudo_confirm_execution_request(deps, conf_exec_req)
-        }
-    }
-}
-
-fn sudo_on_authenticator_added_request(
-    _deps: DepsMut,
-    auth_added: OnAuthenticatorAddedRequest,
-) -> Result<Response, ContractError> {
-    // small storage writes, for example global contract entropy or count of registered accounts
-    match auth_added.authenticator_params {
-        Some(_) => Ok(Response::new().add_attribute("action", "auth_added_req")),
-        None => Err(ContractError::Unauthorized {}),
-    }
-}
-
-fn sudo_on_authenticator_removed_request(
-    _deps: DepsMut,
-    _auth_removed: OnAuthenticatorRemovedRequest,
-) -> Result<Response, ContractError> {
-    Ok(Response::new().add_attribute("action", "auth_removed_req"))
-}
-
-fn sudo_authentication_request(
+pub fn sudo(
     deps: DepsMut,
-    req: Box<AuthenticationRequest>,
+    env: Env,
+    msg: <BtsgAccountEd25519 as BtsgAccountTrait>::SudoMsg,
 ) -> Result<Response, ContractError> {
-    let cred = Ed25519 {
-        pubkey: PUBLIC_KEY.load(deps.storage)?.as_bytes().into(),
-        message: to_json_binary(&req.tx_data.msgs)?,
-        signature: req.signature,
-    };
-
-    // verify ed25519 request
-    cred.verify_cosmwasm(deps.api)?;
-
-    Ok(Response::new().add_attribute("action", "auth_req"))
-}
-
-fn sudo_track_request(
-    _deps: DepsMut,
-    TrackRequest { .. }: TrackRequest,
-) -> Result<Response, ContractError> {
-    // this is where we handle any processes after authentication, regarding message contents, prep to track balances prior to msg execution, etc..
-    Ok(Response::new().add_attribute("action", "track_req"))
-}
-
-fn sudo_confirm_execution_request(
-    _deps: DepsMut,
-    _confirm_execution_req: ConfirmExecutionRequest,
-) -> Result<Response, ContractError> {
-    // here is were we compare balances post event execution, based on data saved from sudo_track_request,etc..
-    Ok(Response::new().add_attribute("action", "conf_exec_req"))
+    BtsgAccountEd25519::process_sudo_auth(deps, env, &msg)
 }
 
 pub fn execute_update_owner(
@@ -159,7 +92,7 @@ mod test {
             signature: signature.clone(),
             message,
         };
-        let res = cred.verify_cosmwasm(deps.as_ref().api);
+        let res = cred.verify(deps.as_ref());
         println!("Res: {:?}", res);
         assert!(res.is_ok())
     }

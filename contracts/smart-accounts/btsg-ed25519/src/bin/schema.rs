@@ -1,6 +1,6 @@
 use cosmwasm_schema::write_api;
 
-use btsg_ed25519::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use btsg_ed25519::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
 fn main() {
     write_api! {

@@ -6,7 +6,7 @@ use thiserror::Error;
 
 use crate::AccountAuthenticator;
 
-#[derive(Error, Debug, PartialEq)]
+#[derive(Error, Debug)]
 pub enum CompositeAuthenticatorError {
     #[error("{0}")]
     StdError(#[from] StdError),
@@ -172,21 +172,21 @@ mod tests {
     #[case("54.666.2.1", Ok(CompositeId { root: 54, path: vec![666, 2, 1] }))]
     #[case(
         "1,2,3",
-        Err(CompositeAuthenticatorError::invalid_composite_id(composite_id))
+       Err( CompositeAuthenticatorError::invalid_composite_id(composite_id).to_string())
     )]
     #[case(
         "1.x.3",
-        Err(CompositeAuthenticatorError::invalid_composite_id(composite_id))
+    Err(CompositeAuthenticatorError::invalid_composite_id(composite_id).to_string())
     )]
     #[case(
         "abc",
-        Err(CompositeAuthenticatorError::invalid_composite_id(composite_id))
+    Err(CompositeAuthenticatorError::invalid_composite_id(composite_id).to_string())
     )]
     fn test_composite_id_from_str(
         #[case] composite_id: &str,
-        #[case] expected: Result<CompositeId, CompositeAuthenticatorError>,
+        #[case] expected: Result<CompositeId, String>,
     ) {
-        let result = CompositeId::from_str(composite_id);
+        let result = CompositeId::from_str(composite_id).map_err(|e| e.to_string());
         assert_eq!(result, expected);
 
         if result.is_ok() {
@@ -213,8 +213,9 @@ mod tests {
             r#type: "AllOf".to_string(),
         };
 
-        let result: Result<CosmwasmAuthenticatorData, CompositeAuthenticatorError> =
-            account_auth.child_authenticator_data(&[]);
+        let result: Result<CosmwasmAuthenticatorData, String> = account_auth
+            .child_authenticator_data(&[])
+            .map_err(|e| e.to_string());
         assert_eq!(result.unwrap(), target_data);
 
         // depth 1
@@ -239,8 +240,9 @@ mod tests {
             r#type: "AllOf".to_string(),
         };
 
-        let result: Result<CosmwasmAuthenticatorData, CompositeAuthenticatorError> =
-            account_auth.child_authenticator_data(&[1]);
+        let result: Result<CosmwasmAuthenticatorData, String> = account_auth
+            .child_authenticator_data(&[1])
+            .map_err(|e: CompositeAuthenticatorError| e.to_string());
         assert_eq!(result.unwrap(), target_data);
 
         // more depth
@@ -280,22 +282,27 @@ mod tests {
             r#type: "AllOf".to_string(),
         };
 
-        let result: Result<CosmwasmAuthenticatorData, CompositeAuthenticatorError> =
-            account_auth.clone().child_authenticator_data(&[0, 1]);
+        let result: Result<CosmwasmAuthenticatorData, String> = account_auth
+            .clone()
+            .child_authenticator_data(&[0, 1])
+            .map_err(|e| e.to_string());
         assert_eq!(result.unwrap(), target_data);
 
-        let result: Result<CosmwasmAuthenticatorData, CompositeAuthenticatorError> =
-            account_auth.clone().child_authenticator_data(&[0, 2]);
+        let result: Result<CosmwasmAuthenticatorData, String> = account_auth
+            .clone()
+            .child_authenticator_data(&[0, 2])
+            .map_err(|e| e.to_string());
         assert_eq!(
-            result.unwrap_err(),
-            CompositeAuthenticatorError::invalid_composite_id("1.0.2")
+            result.unwrap_err().to_string(),
+            CompositeAuthenticatorError::invalid_composite_id("1.0.2").to_string()
         );
 
-        let result: Result<CosmwasmAuthenticatorData, CompositeAuthenticatorError> =
-            account_auth.child_authenticator_data(&[10]);
+        let result: Result<CosmwasmAuthenticatorData, String> = account_auth
+            .child_authenticator_data(&[10])
+            .map_err(|e| e.to_string());
         assert_eq!(
-            result.unwrap_err(),
-            CompositeAuthenticatorError::invalid_composite_id("1.10")
+            result.unwrap_err().to_string(),
+            CompositeAuthenticatorError::invalid_composite_id("1.10").to_string()
         );
     }
 

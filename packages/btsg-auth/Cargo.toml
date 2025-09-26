@@ -15,10 +15,9 @@ cosmwasm-std    = { workspace = true }
 cw-utils        = { workspace = true }
 serde_json      = { workspace = true }
 sha2            = { workspace = true }
- 
 schemars        = { workspace = true }
 serde           = { workspace = true }
 thiserror       = { workspace = true }
-
+hex = "0.4.3"
 [dev-dependencies]
 rstest = "0.18.2"

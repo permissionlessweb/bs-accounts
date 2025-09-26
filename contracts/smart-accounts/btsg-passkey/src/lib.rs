@@ -1,6 +1,6 @@
-pub mod contract;
-mod error;
-pub mod msg;
-mod state;
+// pub mod contract;
+// pub mod msg;
+// mod error;
+// mod state;
 
-pub use crate::error::ContractError;
+// pub use crate::error::ContractError;

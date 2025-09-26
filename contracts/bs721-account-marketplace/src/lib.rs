@@ -9,4 +9,4 @@ pub mod state;
 pub use error::ContractError;
 
 #[cfg(test)]
-pub mod unit_tests;
+mod unit_tests;

@@ -107,7 +107,7 @@ fn sudo_authentication_request(
     }
 
     // verify passkey request
-    cred.verify_cosmwasm(deps.api)?;
+    // cred.verify(deps)?;
 
     Ok(Response::new().add_attribute("action", "auth_req"))
 }
