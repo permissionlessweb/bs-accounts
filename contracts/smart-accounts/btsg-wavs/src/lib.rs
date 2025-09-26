@@ -132,7 +132,7 @@ impl btsg_account::traits::default::BtsgAccountTrait for BtsgAccountWavs {
         Ok(Response::new())
     }
 
-    fn authenticate(
+    fn extended_authenticate(
         deps: cosmwasm_std::DepsMut,
         auth: Self::AuthMethodStructs,
     ) -> Self::AuthProcessResult {

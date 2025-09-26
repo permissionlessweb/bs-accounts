@@ -1,6 +1,7 @@
+use btsg_account_backup::BtsgAccountBackup;
 use cosmwasm_schema::write_api;
 
-use btsg_dao::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use btsg_account_backup::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
 fn main() {
     write_api! {

@@ -7,5 +7,6 @@ fn main() {
         instantiate: InstantiateMsg,
         execute: ExecuteMsg,
         query: QueryMsg,
+        sudo: btsg_auth::AuthenticatorSudoMsg,
     }
 }

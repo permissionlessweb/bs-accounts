@@ -1,24 +1,38 @@
 pub mod contract;
 mod error;
-pub mod msg;
 mod state;
 
+use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Env, Response};
+
 use saa::{EthPersonalSign, Verifiable};
-use serde::{Deserialize, Serialize};
 
-pub use crate::error::ContractError;
-use crate::state::PUBLIC_KEY;
+pub use crate::{error::ContractError, state::PUBLIC_KEY};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+use cosmwasm_std::Addr;
+
+#[cw_serde]
+pub struct InstantiateMsg {
+    pub owner: Option<Addr>,
+    pub pubkey: String,
+}
+
+#[cw_serde]
+pub enum ExecuteMsg {}
+
+#[cw_serde]
+#[derive(QueryResponses, cw_orch::QueryFns)]
+pub enum QueryMsg {}
+
+#[cw_serde]
 pub struct BtsgAccountEthStructs {}
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cw_serde]
 pub struct BtsgAccountEd25519 {}
 impl btsg_account::traits::default::BtsgAccountTrait for BtsgAccountEd25519 {
-    type InstantiateMsg = crate::msg::InstantiateMsg;
-    type ExecuteMsg = crate::msg::ExecuteMsg;
-    type QueryMsg = crate::msg::QueryMsg;
+    type InstantiateMsg = crate::InstantiateMsg;
+    type ExecuteMsg = crate::ExecuteMsg;
+    type QueryMsg = crate::QueryMsg;
     type SudoMsg = btsg_auth::AuthenticatorSudoMsg;
     type ContractError = ContractError;
     type AuthMethodStructs = BtsgAccountEthStructs;
@@ -47,8 +61,6 @@ impl btsg_account::traits::default::BtsgAccountTrait for BtsgAccountEd25519 {
         env: Env,
         req: &btsg_auth::OnAuthenticatorAddedRequest,
     ) -> Self::AuthProcessResult {
-        //TODO: check member is a part of all DAOS registering for membership check
-        //TODO: register RBAM json filters for specific DAOs, if any: https://github.com/DA0-DA0/dao-contracts/blob/development/packages/cw-jsonfilter/README.md
         Ok(Response::new())
     }
 
@@ -98,10 +110,10 @@ impl btsg_account::traits::default::BtsgAccountTrait for BtsgAccountEd25519 {
         Ok(Response::new())
     }
 
-    fn authenticate(
+    fn extended_authenticate(
         deps: cosmwasm_std::DepsMut,
         auth: Self::AuthMethodStructs,
     ) -> Self::AuthProcessResult {
-        todo!()
+        Ok(Response::new())
     }
 }

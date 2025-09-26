@@ -8,16 +8,16 @@ pub mod msg;
 pub mod state;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct BtsgAccountDaoStructs {}
+pub struct BtsgAccountBackupStructs {}
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct BtsgAccountDao {}
-impl btsg_account::traits::default::BtsgAccountTrait for BtsgAccountDao {
+pub struct BtsgAccountBackup {}
+impl btsg_account::traits::default::BtsgAccountTrait for BtsgAccountBackup {
     type InstantiateMsg = crate::msg::InstantiateMsg;
     type ExecuteMsg = crate::msg::ExecuteMsg;
     type QueryMsg = crate::msg::QueryMsg;
     type SudoMsg = btsg_auth::AuthenticatorSudoMsg;
     type ContractError = crate::error::ContractError;
-    type AuthMethodStructs = BtsgAccountDaoStructs;
+    type AuthMethodStructs = BtsgAccountBackupStructs;
     type AuthProcessResult = Result<Response, ContractError>;
 
     fn process_sudo_auth(

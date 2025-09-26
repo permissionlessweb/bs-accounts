@@ -22,6 +22,7 @@ pub struct InstantiateMsg {
 #[cw_serde]
 pub enum ExecuteMsg {}
 #[cw_serde]
+#[derive(QueryResponses)]
 pub enum QueryMsg {}
 pub type SudoMsg = <BtsgAccountEth as BtsgAccountTrait>::SudoMsg;
 
@@ -113,7 +114,7 @@ impl BtsgAccountTrait for BtsgAccountEth {
         Ok(Response::new())
     }
 
-    fn authenticate(
+    fn extended_authenticate(
         deps: cosmwasm_std::DepsMut,
         auth: Self::AuthMethodStructs,
     ) -> Self::AuthProcessResult {

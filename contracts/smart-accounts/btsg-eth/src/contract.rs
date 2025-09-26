@@ -1,10 +1,4 @@
 use btsg_account::traits::default::BtsgAccountTrait;
-use btsg_auth::{
-    AuthenticationRequest, ConfirmExecutionRequest, OnAuthenticatorAddedRequest,
-    OnAuthenticatorRemovedRequest, TrackRequest,
-};
-use saa::EthPersonalSign;
-use saa_common::Verifiable;
 
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};

@@ -1,4 +1,4 @@
-use btsg_zktls::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use btsg_zktls::{ExecuteMsg, InstantiateMsg, QueryMsg};
 use cosmwasm_schema::write_api;
 
 fn main() {
@@ -6,5 +6,6 @@ fn main() {
         instantiate: InstantiateMsg,
         execute: ExecuteMsg,
         query: QueryMsg,
+        sudo: btsg_auth::AuthenticatorSudoMsg,
     }
 }

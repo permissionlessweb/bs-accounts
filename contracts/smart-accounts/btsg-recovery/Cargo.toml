@@ -1,6 +1,6 @@
 [package]
-name          = "btsg-zktls"
-description   = "A demo for authorizations using zktls proofs as validation for actions"
+name          = "btsg-account-backup"
+description   = "Bitsong authenticator implementing trustless account backup, recovery & rotation"
 authors       = [""]
 version       = { workspace = true }
 edition       = { workspace = true }
@@ -24,10 +24,11 @@ cw-ownable         = { workspace = true }
 cw-orch            = { workspace = true }
 cw-utils           = { workspace = true }
 btsg-auth          = { workspace = true }
+bitsong-rs          = { workspace = true }
 btsg-account       = { workspace = true }
 cw2                = { workspace = true }
 sha2               = { workspace = true }
-sha3 = { version = "0.10.8"}
+sha3               = { version = "0.10.8"}
 hex = "0.4.3"
 k256 = { version = "0.13.3", default-features = false, features = ["ecdsa-core", "ecdsa"] }
 digest = {version = "0.10", default-features = false }

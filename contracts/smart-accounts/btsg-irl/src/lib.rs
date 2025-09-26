@@ -140,7 +140,7 @@ impl BtsgAccountTrait for BtsgAccountIrl {
         Ok(Response::new())
     }
 
-    fn authenticate(
+    fn extended_authenticate(
         deps: cosmwasm_std::DepsMut,
         auth: Self::AuthMethodStructs,
     ) -> Self::AuthProcessResult {

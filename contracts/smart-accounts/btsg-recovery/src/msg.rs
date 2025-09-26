@@ -1,16 +1,12 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
+use cosmwasm_std::{Coin, Uint128};
 
 #[cw_serde]
-pub struct InstantiateMsg {
-   pub  dao_addr: String,
-}
+pub struct InstantiateMsg {}
 
 #[cw_serde]
 pub enum ExecuteMsg {}
 
 #[cw_serde]
 #[derive(QueryResponses)]
-pub enum QueryMsg {
-    #[returns(String)]
-    GetDao {},
-}
+pub enum QueryMsg {}

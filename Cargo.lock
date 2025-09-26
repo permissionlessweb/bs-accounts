@@ -496,19 +496,9 @@ checksum = "2261d10cca569e4643e526d8dc2e62e433cc8aba21ab764233731f8d369bf394"
 [[package]]
 name = "bitsong-rs"
 version = "0.0.1"
-source = "git+https://github.com/permissionlessweb/rs-bitsong#5f1a27b5b82a2496b7ebd412b9e7e1379833b94c"
 dependencies = [
- "bip32",
- "cosmos-sdk-proto 0.28.0",
- "ecdsa",
- "eyre",
- "k256",
- "rand_core",
  "rs-bitsong-proto",
  "serde",
- "serde_json",
- "signature",
- "subtle-encoding",
  "tendermint 0.40.4",
  "thiserror 1.0.69",
 ]
@@ -706,6 +696,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "btsg-account-backup"
+version = "0.3.0"
+dependencies = [
+ "bitsong-rs",
+ "btsg-account",
+ "btsg-auth",
+ "cosmwasm-schema 3.0.2",
+ "cosmwasm-std 3.0.2",
+ "cw-orch 0.28.0",
+ "cw-ownable 3.0.1",
+ "cw-storage-plus 3.0.1",
+ "cw-utils 3.0.0",
+ "cw2 3.0.0",
+ "digest 0.10.7",
+ "hex",
+ "k256",
+ "schemars 0.8.22",
+ "serde",
+ "sha2 0.10.9",
+ "sha3",
+ "thiserror 1.0.69",
+]
+
+[[package]]
 name = "btsg-account-test-suite"
 version = "0.3.0"
 dependencies = [
@@ -888,6 +902,7 @@ dependencies = [
 name = "btsg-zktls"
 version = "0.3.0"
 dependencies = [
+ "btsg-account",
  "btsg-auth",
  "cosmwasm-schema 3.0.2",
  "cosmwasm-std 3.0.2",
@@ -3552,7 +3567,6 @@ dependencies = [
 [[package]]
 name = "rs-bitsong-derive"
 version = "0.0.1"
-source = "git+https://github.com/permissionlessweb/rs-bitsong#5f1a27b5b82a2496b7ebd412b9e7e1379833b94c"
 dependencies = [
  "itertools 0.10.5",
  "proc-macro2",
@@ -3563,14 +3577,10 @@ dependencies = [
 
 [[package]]
 name = "rs-bitsong-proto"
-version = "0.27.0"
-source = "git+https://github.com/permissionlessweb/rs-bitsong#5f1a27b5b82a2496b7ebd412b9e7e1379833b94c"
+version = "0.0.1"
 dependencies = [
- "bytes",
  "chrono",
- "cosmos-sdk-proto 0.28.0",
  "cosmwasm-std 3.0.2",
- "http-body-util",
  "layer-climb-proto",
  "prost 0.14.1",
  "prost-types 0.14.1",

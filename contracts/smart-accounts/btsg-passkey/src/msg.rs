@@ -6,7 +6,7 @@ use saa::types::PasskeyPayload;
 #[cw_serde]
 pub struct InstantiateMsg {
     pub owner: Option<Addr>,
-    // pub payload: PasskeyPayload,
+    pub payload: PasskeyPayload,
 }
 
 #[cw_serde]

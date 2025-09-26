@@ -1,18 +1,13 @@
 use btsg_account::traits::default::BtsgAccountTrait;
-use btsg_auth::{
-    AuthenticationRequest, ConfirmExecutionRequest, OnAuthenticatorAddedRequest,
-    OnAuthenticatorRemovedRequest, TrackRequest,
-};
-use cosmwasm_std::{to_json_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
+
+use cosmwasm_std::entry_point;
+use cosmwasm_std::{Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
 use cw2::set_contract_version;
 
 use crate::{
-    msg::{ExecuteMsg, InstantiateMsg, QueryMsg},
     state::PUBLIC_KEY,
-    BtsgAccountEd25519, ContractError,
+    BtsgAccountEd25519, ContractError, {ExecuteMsg, InstantiateMsg, QueryMsg},
 };
-
-use cosmwasm_std::entry_point;
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:btsg-ed25519";
@@ -61,6 +56,7 @@ pub fn sudo(
 ) -> Result<Response, ContractError> {
     BtsgAccountEd25519::process_sudo_auth(deps, env, &msg)
 }
+
 pub fn execute_update_owner(
     deps: DepsMut,
     info: MessageInfo,
@@ -91,13 +87,13 @@ mod test {
             "a/lQuaTyhcTEeRA2XFTPxoDSIdS3yUUH1VSKOm2zz5EURfheGzzLgXea6QAalswOM2njnUzblqIGiOC0P+j2rhw="
         ).unwrap();
 
-        // let cred = EthPersonalSign {
-        //     signer: address.to_string(),
-        //     signature: signature.clone(),
-        //     message,
-        // };
-        // let res = cred.verify_cosmwasm(deps.as_ref().api);
-        // println!("Res: {:?}", res);
-        // assert!(res.is_ok())
+        let cred = EthPersonalSign {
+            signer: address.to_string(),
+            signature: signature.clone(),
+            message,
+        };
+        let res = cred.verify(deps.as_ref());
+        println!("Res: {:?}", res);
+        assert!(res.is_ok())
     }
 }
