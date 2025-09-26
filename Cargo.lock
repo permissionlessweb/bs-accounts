@@ -496,6 +496,7 @@ checksum = "2261d10cca569e4643e526d8dc2e62e433cc8aba21ab764233731f8d369bf394"
 [[package]]
 name = "bitsong-rs"
 version = "0.0.1"
+source = "git+https://github.com/permissionlessweb/rs-bitsong#0656acd24526bb21e098a329ad07683337e4afd6"
 dependencies = [
  "rs-bitsong-proto",
  "serde",
@@ -3567,6 +3568,7 @@ dependencies = [
 [[package]]
 name = "rs-bitsong-derive"
 version = "0.0.1"
+source = "git+https://github.com/permissionlessweb/rs-bitsong#0656acd24526bb21e098a329ad07683337e4afd6"
 dependencies = [
  "itertools 0.10.5",
  "proc-macro2",
@@ -3578,6 +3580,7 @@ dependencies = [
 [[package]]
 name = "rs-bitsong-proto"
 version = "0.0.1"
+source = "git+https://github.com/permissionlessweb/rs-bitsong#0656acd24526bb21e098a329ad07683337e4afd6"
 dependencies = [
  "chrono",
  "cosmwasm-std 3.0.2",
