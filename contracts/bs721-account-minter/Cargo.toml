@@ -43,6 +43,7 @@ cw-utils.workspace = true
 bs-controllers.workspace = true
 cw-orch.workspace = true
 cosmwasm-std = { workspace = true, features = [
+  "staking",
   "cosmwasm_1_4",
   # Enable this if you only deploy to chains that have CosmWasm 2.0 or higher
   "cosmwasm_2_0",
