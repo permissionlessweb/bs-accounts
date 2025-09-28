@@ -60,13 +60,13 @@ pub fn instantiate(
 
     let account_collection_init_msg = bs721_account::msg::InstantiateMsg {
         verifier: msg.verifier,
-        base_init_msg: bs721_base::msg::InstantiateMsg {
+        marketplace: deps.api.addr_validate(&msg.marketplace_addr)?,
+        base_init_msg: bs721_base::InstantiateMsg {
             name: "Bitsong Account Tokens".to_string(),
             symbol: "ACCOUNTS".to_string(),
-            minter: env.contract.address.to_string(),
             uri: None,
+            minter: env.contract.address.to_string(),
         },
-        marketplace,
     };
     let salt = &env.block.height.to_be_bytes();
     let code_info = deps.querier.query_wasm_code_info(msg.collection_code_id)?;

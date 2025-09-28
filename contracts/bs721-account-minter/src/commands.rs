@@ -9,8 +9,8 @@ use cosmwasm_std::{
 use cosmwasm_std::{to_json_binary, Addr, Deps, StdResult};
 use cw_utils::must_pay;
 
-use crate::state::ACCOUNT_MARKETPLACE;
 use crate::{
+    state::ACCOUNT_MARKETPLACE,
     state::{ACCOUNT_COLLECTION, CONFIG, PAUSED, SUDO_PARAMS},
     ContractError,
 };
