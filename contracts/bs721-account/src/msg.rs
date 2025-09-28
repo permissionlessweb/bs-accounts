@@ -343,3 +343,7 @@ pub enum SudoMsg {
         max_rev_map_count: u32,
     },
 }
+
+
+#[cosmwasm_schema::cw_serde]
+pub struct MigrateMsg {}
