@@ -2,7 +2,10 @@
 use btsg_account::Metadata;
 
 use crate::deploy::{account::*, market::BtsgAccountMarket, minter::BtsgAccountMinter};
-use bs721_account_marketplace::msgs::ExecuteMsgFns as _;
+pub use bs721_account_marketplace::msgs::ExecuteMsgFns as _;
+pub use bs721_account_minter::msg::ExecuteMsgFns as _;
+pub use bs721_base::msg::ExecuteMsgFns as _;
+pub use bs721_account::msg::ExecuteMsgFns as _;
 use btsg_nft_scripts::base::Bs721Base;
 use cosmwasm_std::Uint128;
 
