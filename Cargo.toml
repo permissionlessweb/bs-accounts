@@ -37,10 +37,10 @@ abstract-std = "0.26.0"
 # abstract-interface           = { version = "0.26.0", features = [ "daemon"]}
 cw-orch = "0.28.0"
 
-bs721                        = { git = "https://github.com/permissionlessweb/bs-nfts", branch = "feat/wavs",package = "bs721" }
-bs721-base                   = { git = "https://github.com/permissionlessweb/bs-nfts", branch = "feat/wavs"}
-bs-controllers               = { git = "https://github.com/permissionlessweb/bs-nfts", branch = "feat/wavs", library = "bs-controllers" } 
-btsg-nft-scripts             = { git = "https://github.com/permissionlessweb/bs-nfts", branch = "feat/wavs", package = "btsg-nft-scripts" }
+bs721                        = { git = "https://github.com/permissionlessweb/bs-nfts", branch = "feat/cw@v2",package = "bs721" }
+bs721-base                   = { git = "https://github.com/permissionlessweb/bs-nfts", branch = "feat/cw@v2"}
+bs-controllers               = { git = "https://github.com/permissionlessweb/bs-nfts", branch = "feat/cw@v2", library = "bs-controllers" } 
+btsg-nft-scripts             = { git = "https://github.com/permissionlessweb/bs-nfts", branch = "feat/cw@v2", package = "btsg-nft-scripts" }
 btsg-account                 = { path = "packages/btsg-account" }
 btsg-auth                    = { path = "packages/btsg-auth" }
 

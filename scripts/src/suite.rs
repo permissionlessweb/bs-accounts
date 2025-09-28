@@ -14,7 +14,7 @@ where
     pub account: BtsgAccountCollection<Chain, Metadata>,
     pub minter: BtsgAccountMinter<Chain>,
     pub market: BtsgAccountMarket<Chain>,
-    pub bs721base: Bs721Base<Chain, Empty>,
+    pub bs721base: Bs721Base<Chain, Empty, Empty>,
     // pub abs: Abstract<Chain>,
 }
 
