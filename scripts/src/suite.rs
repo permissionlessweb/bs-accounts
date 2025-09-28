@@ -1,9 +1,7 @@
 // use abstract_interface::Abstract;
 use btsg_account::Metadata;
 
-use crate::deploy::{
-    account::*, btsg_wavs::BtsgWavsAuth, market::BtsgAccountMarket, minter::BtsgAccountMinter,
-};
+use crate::deploy::{account::*, market::BtsgAccountMarket, minter::BtsgAccountMinter};
 use bs721_account_marketplace::msgs::ExecuteMsgFns as _;
 use btsg_nft_scripts::base::Bs721Base;
 use cosmwasm_std::Uint128;
@@ -16,7 +14,6 @@ where
     pub account: BtsgAccountCollection<Chain, Metadata>,
     pub minter: BtsgAccountMinter<Chain>,
     pub market: BtsgAccountMarket<Chain>,
-    pub wavs: BtsgWavsAuth<Chain>,
     pub bs721base: Bs721Base<Chain, Empty>,
     // pub abs: Abstract<Chain>,
 }
@@ -29,7 +26,6 @@ impl<Chain: CwEnv> BtsgAccountSuite<Chain> {
             account: BtsgAccountCollection::new("bs721_account", chain.clone()),
             minter: BtsgAccountMinter::new("bs721_account_minter", chain.clone()),
             market: BtsgAccountMarket::new("bs721_account_market", chain.clone()),
-            wavs: BtsgWavsAuth::new("btsg_wavs", chain.clone()),
             bs721base: Bs721Base::new("bs721_base", chain.clone()),
             // abs: Abstract::new(chain.clone()),
         }
@@ -39,7 +35,6 @@ impl<Chain: CwEnv> BtsgAccountSuite<Chain> {
         let _acc = self.account.upload()?.uploaded_code_id()?;
         let _minter = self.minter.upload()?.uploaded_code_id()?;
         let _market = self.market.upload()?.uploaded_code_id()?;
-        let _wavs = self.wavs.upload()?.uploaded_code_id()?;
         let _bs721base = self.bs721base.upload()?.uploaded_code_id()?;
         Ok(())
     }
