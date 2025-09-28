@@ -8,7 +8,7 @@ schema:
 lint:
 	cargo clippy --fix --tests -- -D warnings
    
-build:
+optimize:
 	sh scripts/sh/optimize.sh
 	
  

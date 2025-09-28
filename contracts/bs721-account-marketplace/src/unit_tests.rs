@@ -1,9 +1,12 @@
 use crate::commands::{query_asks_by_seller, query_bids_by_bidder};
 use crate::contract::{execute, instantiate};
-use crate::msgs::{ExecuteMsg, InstantiateMsg};
 #[cfg(test)]
 use crate::state::*;
-use btsg_account::NATIVE_DENOM;
+use btsg_account::market::{Ask, Bid};
+use btsg_account::{
+    market::{ExecuteMsg, InstantiateMsg},
+    NATIVE_DENOM,
+};
 use cosmwasm_std::testing::{message_info, mock_dependencies, mock_env};
 use cosmwasm_std::{coins, Addr, DepsMut, Timestamp, Uint128};
 
@@ -18,8 +21,6 @@ const TRADING_FEE_BASIS_POINTS: u64 = 200; // 2%
 fn ask_indexed_map() {
     let mut deps = mock_dependencies();
     let seller = Addr::unchecked("seller");
-
-    // let env = mock_env();
 
     let ask = Ask {
         token_id: TOKEN_ID.to_string(),

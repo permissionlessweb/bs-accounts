@@ -1,7 +1,7 @@
 use cw_orch::{interface, prelude::*};
 
 use crate::contract::{execute, instantiate, query, sudo};
-use crate::msgs::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use btsg_account::market::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
 /// Uploadable trait for bs721_account_minter & use with cw-orchestrator library
 #[interface(InstantiateMsg, ExecuteMsg, QueryMsg, Empty)]
@@ -11,7 +11,7 @@ impl<Chain> Uploadable for BtsgAccountMarket<Chain> {
     /// Return the path to the wasm file corresponding to the contract
     fn wasm(_chain: &ChainInfoOwned) -> WasmPath {
         artifacts_dir_from_workspace!()
-            .find_wasm_path("bs721_account_market")
+            .find_wasm_path("bs721_account_marketplace")
             .unwrap()
     }
     /// Returns a CosmWasm contract wrapper

@@ -1,32 +1,11 @@
 use bs_controllers::Hooks;
-use cosmwasm_std::{Addr, Decimal, StdResult, Storage, Timestamp, Uint128};
+use btsg_account::market::*;
+use cosmwasm_std::{Addr, StdResult, Storage};
 use cw_storage_macro::index_list;
 use cw_storage_plus::{IndexedMap, Item, MultiIndex, UniqueIndex};
 
 // bps fee can not exceed 100%
 pub const MAX_FEE_BPS: u64 = 10000;
-/// Type for storing the `ask`
-pub type TokenId = String;
-/// Type for `ask` unique secondary index
-pub type Id = u64;
-
-#[cosmwasm_schema::cw_serde]
-pub struct SudoParams {
-    /// Fair Burn + Community Pool fee for winning bids
-    pub trading_fee_percent: Decimal,
-    /// Min value for a bid
-    pub min_price: Uint128,
-    /// Interval to rate limit setting asks (in seconds)
-    pub ask_interval: u64,
-    /// The number of bids to query to when searching for the highest bid
-    pub valid_bid_query_limit: u32,
-}
-
-pub struct ParamInfo {
-    pub trading_fee_bps: Option<u64>,
-    pub min_price: Option<Uint128>,
-    pub ask_interval: Option<u64>,
-}
 
 pub const SUDO_PARAMS: Item<SudoParams> = Item::new("sp");
 
@@ -57,17 +36,6 @@ pub fn decrement_asks(storage: &mut dyn Storage) -> StdResult<u64> {
     Ok(val)
 }
 
-/// Represents an ask on the marketplace
-#[cosmwasm_schema::cw_serde]
-pub struct Ask {
-    pub token_id: TokenId,
-    pub id: u64,
-    pub seller: Addr,
-}
-
-/// Primary key for asks: token_id
-/// Name reverse lookup can happen in O(1) time
-pub type AskKey = TokenId;
 /// Convenience ask key constructor
 pub fn ask_key(token_id: &str) -> AskKey {
     token_id.to_string()
@@ -95,28 +63,6 @@ pub fn asks<'a>() -> IndexedMap<AskKey, Ask, AskIndicies<'a>> {
     IndexedMap::new("asks", indexes)
 }
 
-/// Represents a bid (offer) on the marketplace
-#[cosmwasm_schema::cw_serde]
-pub struct Bid {
-    pub token_id: TokenId,
-    pub bidder: Addr,
-    pub amount: Uint128,
-    pub created_time: Timestamp,
-}
-
-impl Bid {
-    pub fn new(token_id: &str, bidder: Addr, amount: Uint128, created_time: Timestamp) -> Self {
-        Bid {
-            token_id: token_id.to_string(),
-            bidder,
-            amount,
-            created_time,
-        }
-    }
-}
-
-/// Primary key for bids: (token_id, bidder)
-pub type BidKey = (TokenId, Addr);
 /// Convenience bid key constructor
 pub fn bid_key(token_id: &str, bidder: &Addr) -> BidKey {
     (token_id.to_string(), bidder.clone())

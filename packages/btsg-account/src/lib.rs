@@ -1,4 +1,5 @@
 pub mod minter;
+pub mod market;
 pub mod verify_generic;
 
 pub const MAX_TEXT_LENGTH: u32 = 512;

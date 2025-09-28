@@ -71,7 +71,7 @@ pub fn execute_mint_and_list(
         funds: vec![],
     };
 
-    let ask_msg = bs721_account_marketplace::msgs::ExecuteMsg::SetAsk {
+    let ask_msg = btsg_account::market::ExecuteMsg::SetAsk {
         token_id: account.to_string(),
         seller: sender.to_string(),
     };

@@ -25,15 +25,19 @@ impl<Chain: CwEnv> BtsgAccountSuite<Chain> {
         BtsgAccountSuite::<Chain> {
             account: BtsgAccountCollection::new("bs721_account", chain.clone()),
             minter: BtsgAccountMinter::new("bs721_account_minter", chain.clone()),
-            market: BtsgAccountMarket::new("bs721_account_market", chain.clone()),
-            // abs: Abstract::new(chain.clone()),
+            market: BtsgAccountMarket::new("bs721_account_marketplace", chain.clone()),
         }
     }
 
     pub fn upload(&self) -> Result<(), CwOrchError> {
-        let _acc = self.account.upload()?.uploaded_code_id()?;
-        let _minter = self.minter.upload()?.uploaded_code_id()?;
-        let _market = self.market.upload()?.uploaded_code_id()?;
+        let acc_code_id = self.account.upload()?.uploaded_code_id()?;
+        let minter_code_id = self.minter.upload()?.uploaded_code_id()?;
+        let market_code_id = self.market.upload()?.uploaded_code_id()?;
+
+        println!("Account code ID: {}", acc_code_id);
+        println!("Minter code ID: {}", minter_code_id);
+        println!("Market code ID: {}", market_code_id);
+
         Ok(())
     }
 }
@@ -60,14 +64,12 @@ impl<Chain: CwEnv> cw_orch::contract::Deploy<Chain> for BtsgAccountSuite<Chain> 
     }
 
     fn deploy_on(chain: Chain, data: Self::DeployData) -> Result<Self, Self::Error> {
-        // let abs: Abstract<Chain> = Abstract::deploy_on(chain.clone(), ())
-        //     .map_err(|e| CwOrchError::from(anyhow::anyhow!(e)))?;
         // ########### Upload ##############
         let mut suite: BtsgAccountSuite<Chain> = BtsgAccountSuite::store_on(chain.clone())?;
         // suite.abs = abs;
 
         suite.market.instantiate(
-            &bs721_account_marketplace::msgs::InstantiateMsg {
+            &btsg_account::market::InstantiateMsg {
                 trading_fee_bps: 200,
                 min_price: Uint128::from(5000000u64),
                 ask_interval: 60,

@@ -2,8 +2,8 @@ use btsg_account::minter::{Config, SudoParams};
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    instantiate2_address, to_json_binary, Binary, CanonicalAddr, Deps, DepsMut, Env, MessageInfo,
-    Reply, Response, StdResult, SubMsg, WasmMsg,
+    instantiate2_address, to_json_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response,
+    StdResult, WasmMsg,
 };
 use cw2::set_contract_version;
 
@@ -85,12 +85,12 @@ pub fn instantiate(
         label: "Account Collection".to_string(),
         salt: salt.into(),
     };
-    let submsg = SubMsg::reply_on_success(wasm_msg, INIT_COLLECTION_REPLY_ID).with_payload(addr);
+    ACCOUNT_COLLECTION.save(deps.storage, &deps.api.addr_humanize(&addr)?)?;
 
     Ok(Response::new()
+        .add_message(wasm_msg)
         .add_attribute("action", "instantiate")
-        .add_attribute("account_minter_addr", env.contract.address.to_string())
-        .add_submessage(submsg))
+        .add_attribute("account_minter_addr", env.contract.address.to_string()))
 }
 
 #[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
@@ -118,19 +118,6 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::Params {} => to_json_binary(&query_params(deps)?),
         QueryMsg::Config {} => to_json_binary(&query_config(deps)?),
     }
-}
-
-/// Mint a account for the sender, or `contract` if specified
-const INIT_COLLECTION_REPLY_ID: u64 = 1;
-#[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
-pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
-    if msg.id != INIT_COLLECTION_REPLY_ID {
-        return Err(ContractError::InvalidReplyID {});
-    }
-    let human_addr = deps.api.addr_humanize(&CanonicalAddr::from(msg.payload))?;
-    ACCOUNT_COLLECTION.save(deps.storage, &human_addr)?;
-
-    Ok(Response::default().add_attribute("action", "init_collection_reply"))
 }
 
 #[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]

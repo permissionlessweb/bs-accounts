@@ -1,9 +1,9 @@
 use cw_orch::{anyhow, mock::MockBech32, prelude::*};
 
 use crate::BtsgAccountSuite;
-use bs721_account::msg::{Bs721AccountsQueryMsgFns, ExecuteMsgFns, InstantiateMsg};
-use bs721_account_marketplace::msgs::{
-    ExecuteMsgFns as _, QueryMsgFns, SudoMsg as MarketplaceSudoMsg,
+use crate::{
+    Bs721AccountsQueryMsgFns, BtsgAccountExecuteFns, BtsgAccountMarketExecuteFns,
+    BtsgAccountMarketQueryFns,
 };
 use bs721_account_minter::msg::{ExecuteMsgFns as _, QueryMsgFns as _};
 use cosmwasm_std::Uint128;
@@ -23,6 +23,7 @@ pub fn init() -> anyhow::Result<()> {
 mod execute {
 
     use bs721_account_minter::ContractError;
+    use btsg_account::market::QueryMsgFns;
     use cosmwasm_std::coin;
 
     use super::*;
@@ -292,7 +293,7 @@ mod execute {
         // run sudo msg
         mock.app.borrow_mut().sudo(SudoMsg::Wasm(WasmSudo {
             contract_addr: suite.market.address()?,
-            message: to_json_binary(&MarketplaceSudoMsg::UpdateParams {
+            message: to_json_binary(&btsg_account::market::SudoMsg::UpdateParams {
                 trading_fee_bps: Some(1000u64),
                 min_price: Some(Uint128::from(1000u128)),
                 ask_interval: Some(1000),
@@ -414,7 +415,7 @@ mod admin {
     }
 }
 mod query {
-    use bs721_account_marketplace::{msgs::BidOffset, state::Bid};
+    use btsg_account::market::{Bid, BidOffset};
     use cosmwasm_std::coin;
 
     use super::*;
@@ -1000,6 +1001,7 @@ mod public_start_time {
 
 mod associate_address {
 
+    use bs721_account::msg::InstantiateMsg;
     use cosmwasm_std::coin;
 
     use super::*;

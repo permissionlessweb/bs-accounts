@@ -3,24 +3,21 @@ pub mod market;
 pub mod minter;
 pub mod smart_accounts;
 
-// use abstract_interface::Abstract;
-use bs721_account::msg::{Bs721AccountsQueryMsgFns as _, ExecuteMsgFns as _};
-use bs721_account_marketplace::msgs::{
-    ExecuteMsgFns as _, InstantiateMsg as AccountMarketInitMsg, QueryMsgFns,
-};
 use bs721_account_minter::msg::InstantiateMsg as AccountMinterInitMsg;
+use btsg_account::market::InstantiateMsg as AccountMarketInitMsg;
 use cosmwasm_std::{coin, coins, Decimal, StakingMsg, Uint128};
 use cw_orch::{
     anyhow,
     mock::cw_multi_test::{Module, StakingInfo},
     prelude::*,
 };
-
 const BASE_PRICE: u128 = 100_000_000;
 const BASE_DELEGATION: u128 = 2100000000;
 const VALIDATOR_1: &str = "val-1";
-// const VALIDATOR_2: &str = "val-2";
-
+use crate::{
+    Bs721AccountsQueryMsgFns, BtsgAccountExecuteFns, BtsgAccountMarketExecuteFns,
+    BtsgAccountMarketQueryFns,
+};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -205,7 +202,7 @@ impl BtsgAccountSuite<MockBech32> {
         mock.add_balance(&bidder, bid_amnt.clone())?;
 
         self.market.call_as(&bidder).execute(
-            &bs721_account_marketplace::msgs::ExecuteMsg::SetBid {
+            &btsg_account::market::ExecuteMsg::SetBid {
                 token_id: account.into(),
             },
             &bid_amnt,

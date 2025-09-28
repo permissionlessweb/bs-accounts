@@ -6,7 +6,7 @@ pub mod networks;
 pub use bs721_account::msg::{
     AsyncBs721AccountsQueryMsgFns, Bs721AccountsQueryMsgFns, ExecuteMsgFns as BtsgAccountExecuteFns,
 };
-pub use bs721_account_marketplace::msgs::{
+pub use btsg_account::market::{
     AsyncQueryMsgFns as BtsgAccountMarketAsyncQueryMsgFns,
     ExecuteMsgFns as BtsgAccountMarketExecuteFns, QueryMsgFns as BtsgAccountMarketQueryFns,
 };

@@ -13,6 +13,7 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 cosmwasm-std = { workspace = true }
+cw-orch = { workspace = true }
 cosmwasm-crypto  = { workspace = true }
 cosmwasm-schema = { workspace = true }
 cw-ownable   = { workspace = true }

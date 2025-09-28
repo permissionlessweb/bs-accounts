@@ -25,9 +25,9 @@ bs721-base                  = { workspace = true }
 btsg-nft-scripts            = { workspace = true }
 btsg-account                = { path = "../packages/btsg-account" }
 btsg-auth                   = { workspace = true }
-bs721-account               = { path = "../contracts/bs721-account", features = ["interface"] }
-bs721-account-minter        = { path = "../contracts/bs721-account-minter" }
-bs721-account-marketplace   = { path = "../contracts/bs721-account-marketplace" }
+bs721-account               = { workspace = true, features = ["library"] }
+bs721-account-minter        = { workspace = true, features = ["library"] }
+bs721-account-marketplace   = { workspace = true, features = ["library"] }
 
 # Abstract & CW-Orchestrator
 abstract-std                = { workspace = true }
@@ -45,6 +45,7 @@ log                         = { version = "0.4.22" }
 reqwest                     = { version = "0.11.9" }
 serde                       = { version = "1.0.140", default-features = false, features = ["derive"] }
 serde_json                  = { version = "1.0.79" }
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 tokio                       = { version = "1.39.3" }
 
 [dev-dependencies]

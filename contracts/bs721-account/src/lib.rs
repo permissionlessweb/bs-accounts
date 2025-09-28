@@ -10,8 +10,7 @@ use crate::msg::MigrateMsg;
 pub mod interface;
 
 use cosmwasm_std::{
-    entry_point, to_json_binary, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response,
-    StdError, StdResult,
+    to_json_binary, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdError, StdResult,
 };
 
 use btsg_account::Metadata;
@@ -41,7 +40,7 @@ pub mod entry {
     use state::SUDO_PARAMS;
     use state::VERIFIER;
 
-    #[cfg_attr(not(feature = "library"), entry_point)]
+    #[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
     pub fn instantiate(
         mut deps: DepsMut,
         env: Env,
@@ -73,7 +72,8 @@ pub mod entry {
             .add_attribute("action", "instantiate")
             .add_attribute("bs721_account_address", env.contract.address.to_string()))
     }
-    #[cfg_attr(not(feature = "library"), entry_point)]
+
+    #[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
     pub fn execute(
         deps: DepsMut,
         env: Env,
@@ -158,7 +158,7 @@ pub mod entry {
         }
     }
 
-    #[entry_point]
+    #[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
     pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         match msg {
             QueryMsg::Params {} => to_json_binary(&query_params(deps)?),

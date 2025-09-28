@@ -1,3 +1,4 @@
+use btsg_account::market::{Ask, Bid};
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{Addr, Deps, DepsMut, Env, Reply, Response, StdResult, SubMsg, WasmMsg};

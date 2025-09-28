@@ -1,11 +1,12 @@
 use crate::hooks::{prepare_ask_hook, prepare_bid_hook, prepare_sale_hook};
-use crate::msgs::{BidOffset, Bidder, ConfigResponse, HookAction};
+use crate::msgs::HookAction;
 use crate::{
     error::ContractError,
     // hooks::{prepare_ask_hook, prepare_bid_hook, prepare_sale_hook},
     state::*,
 };
 use btsg_account::{charge_fees, Metadata, NATIVE_DENOM};
+use btsg_account::{market::*, TokenId};
 
 use cosmwasm_std::{
     coin, to_json_binary, Addr, BankMsg, Decimal, Deps, DepsMut, Empty, Env, Event, Fraction,
@@ -386,11 +387,7 @@ pub fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
     Ok(ConfigResponse { minter, collection })
 }
 
-pub fn query_asks(
-    deps: Deps,
-    start_after: Option<crate::state::Id>,
-    limit: Option<u32>,
-) -> StdResult<Vec<Ask>> {
+pub fn query_asks(deps: Deps, start_after: Option<Id>, limit: Option<u32>) -> StdResult<Vec<Ask>> {
     let limit = limit.unwrap_or(DEFAULT_QUERY_LIMIT).min(MAX_QUERY_LIMIT) as usize;
 
     asks()

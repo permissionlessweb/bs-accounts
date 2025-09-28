@@ -5,12 +5,8 @@ use cosmwasm_std::{
 use cw2::set_contract_version;
 use semver::Version;
 
-use crate::{
-    commands::*,
-    msgs::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg, SudoMsg},
-    state::*,
-    ContractError,
-};
+use crate::{commands::*, msgs::MigrateMsg, state::*, ContractError};
+use btsg_account::market::{ExecuteMsg, InstantiateMsg, ParamInfo, QueryMsg, SudoMsg, SudoParams};
 
 pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 pub const ACCOUNT_MARKETPLACE: &str = "bs721_account_marketplace";
