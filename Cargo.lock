@@ -1628,7 +1628,6 @@ dependencies = [
 name = "btsg-account-scripts"
 version = "0.2.0"
 dependencies = [
- "abstract-cw-orch-polytone",
  "abstract-std",
  "anyhow",
  "bech32 0.11.0",
@@ -1641,7 +1640,6 @@ dependencies = [
  "btsg-nft-scripts",
  "clap",
  "commonware-cryptography",
- "cosmos-sdk-proto 0.26.1",
  "cosmrs 0.22.0",
  "cosmwasm-crypto",
  "cosmwasm-schema",
@@ -1656,7 +1654,6 @@ dependencies = [
  "k256",
  "log",
  "pretty_env_logger",
- "prost-types",
  "reqwest 0.11.27",
  "ripemd",
  "serde",

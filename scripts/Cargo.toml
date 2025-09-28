@@ -11,15 +11,14 @@ bech32                      = { workspace = true }
 ripemd                      = { version = "0.1.3",  default-features = false }
 k256                        = { version = "0.13.3", default-features = false, features = ["ecdsa"] }
 ecdsa                       = { version = "0.16.2" }
+commonware-cryptography     = { version = "0.0.53" }
 
 # CosmWasm & Cosmos Ecosystem
 cosmwasm-schema             = { workspace = true }
 cosmwasm-std                = { workspace = true }
-cosmos-sdk-proto            = { workspace = true }
 cosmwasm-crypto             = { workspace = true }
 cw-ownable                  = { workspace = true }
 cosmrs                      = { version = "0.22.0" }
-prost-types                 = { version = "0.13.4" }
 
 # NFT & Account Contracts
 bs721-base                  = { workspace = true }
@@ -32,12 +31,7 @@ bs721-account-marketplace   = { path = "../contracts/bs721-account-marketplace" 
 
 # Abstract & CW-Orchestrator
 abstract-std                = { workspace = true }
-# abstract-client           = { workspace = true }
-# abstract-interface        = { workspace = true }
-cw-orch-polytone            = { package = "abstract-cw-orch-polytone", version = "6.0.1" }
 cw-orch                     = { workspace = true, features = ["daemon"] }
-# polypthone                = { package = "abstract-polytone", version = "1.0.5" }
-# polypthone-note           = { package = "abstract-polytone-note", version = "3.0.0" }
 
 # CLI & Utilities
 clap                        = { version = "4.0.32", features = ["derive"] }
@@ -53,8 +47,6 @@ serde                       = { version = "1.0.140", default-features = false, f
 serde_json                  = { version = "1.0.79" }
 tokio                       = { version = "1.39.3" }
 
-# Cryptography (External)
-commonware-cryptography     = { version = "0.0.53" }
 [dev-dependencies]
 
 

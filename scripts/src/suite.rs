@@ -1,7 +1,6 @@
 // use abstract_interface::Abstract;
 use crate::BtsgAccountMarketExecuteFns;
 use btsg_account::Metadata;
-use btsg_nft_scripts::base::Bs721Base;
 use cosmwasm_std::Uint128;
 
 use bs721_account::interface::BtsgAccountCollection;
