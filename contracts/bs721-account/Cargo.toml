@@ -33,6 +33,7 @@ optimize = """docker run --rm -v "$(pwd)":/code \
 """
 
 [dependencies]
+semver                       = "1.0"
 abstract-std  = { workspace = true }
 bs721 = { workspace = true}
 bs721-base   = { workspace = true, features = ["library"]}
