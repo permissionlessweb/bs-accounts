@@ -3,18 +3,20 @@ mod error;
 pub mod helpers;
 pub mod msg;
 pub mod state;
-
 pub use crate::error::ContractError;
 use crate::msg::MigrateMsg;
+
+#[cfg(not(target_arch = "wasm32"))]
+pub mod interface;
+
 use cosmwasm_std::{
-    entry_point, to_json_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdError,
-    StdResult,
+    entry_point, to_json_binary, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response,
+    StdError, StdResult,
 };
 
 use btsg_account::Metadata;
-use cosmwasm_std::Empty;
-
 use msg::Bs721AccountsQueryMsg;
+
 use semver::Version;
 
 // version info for migration info
@@ -27,16 +29,12 @@ pub type ExecuteMsg = crate::msg::ExecuteMsg<Metadata>;
 pub type QueryMsg = Bs721AccountsQueryMsg;
 
 pub mod entry {
-    use crate::commands::transcode;
-
     use super::*;
-
-    use commands::sudo_update_params;
+    use commands::{sudo_update_params, transcode};
     use cw_utils::maybe_addr;
     use msg::InstantiateMsg;
 
-    use commands::manifest::*;
-    use commands::queries::*;
+    use commands::{manifest::*, queries::*};
     use msg::SudoMsg;
     use state::SudoParams;
     use state::ACCOUNT_MARKETPLACE;

@@ -1,7 +1,7 @@
 use cw_orch::{interface, prelude::*};
 
-use bs721_account::entry::{execute, instantiate, query, sudo};
-use bs721_account::msg::{Bs721AccountsQueryMsg as QueryMsg, ExecuteMsg, InstantiateMsg};
+use crate::entry::{execute, instantiate, query, sudo};
+use crate::msg::{Bs721AccountsQueryMsg as QueryMsg, ExecuteMsg, InstantiateMsg};
 use btsg_account::Metadata;
 
 /// Uploadable trait for bs721_account & use with cw-orchestrator library

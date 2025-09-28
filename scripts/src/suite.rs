@@ -1,9 +1,12 @@
 // use abstract_interface::Abstract;
+use crate::BtsgAccountMarketExecuteFns;
 use btsg_account::Metadata;
-use crate::BtsgAccountMarketplaceExecuteFns;
-use crate::deploy::{account::*, market::BtsgAccountMarket, minter::BtsgAccountMinter};
 use btsg_nft_scripts::base::Bs721Base;
 use cosmwasm_std::Uint128;
+
+use bs721_account::interface::BtsgAccountCollection;
+use bs721_account_marketplace::interface::BtsgAccountMarket;
+use bs721_account_minter::interface::BtsgAccountMinter;
 
 use cw_orch::prelude::*;
 pub struct BtsgAccountSuite<Chain>
