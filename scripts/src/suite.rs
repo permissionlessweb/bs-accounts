@@ -16,7 +16,6 @@ where
     pub account: BtsgAccountCollection<Chain, Metadata>,
     pub minter: BtsgAccountMinter<Chain>,
     pub market: BtsgAccountMarket<Chain>,
-    pub bs721base: Bs721Base<Chain, Empty, Empty>,
     // pub abs: Abstract<Chain>,
 }
 
@@ -28,7 +27,6 @@ impl<Chain: CwEnv> BtsgAccountSuite<Chain> {
             account: BtsgAccountCollection::new("bs721_account", chain.clone()),
             minter: BtsgAccountMinter::new("bs721_account_minter", chain.clone()),
             market: BtsgAccountMarket::new("bs721_account_market", chain.clone()),
-            bs721base: Bs721Base::new("bs721_base", chain.clone()),
             // abs: Abstract::new(chain.clone()),
         }
     }
@@ -37,7 +35,6 @@ impl<Chain: CwEnv> BtsgAccountSuite<Chain> {
         let _acc = self.account.upload()?.uploaded_code_id()?;
         let _minter = self.minter.upload()?.uploaded_code_id()?;
         let _market = self.market.upload()?.uploaded_code_id()?;
-        let _bs721base = self.bs721base.upload()?.uploaded_code_id()?;
         Ok(())
     }
 }
@@ -114,16 +111,6 @@ impl<Chain: CwEnv> cw_orch::contract::Deploy<Chain> for BtsgAccountSuite<Chain> 
         suite
             .market
             .setup(suite.account.address()?, suite.minter.address()?)?;
-
-        // instantiate wavs authenticator
-        // suite.wavs.instantiate(
-        //     &btsg_wavs::msg::InstantiateMsg {
-        //         owner: None,
-        //         wavs_operator_pubkeys: vec![BLS_PUBKEY.as_bytes().into()], // only one bls key, need to add more
-        //     },
-        //     None,
-        //     &[],
-        // )?;
 
         Ok(suite)
     }
