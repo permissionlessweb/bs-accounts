@@ -22,7 +22,7 @@ pub mod manifest {
     };
     use bs721::Expiration;
     use bs721_base::state::TokenInfo;
-    use btsg_account::{verify_generic::CosmosArbitrary, Metadata};
+    use btsg_account::{market::PendingBid, verify_generic::CosmosArbitrary, Metadata};
     use cosmwasm_std::{to_json_binary, Attribute, WasmMsg};
 
     use crate::state::{REVERSE_MAP_KEY, REVMAP_LIMIT};
@@ -655,7 +655,13 @@ pub mod manifest {
         account: String,
     ) -> Result<Response, ContractError> {
         nonpayable(&info)?;
-        only_owner(deps.as_ref(), &info.sender, &account)?;
+
+        ensure_not_in_cooldown(
+            deps.as_ref(),
+            &ACCOUNT_MARKETPLACE.load(deps.storage)?,
+            &account,
+        )?;
+
         let bs721 = Bs721AccountContract::default();
 
         bs721.execute(
@@ -680,6 +686,7 @@ pub mod manifest {
         let recipient = deps.api.addr_validate(&recipient)?;
 
         let names_marketplace = ACCOUNT_MARKETPLACE.load(deps.storage)?;
+        ensure_not_in_cooldown(deps.as_ref(), &names_marketplace, &token_id)?;
 
         let update_ask_msg =
             _transfer_nft(deps, env, &info, &recipient, &token_id, &names_marketplace)?;
@@ -693,17 +700,41 @@ pub mod manifest {
     }
 
     // Update the ask on the marketplace
-    fn update_ask_on_marketplace(
+    fn ensure_not_in_cooldown(
         deps: Deps,
+        names_marketplace: &Addr,
+        token_id: &str,
+    ) -> Result<(), ContractError> {
+        // ensure token is not in cooldown
+        let res: Option<PendingBid> = deps.querier.query_wasm_smart(
+            names_marketplace.clone(),
+            &btsg_account::market::QueryMsg::Cooldown {
+                token_id: token_id.to_string(),
+            },
+        )?;
+
+        match res {
+            Some(_) => {
+                return Err(ContractError::AccountCannotBeTransfered {
+                    reason: "Account is in cooldown".to_string(),
+                })
+            }
+            None => Ok(()),
+        }
+    }
+
+    // Update the ask on the marketplace
+    fn update_ask_on_marketplace(
         token_id: &str,
         recipient: Addr,
+        names_marketplace: &Addr,
     ) -> Result<WasmMsg, ContractError> {
         let msg = btsg_account::market::ExecuteMsg::UpdateAsk {
             token_id: token_id.to_string(),
             seller: recipient.to_string(),
         };
         let update_ask_msg = WasmMsg::Execute {
-            contract_addr: ACCOUNT_MARKETPLACE.load(deps.storage)?.to_string(),
+            contract_addr: names_marketplace.to_string(),
             funds: vec![],
             msg: to_json_binary(&msg)?,
         };
@@ -718,7 +749,8 @@ pub mod manifest {
         token_id: &str,
         names_marketplace: &Addr,
     ) -> Result<WasmMsg, ContractError> {
-        let update_ask_msg = update_ask_on_marketplace(deps.as_ref(), token_id, recipient.clone())?;
+        let update_ask_msg =
+            update_ask_on_marketplace(token_id, recipient.clone(), names_marketplace)?;
 
         reset_token_metadata_and_reverse_map(&mut deps, env.contract.address.clone(), token_id)?;
 
@@ -750,8 +782,10 @@ pub mod manifest {
         msg: Binary,
     ) -> Result<Response, ContractError> {
         let contract_addr = deps.api.addr_validate(&contract)?;
+        let names_marketplace = ACCOUNT_MARKETPLACE.load(deps.storage)?;
+        ensure_not_in_cooldown(deps.as_ref(), &names_marketplace, &token_id)?;
         let update_ask_msg =
-            update_ask_on_marketplace(deps.as_ref(), &token_id, contract_addr.clone())?;
+            update_ask_on_marketplace(&token_id, contract_addr.clone(), &names_marketplace)?;
 
         reset_token_metadata_and_reverse_map(&mut deps, env.contract.address.clone(), &token_id)?;
 

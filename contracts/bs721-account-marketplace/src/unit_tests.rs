@@ -4,7 +4,7 @@ use crate::contract::{execute, instantiate};
 use crate::state::*;
 use btsg_account::market::{Ask, Bid};
 use btsg_account::{
-    market::{ExecuteMsg, InstantiateMsg},
+    market::{ExecuteMsg, MarketplaceInstantiateMsg},
     NATIVE_DENOM,
 };
 use cosmwasm_std::testing::{message_info, mock_dependencies, mock_env};
@@ -82,11 +82,13 @@ fn bid_indexed_map() {
 }
 
 fn setup_contract(deps: DepsMut) {
-    let msg = InstantiateMsg {
+    let msg = MarketplaceInstantiateMsg {
         trading_fee_bps: TRADING_FEE_BASIS_POINTS,
         min_price: Uint128::from(5u128),
         ask_interval: 60,
         valid_bid_query_limit: 100,
+        cooldown_timeframe: todo!(),
+        cooldown_cancel_fee: todo!(),
     };
     let info = message_info(&Addr::unchecked(CREATOR), &[]);
     let res = instantiate(deps, mock_env(), info, msg).unwrap();
@@ -97,11 +99,12 @@ fn setup_contract(deps: DepsMut) {
 fn proper_initialization() {
     let mut deps = mock_dependencies();
 
-    let msg = InstantiateMsg {
+    let msg = MarketplaceInstantiateMsg {
         trading_fee_bps: TRADING_FEE_BASIS_POINTS,
         min_price: Uint128::from(5u128),
         ask_interval: 60,
-
+        cooldown_timeframe: todo!(),
+        cooldown_cancel_fee: todo!(),
         valid_bid_query_limit: 100,
     };
     let info = message_info(&Addr::unchecked("creator"), &coins(1000, NATIVE_DENOM));
@@ -116,11 +119,13 @@ fn bad_fees_initialization() {
     let mut deps = mock_dependencies();
 
     // throw error if trading fee bps > 100%
-    let msg = InstantiateMsg {
+    let msg = MarketplaceInstantiateMsg {
         trading_fee_bps: 10001,
         min_price: Uint128::from(5u128),
         ask_interval: 60,
         valid_bid_query_limit: 100,
+        cooldown_timeframe: todo!(),
+        cooldown_cancel_fee: todo!(),
     };
     let info = message_info(&Addr::unchecked("creator"), &coins(1000, NATIVE_DENOM));
     let res = instantiate(deps.as_mut(), mock_env(), info, msg);

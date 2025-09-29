@@ -32,6 +32,9 @@ pub enum ContractError {
     #[error("InsufficientRenewalFunds: expected {expected}, actual {actual}")]
     InsufficientRenewalFunds { expected: Coin, actual: Coin },
 
+    #[error("Incorrect payment, got: {got}, expected {expected}")]
+    IncorrectPayment { got: u128, expected: u128 },
+
     #[error("UnauthorizedOwner")]
     UnauthorizedOwner {},
 

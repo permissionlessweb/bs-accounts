@@ -1,10 +1,10 @@
 use cw_orch::{interface, prelude::*};
 
 use crate::contract::{execute, instantiate, query, sudo};
-use btsg_account::market::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use btsg_account::market::{ExecuteMsg, MarketplaceInstantiateMsg, QueryMsg};
 
 /// Uploadable trait for bs721_account_minter & use with cw-orchestrator library
-#[interface(InstantiateMsg, ExecuteMsg, QueryMsg, Empty)]
+#[interface(MarketplaceInstantiateMsg, ExecuteMsg, QueryMsg, Empty)]
 pub struct BtsgAccountMarket;
 
 impl<Chain> Uploadable for BtsgAccountMarket<Chain> {

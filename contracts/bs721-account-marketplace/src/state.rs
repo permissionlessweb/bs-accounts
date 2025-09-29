@@ -1,6 +1,8 @@
 use bs_controllers::Hooks;
-use btsg_account::market::*;
-use cosmwasm_std::{Addr, StdResult, Storage};
+
+use btsg_account::market::{Ask, AskKey, Bid, BidKey, PendingBid, SudoParams};
+use cosmwasm_schema::cw_serde;
+use cosmwasm_std::{Addr, StdResult, Storage, Timestamp, Uint128};
 use cw_storage_macro::index_list;
 use cw_storage_plus::{IndexedMap, Item, MultiIndex, UniqueIndex};
 
@@ -8,6 +10,8 @@ use cw_storage_plus::{IndexedMap, Item, MultiIndex, UniqueIndex};
 pub const MAX_FEE_BPS: u64 = 10000;
 
 pub const SUDO_PARAMS: Item<SudoParams> = Item::new("sp");
+
+pub const COOLDOWN: Item<String> = Item::new("cd");
 
 pub const ASK_HOOKS: Hooks = Hooks::new("ah");
 pub const BID_HOOKS: Hooks = Hooks::new("bh");
@@ -91,4 +95,32 @@ pub fn bids<'a>() -> IndexedMap<BidKey, Bid, BidIndicies<'a>> {
         ),
     };
     IndexedMap::new("b2", indexes)
+}
+
+#[index_list(PendingBid)]
+pub struct PendingBidIndicies<'a> {
+    pub owner: MultiIndex<'a, Addr, PendingBid, String>,
+    pub new_owner: MultiIndex<'a, Addr, PendingBid, String>,
+    pub unlock_time: MultiIndex<'a, (String, u64), PendingBid, String>,
+}
+
+pub fn cooldown_bids<'a>() -> IndexedMap<&'a str, PendingBid, PendingBidIndicies<'a>> {
+    let indexes = PendingBidIndicies {
+        owner: MultiIndex::new(
+            |_pk: &[u8], d: &PendingBid| d.ask.seller.clone(),
+            "pending_bids",
+            "pending_bids__owner",
+        ),
+        new_owner: MultiIndex::new(
+            |_pk: &[u8], d: &PendingBid| d.new_owner.clone(),
+            "pending_bids",
+            "pending_bids__new_owner",
+        ),
+        unlock_time: MultiIndex::new(
+            |_pk: &[u8], d: &PendingBid| (d.ask.token_id.clone(), d.unlock_time.seconds()),
+            "pending_bids",
+            "pending_bids__unlock_time",
+        ),
+    };
+    IndexedMap::new("pending_bids", indexes)
 }

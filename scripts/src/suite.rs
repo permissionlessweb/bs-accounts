@@ -69,11 +69,13 @@ impl<Chain: CwEnv> cw_orch::contract::Deploy<Chain> for BtsgAccountSuite<Chain> 
         // suite.abs = abs;
 
         suite.market.instantiate(
-            &btsg_account::market::InstantiateMsg {
+            &btsg_account::market::MarketplaceInstantiateMsg {
                 trading_fee_bps: 200,
                 min_price: Uint128::from(5000000u64),
                 ask_interval: 60,
                 valid_bid_query_limit: 30,
+                cooldown_timeframe: todo!(),
+                cooldown_cancel_fee: todo!(),
             },
             Some(&Addr::unchecked(data.to_string())),
             &[],
@@ -89,7 +91,7 @@ impl<Chain: CwEnv> cw_orch::contract::Deploy<Chain> for BtsgAccountSuite<Chain> 
                     min_account_length: 3u32,
                     max_account_length: 128u32,
                     base_price: 10u128.into(),
-                    base_delegation: 2100_000_000u128.into(),
+                    base_delegation: 0u128.into(),
                     marketplace_addr: suite.market.addr_str()?,
                     mint_start_delay: None,
                 },

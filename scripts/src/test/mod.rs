@@ -4,7 +4,7 @@ pub mod minter;
 pub mod smart_accounts;
 
 use bs721_account_minter::msg::InstantiateMsg as AccountMinterInitMsg;
-use btsg_account::market::InstantiateMsg as AccountMarketInitMsg;
+use btsg_account::market::MarketplaceInstantiateMsg as AccountMarketInitMsg;
 use cosmwasm_std::{coin, coins, Decimal, StakingMsg, Uint128};
 use cw_orch::{
     anyhow,
@@ -52,6 +52,8 @@ impl BtsgAccountSuite<MockBech32> {
                 min_price: 100u128.into(),
                 ask_interval: 30u64,
                 valid_bid_query_limit: 100u32,
+                cooldown_timeframe: todo!(),
+                cooldown_cancel_fee: todo!(),
             },
             None,
             &[],

@@ -5,7 +5,7 @@ use crate::{
     // hooks::{prepare_ask_hook, prepare_bid_hook, prepare_sale_hook},
     state::*,
 };
-use btsg_account::{charge_fees, Metadata, NATIVE_DENOM};
+use btsg_account::{charge_fees, Metadata, DEPLOYMENT_DAO, NATIVE_DENOM};
 use btsg_account::{market::*, TokenId};
 
 use cosmwasm_std::{
@@ -200,6 +200,59 @@ pub fn execute_set_bid(
 }
 
 /// Removes a bid made by the bidder. Bidders can only remove their own bids
+pub fn execute_cancel_cooldown(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    token_id: &str,
+) -> Result<Response, ContractError> {
+    match cooldown_bids().may_load(deps.storage, &ask_key(token_id))? {
+        Some(p) => {
+            // sender must be current token owner
+            if info.sender != p.ask.seller {
+                return Err(ContractError::Unauthorized {});
+            }
+            // must have sent cancel cooldown fee
+            ;
+            let payment = must_pay(&info, NATIVE_DENOM)?;
+            let expected = SUDO_PARAMS.load(deps.storage)?.cooldown_fee.amount;
+            if payment != expected {
+                return Err(ContractError::IncorrectPayment {
+                    got: payment.u128(),
+                    expected: expected.u128(),
+                });
+            }
+
+            // cannot cancel if cooldown period is over
+            if env.block.time <= p.unlock_time {
+                return Err(ContractError::InvalidDuration {});
+            }
+
+            // refund bidder
+            let dev_cut = expected
+                .u128()
+                .checked_div(2)
+                .expect("fatal division error");
+
+            let dev_cut_msg = BankMsg::Send {
+                to_address: DEPLOYMENT_DAO.to_string(),
+                amount: vec![coin(dev_cut, NATIVE_DENOM.to_string())],
+            };
+            // refund bidder
+            let seller_share_msg = BankMsg::Send {
+                to_address: p.new_owner.to_string(),
+                amount: vec![coin(
+                    p.amount.u128() + (expected.u128() - dev_cut),
+                    NATIVE_DENOM.to_string(),
+                )],
+            };
+
+            Ok(Response::default().add_messages(vec![seller_share_msg, dev_cut_msg]))
+        }
+        None => return Err(ContractError::AskNotFound {}),
+    }
+}
+/// Removes a bid made by the bidder. Bidders can only remove their own bids
 pub fn execute_remove_bid(
     deps: DepsMut,
     _env: Env,
@@ -232,11 +285,61 @@ pub fn execute_remove_bid(
     Ok(res)
 }
 
+pub fn execute_finalize_bid(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    token_id: &str,
+) -> Result<Response, ContractError> {
+    let collection = ACCOUNT_COLLECTION.load(deps.storage)?;
+    let pending = cooldown_bids().may_load(deps.storage, &ask_key(token_id))?;
+    let mut res = Response::default();
+    match pending {
+        Some(p) => {
+            // check sender is either current or new owner
+            if info.sender != p.ask.seller || info.sender != p.new_owner {
+                return Err(ContractError::Unauthorized {});
+            }
+            // check if pending bid is ready to be finalized
+            if env.block.time > p.unlock_time {
+                return Err(ContractError::InvalidDuration {});
+            }
+            // Check if token is approved for transfer
+            Bs721Contract::<Empty, Empty>(collection, PhantomData, PhantomData).approval(
+                &deps.querier,
+                token_id,
+                &p.ask.seller.to_string(),
+                None,
+            )?;
+
+            // Transfer funds and NFT
+            finalize_sale(
+                deps.as_ref(),
+                p.ask.clone(),
+                p.amount,
+                p.new_owner.clone(),
+                &mut res,
+            )?;
+            // Update Ask with new seller and renewal time
+            let ask = Ask {
+                token_id: token_id.to_string(),
+                id: p.ask.id,
+                seller: p.new_owner.clone(),
+            };
+            store_ask(deps.storage, &ask)?;
+        }
+        None => {
+            return Err(ContractError::AskNotFound {});
+        }
+    }
+
+    Ok(res)
+}
 /// Seller can accept a bid which transfers funds as well as the token.
 /// The bid is removed, then a new ask is created for the same token.
 pub fn execute_accept_bid(
     deps: DepsMut,
-    _env: Env,
+    env: Env,
     info: MessageInfo,
     token_id: &str,
     bidder: Addr,
@@ -244,12 +347,13 @@ pub fn execute_accept_bid(
     // println!("1.0 execute_accept bid ----------------------------");
     nonpayable(&info)?;
     let collection = ACCOUNT_COLLECTION.load(deps.storage)?;
+    let cooldown = SUDO_PARAMS.load(deps.storage)?.cooldown_duration;
     only_owner(deps.as_ref(), &info, &collection, token_id)?;
 
     let ask_key = ask_key(token_id);
     let bid_key = bid_key(token_id, &bidder);
 
-    let ask = asks().load(deps.storage, ask_key)?;
+    let ask = asks().load(deps.storage, ask_key.clone())?;
     let bid = bids().load(deps.storage, bid_key.clone())?;
 
     // Check if token is approved for transfer
@@ -263,31 +367,17 @@ pub fn execute_accept_bid(
     // Remove accepted bid
     bids().remove(deps.storage, bid_key)?;
 
-    let mut res = Response::new();
+    // begin cooldown period
+    let unlock_time = env.block.time.plus_seconds(cooldown.seconds());
+    let pending = PendingBid::new(ask.clone(), bidder.clone(), bid.amount, unlock_time);
+    cooldown_bids().save(deps.storage, &ask_key, &pending)?;
 
-    // Transfer funds and NFT
-    finalize_sale(
-        deps.as_ref(),
-        ask.clone(),
-        bid.amount,
-        bidder.clone(),
-        &mut res,
-    )?;
-
-    // Update Ask with new seller and renewal time
-    let ask = Ask {
-        token_id: token_id.to_string(),
-        id: ask.id,
-        seller: bidder.clone(),
-    };
-    store_ask(deps.storage, &ask)?;
-
-    let event = Event::new("accept-bid")
-        .add_attribute("token_id", token_id)
-        .add_attribute("bidder", bidder)
-        .add_attribute("price", bid.amount.to_string());
-
-    Ok(res.add_event(event))
+    Ok(Response::default().add_event(
+        Event::new("accept-bid")
+            .add_attribute("token_id", token_id)
+            .add_attribute("bidder", bidder)
+            .add_attribute("price", bid.amount.to_string()),
+    ))
 }
 
 /// Transfers funds and NFT, updates bid

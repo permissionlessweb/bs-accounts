@@ -4,6 +4,8 @@ edition = "2021"
 license = "BSD-3-Clause"
 repository = "https://github.com/bitsongofficial/bs-accounts"
 version  = { workspace = true }
+
+
 [dependencies]
 # Cryptography & Signing
 sha2                        = { workspace = true }

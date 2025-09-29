@@ -1673,7 +1673,7 @@ dependencies = [
 [[package]]
 name = "btsg-auth"
 version = "0.2.0"
-source = "git+https://github.com/permissionlessweb/bs-accounts?branch=cleanup#9aef8f7a7065d872fe99b56a6f2d408d0d8bf88f"
+source = "git+https://github.com/permissionlessweb/bs-accounts?branch=cleanup#75b1931199e8410095993cb6893aebed17118ed7"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -11378,7 +11378,7 @@ dependencies = [
  "openssl-probe",
  "rustls-pki-types",
  "schannel",
- "security-framework 3.5.0",
+ "security-framework 3.5.1",
 ]
 
 [[package]]
@@ -11739,9 +11739,9 @@ dependencies = [
 
 [[package]]
 name = "security-framework"
-version = "3.5.0"
+version = "3.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cc198e42d9b7510827939c9a15f5062a0c913f3371d765977e586d2fe6c16f4a"
+checksum = "b3297343eaf830f66ede390ea39da1d462b6b0c1b000f420d0a83f898bbbe6ef"
 dependencies = [
  "bitflags 2.9.1",
  "core-foundation 0.10.1",
@@ -13938,7 +13938,7 @@ version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
- "windows-sys 0.48.0",
+ "windows-sys 0.61.1",
 ]
 
 [[package]]

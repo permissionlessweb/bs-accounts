@@ -1,6 +1,6 @@
 use cw_orch::{interface, prelude::*};
 
-use crate::contract::{execute, instantiate, query, sudo};
+use crate::contract::{execute, instantiate, query, sudo, CONTRACT_NAME};
 use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
 /// Uploadable trait for bs721_account_minter & use with cw-orchestrator library

@@ -2,6 +2,7 @@ use cw_orch::{interface, prelude::*};
 
 use crate::entry::{execute, instantiate, query, sudo};
 use crate::msg::{Bs721AccountsQueryMsg as QueryMsg, ExecuteMsg, InstantiateMsg};
+use crate::ACCOUNT_CONTRACT;
 use btsg_account::Metadata;
 
 /// Uploadable trait for bs721_account & use with cw-orchestrator library

@@ -27,7 +27,7 @@ In this repo are [cw-orchestrator scripts](../../scripts/src/bin/manual_deploy.r
 ### Compile the contracts
 
 ```sh
-just build
+just optimize
 ```
 
 ### Test the workspace

@@ -6,17 +6,19 @@ use cw2::set_contract_version;
 use semver::Version;
 
 use crate::{commands::*, msgs::MigrateMsg, state::*, ContractError};
-use btsg_account::market::{ExecuteMsg, InstantiateMsg, ParamInfo, QueryMsg, SudoMsg, SudoParams};
+use btsg_account::market::{
+    ExecuteMsg, MarketplaceInstantiateMsg, ParamInfo, QueryMsg, SudoMsg, SudoParams,
+};
 
 pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
-pub const ACCOUNT_MARKETPLACE: &str = "bs721_account_marketplace";
+pub const ACCOUNT_MARKETPLACE: &str = "crates.io:bs721-account-marketplace";
 
 #[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
 pub fn instantiate(
     deps: DepsMut,
     _env: Env,
     _info: MessageInfo,
-    msg: InstantiateMsg,
+    msg: MarketplaceInstantiateMsg,
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, ACCOUNT_MARKETPLACE, CONTRACT_VERSION)?;
     if msg.trading_fee_bps > MAX_FEE_BPS {
@@ -28,6 +30,8 @@ pub fn instantiate(
         min_price: msg.min_price,
         ask_interval: msg.ask_interval,
         valid_bid_query_limit: msg.valid_bid_query_limit,
+        cooldown_duration: msg.cooldown_timeframe,
+        cooldown_fee: msg.cooldown_cancel_fee,
     };
 
     SUDO_PARAMS.save(deps.storage, &params)?;
@@ -61,6 +65,10 @@ pub fn execute(
         ExecuteMsg::RemoveBid { token_id } => execute_remove_bid(deps, env, info, &token_id),
         ExecuteMsg::AcceptBid { token_id, bidder } => {
             execute_accept_bid(deps, env, info, &token_id, api.addr_validate(&bidder)?)
+        }
+        ExecuteMsg::FinalizeBid { token_id } => execute_finalize_bid(deps, env, info, &token_id),
+        ExecuteMsg::CancelCooldown { token_id } => {
+            execute_cancel_cooldown(deps, env, info, &token_id)
         }
     }
 }
@@ -130,6 +138,9 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::BidHooks {} => to_json_binary(&BID_HOOKS.query_hooks(deps)?),
         QueryMsg::SaleHooks {} => to_json_binary(&SALE_HOOKS.query_hooks(deps)?),
         QueryMsg::Config {} => to_json_binary(&query_config(deps)?),
+        QueryMsg::Cooldown { token_id } => {
+            to_json_binary(&cooldown_bids().may_load(deps.storage, &ask_key(&token_id))?)
+        }
     }
 }
 

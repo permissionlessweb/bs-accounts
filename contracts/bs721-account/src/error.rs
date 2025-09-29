@@ -72,6 +72,9 @@ pub enum ContractError {
     #[error("CannotRemoveEmptyMap")]
     CannotRemoveEmptyMap {},
 
+    #[error("AccountCannotBeTransfered: {reason}")]
+    AccountCannotBeTransfered { reason: String },
+
     #[error("CannotRemoveMoreThanWillExists")]
     CannotRemoveMoreThanWillExists {},
 

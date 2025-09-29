@@ -1,10 +1,12 @@
-pub mod minter;
 pub mod market;
+pub mod minter;
 pub mod verify_generic;
 
 pub const MAX_TEXT_LENGTH: u32 = 512;
 pub const NATIVE_DENOM: &str = "ubtsg";
 pub const SECONDS_PER_YEAR: u64 = 31536000;
+pub const DEPLOYMENT_DAO: &str =
+    "bitsong13hmdq0slwmff7sej79kfa8mgnx4rl46nj2fvmlgu6u32tz6vfqesdfq4vm";
 
 /// Custom bitsong name metadata.
 #[cosmwasm_schema::cw_serde]

@@ -7,6 +7,8 @@ pub type Collection = String;
 pub type Bidder = String;
 pub type Seller = String;
 pub type AskKey = TokenId;
+/// Primary key for bids: (token_id, bidder)
+pub type BidKey = (TokenId, Addr);
 pub type Id = u64;
 
 /// Represents an ask on the marketplace
@@ -37,11 +39,26 @@ impl Bid {
     }
 }
 
-/// Primary key for bids: (token_id, bidder)
-pub type BidKey = (TokenId, Addr);
+#[cosmwasm_schema::cw_serde]
+pub struct PendingBid {
+    pub ask: Ask,
+    pub new_owner: Addr,
+    pub amount: Uint128,
+    pub unlock_time: Timestamp,
+}
+impl PendingBid {
+    pub fn new(ask: Ask, new_owner: Addr, amount: Uint128, unlock_time: Timestamp) -> Self {
+        PendingBid {
+            ask,
+            new_owner,
+            amount,
+            unlock_time,
+        }
+    }
+}
 
 #[cosmwasm_schema::cw_serde]
-pub struct InstantiateMsg {
+pub struct MarketplaceInstantiateMsg {
     /// Community pool fee for winning bids
     /// 0.25% = 25, 0.5% = 50, 1% = 100, 2.5% = 250
     pub trading_fee_bps: u64,
@@ -51,6 +68,11 @@ pub struct InstantiateMsg {
     pub ask_interval: u64,
     /// The number of bids to query to when searching for the highest bid
     pub valid_bid_query_limit: u32,
+    /// Minimum time accepted bids are in escrow until they can be finalized.
+    /// Improves security of account tokens.
+    pub cooldown_timeframe: Timestamp,
+    /// Fee required by token owner to cancel a bid they have accepted. Split betweeen Bitsong developers & biddee.
+    pub cooldown_cancel_fee: Coin,
 }
 
 #[cosmwasm_schema::cw_serde]
@@ -77,7 +99,8 @@ pub enum ExecuteMsg {
     SetBid {
         token_id: TokenId,
     },
-    /// Remove an existing bid from an ask
+    /// Remove an existing bid from an ask.
+    /// If bid is in cooldown period & current token_id owner is calling, this will revert
     RemoveBid {
         token_id: TokenId,
     },
@@ -85,6 +108,14 @@ pub enum ExecuteMsg {
     AcceptBid {
         token_id: TokenId,
         bidder: String,
+    },
+    /// Finalize a bid for an account once the delay period is complete.
+    ///  Bidder or Bidee can call this function.
+    FinalizeBid {
+        token_id: TokenId,
+    },
+    CancelCooldown {
+        token_id: TokenId,
     },
     Setup {
         minter: String,
@@ -168,6 +199,8 @@ pub enum QueryMsg {
     /// Get the minter and collection
     #[returns(ConfigResponse)]
     Config {},
+    #[returns(Option<PendingBid>)]
+    Cooldown { token_id: TokenId },
 }
 
 #[cosmwasm_schema::cw_serde]
@@ -238,6 +271,8 @@ pub struct SudoParams {
     pub ask_interval: u64,
     /// The number of bids to query to when searching for the highest bid
     pub valid_bid_query_limit: u32,
+    pub cooldown_duration: Timestamp,
+    pub cooldown_fee: Coin,
 }
 
 pub struct ParamInfo {
