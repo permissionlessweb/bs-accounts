@@ -5,7 +5,9 @@ use crate::{
     // hooks::{prepare_ask_hook, prepare_bid_hook, prepare_sale_hook},
     state::*,
 };
-use btsg_account::{charge_fees, Metadata, DEPLOYMENT_DAO, NATIVE_DENOM};
+use btsg_account::{
+    charge_fees, Metadata, DEFAULT_QUERY_LIMIT, DEPLOYMENT_DAO, MAX_QUERY_LIMIT, NATIVE_DENOM,
+};
 use btsg_account::{market::*, TokenId};
 
 use cosmwasm_std::{
@@ -19,14 +21,6 @@ use bs721::{Bs721ExecuteMsg, OwnerOfResponse};
 use bs721_base::helpers::Bs721Contract;
 use cw_storage_plus::Bound;
 use cw_utils::{must_pay, nonpayable};
-
-// Query limits
-const DEFAULT_QUERY_LIMIT: u32 = 10;
-const MAX_QUERY_LIMIT: u32 = 100;
-pub const PROPOSE_BIDDER_A: u64 = 1;
-pub const ACCEPT_BIDDER_A: u64 = 2;
-pub const PROPOSE_BIDDER_B: u64 = 3;
-pub const ACCEPT_BIDDER_B: u64 = 4;
 
 /// Setup this contract (can be run once only)
 pub fn execute_setup(
@@ -206,7 +200,8 @@ pub fn execute_cancel_cooldown(
     info: MessageInfo,
     token_id: &str,
 ) -> Result<Response, ContractError> {
-    match cooldown_bids().may_load(deps.storage, &ask_key(token_id))? {
+    let cd_key = &ask_key(token_id);
+    match cooldown_bids().may_load(deps.storage, cd_key)? {
         Some(p) => {
             // sender must be current token owner
             if info.sender != p.ask.seller {
@@ -246,7 +241,7 @@ pub fn execute_cancel_cooldown(
                     NATIVE_DENOM.to_string(),
                 )],
             };
-
+            cooldown_bids().remove(deps.storage, cd_key)?;
             Ok(Response::default().add_messages(vec![seller_share_msg, dev_cut_msg]))
         }
         None => return Err(ContractError::AskNotFound {}),
@@ -292,7 +287,8 @@ pub fn execute_finalize_bid(
     token_id: &str,
 ) -> Result<Response, ContractError> {
     let collection = ACCOUNT_COLLECTION.load(deps.storage)?;
-    let pending = cooldown_bids().may_load(deps.storage, &ask_key(token_id))?;
+    let cd_key = &ask_key(token_id);
+    let pending = cooldown_bids().may_load(deps.storage, cd_key)?;
     let mut res = Response::default();
     match pending {
         Some(p) => {
@@ -320,13 +316,15 @@ pub fn execute_finalize_bid(
                 p.new_owner.clone(),
                 &mut res,
             )?;
-            // Update Ask with new seller and renewal time
-            let ask = Ask {
-                token_id: token_id.to_string(),
-                id: p.ask.id,
-                seller: p.new_owner.clone(),
-            };
-            store_ask(deps.storage, &ask)?;
+            cooldown_bids().remove(deps.storage, cd_key)?;
+            store_ask(
+                deps.storage,
+                &Ask {
+                    token_id: token_id.to_string(),
+                    id: p.ask.id,
+                    seller: p.new_owner.clone(),
+                },
+            )?;
         }
         None => {
             return Err(ContractError::AskNotFound {});

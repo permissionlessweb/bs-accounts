@@ -2,6 +2,9 @@ pub mod market;
 pub mod minter;
 pub mod verify_generic;
 
+// Query limits
+pub const DEFAULT_QUERY_LIMIT: u32 = 10;
+pub const MAX_QUERY_LIMIT: u32 = 100;
 pub const MAX_TEXT_LENGTH: u32 = 512;
 pub const NATIVE_DENOM: &str = "ubtsg";
 pub const SECONDS_PER_YEAR: u64 = 31536000;
