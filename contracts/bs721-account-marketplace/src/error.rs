@@ -23,6 +23,9 @@ pub enum ContractError {
     #[error("Unauthorized")]
     Unauthorized {},
 
+    #[error("CannotFinalizeBid")]
+    CannotFinalizeBid {},
+
     #[error("NotApproved")]
     NotApproved {},
 

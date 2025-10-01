@@ -74,7 +74,7 @@ impl<Chain: CwEnv> cw_orch::contract::Deploy<Chain> for BtsgAccountSuite<Chain> 
                 min_price: Uint128::from(5000000u64),
                 ask_interval: 60,
                 valid_bid_query_limit: 30,
-                cooldown_timeframe: Timestamp::plus_days(&chain.block_info().unwrap().time, 7),
+                cooldown_timeframe: 60 * 60 * 24 as u64,
                 cooldown_cancel_fee: coin(100_000_000u128, "ubtsg"),
             },
             Some(&Addr::unchecked(data.to_string())),

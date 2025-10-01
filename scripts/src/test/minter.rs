@@ -23,8 +23,9 @@ pub fn init() -> anyhow::Result<()> {
 mod execute {
 
     use bs721_account_minter::ContractError;
-    use btsg_account::market::QueryMsgFns;
-    use cosmwasm_std::coin;
+    use btsg_account::market::{Ask, ExecuteMsg, PendingBid, QueryMsgFns};
+    use btsg_account::DEPLOYMENT_DAO;
+    use cosmwasm_std::{coin, Binary};
 
     use super::*;
 
@@ -82,13 +83,12 @@ mod execute {
         let owner = mock.sender.clone();
         let bidder = mock.addr_make("bidder");
         let token_id = "bobo";
-
         mock.wait_seconds(200)?;
         suite.mint_and_list(mock.clone(), token_id, &owner)?;
-
         suite.bid_w_funds(mock, token_id, bidder, BID_AMOUNT)?;
         Ok(())
     }
+
     #[test]
     fn test_accept_bid() -> anyhow::Result<()> {
         let mock = MockBech32::new("mock");
@@ -109,6 +109,12 @@ mod execute {
         );
 
         suite.market.accept_bid(bidder.clone(), token_id.into())?;
+
+        mock.wait_seconds(60)?;
+        suite
+            .market
+            .call_as(&owner)
+            .finalize_bid(token_id.to_string())?;
 
         // check if bid is removed
         assert!(suite
@@ -143,6 +149,11 @@ mod execute {
         suite.mint_and_list(mock.clone(), token_id, &owner)?;
         suite.bid_w_funds(mock.clone(), token_id, bidder.clone(), BID_AMOUNT)?;
         suite.market.accept_bid(bidder.clone(), token_id.into())?;
+        mock.wait_seconds(60)?;
+        suite
+            .market
+            .call_as(&owner)
+            .finalize_bid(token_id.to_string())?;
         suite.bid_w_funds(mock.clone(), token_id, bidder2.clone(), BID_AMOUNT)?;
         suite
             .account
@@ -153,6 +164,11 @@ mod execute {
             .market
             .call_as(&bidder)
             .accept_bid(bidder2.clone(), token_id.into())?;
+        mock.wait_seconds(60)?;
+        suite
+            .market
+            .call_as(&bidder)
+            .finalize_bid(bidder2.to_string())?;
 
         Ok(())
     }
@@ -276,6 +292,7 @@ mod execute {
 
         Ok(())
     }
+
     #[test]
     fn test_update_mkt_sudo() -> anyhow::Result<()> {
         let mock = MockBech32::new("bitsong");
@@ -307,6 +324,194 @@ mod execute {
         assert_eq!(res.ask_interval, 1000);
 
         Ok(())
+    }
+
+    #[test]
+    fn test_cooldown_period() -> anyhow::Result<()> {
+        let mock = MockBech32::new("bitsong");
+        let mut suite = BtsgAccountSuite::new(mock.clone());
+        suite.default_setup(mock.clone(), None, Some(mock.sender.clone()))?;
+        mock.wait_seconds(200)?;
+
+        let owner = mock.sender.clone();
+        mock.add_balance(&owner, vec![coin(10000000000u128, "ubtsg")])?;
+        let bidder = mock.addr_make("bidder");
+        let account = "account";
+        suite.mint_and_list(mock.clone(), account, &owner)?;
+        suite.bid_w_funds(mock.clone(), account, bidder.clone(), BID_AMOUNT)?;
+        let owner_balance_a = mock.query_balance(&owner, "ubtsg")?;
+        let bidder_balance_a = mock.query_balance(&bidder, "ubtsg")?;
+        suite.market.accept_bid(bidder.clone(), account.into())?;
+        // no funds are transfered before cooldown is over
+        let owner_balance_b = mock.query_balance(&owner, "ubtsg")?;
+        let bidder_balance_b = mock.query_balance(&bidder, "ubtsg")?;
+        mock.wait_seconds(10)?;
+        assert_eq!(owner_balance_a, owner_balance_b);
+        assert_eq!(bidder_balance_a, bidder_balance_b);
+        assert_eq!(
+            suite.market.cooldown(account.to_string())?,
+            Some(PendingBid {
+                ask: Ask {
+                    token_id: account.to_string(),
+                    id: 1,
+                    seller: owner.clone(),
+                },
+                new_owner: bidder.clone(),
+                amount: BID_AMOUNT.into(),
+                unlock_time: mock.block_info()?.time.plus_seconds(50)
+            })
+        );
+        assert_eq!(
+            suite.account.burn(account).unwrap_err().root().to_string(),
+            bs721_account::ContractError::AccountCannotBeTransfered {
+                reason: "Account is in cooldown".to_string()
+            }
+            .to_string()
+        );
+        assert_eq!(
+            suite
+                .account
+                .transfer_nft(bidder.clone(), account)
+                .unwrap_err()
+                .root()
+                .to_string(),
+            bs721_account::ContractError::AccountCannotBeTransfered {
+                reason: "Account is in cooldown".to_string()
+            }
+            .to_string()
+        );
+        assert_eq!(
+            suite
+                .account
+                .send_nft(suite.minter.address()?, Binary::default(), account)
+                .unwrap_err()
+                .root()
+                .to_string(),
+            bs721_account::ContractError::AccountCannotBeTransfered {
+                reason: "Account is in cooldown".to_string()
+            }
+            .to_string()
+        );
+        mock.wait_seconds(50)?;
+        suite
+            .market
+            .call_as(&owner)
+            .finalize_bid(account.to_string())?;
+        assert_eq!(suite.market.cooldown(account.to_string())?, None,);
+        let owner_balance_c = mock.query_balance(&owner, "ubtsg")?;
+        let bidder_balance_c = mock.query_balance(&bidder, "ubtsg")?;
+        assert_eq!(owner_balance_c.u128(), owner_balance_b.u128() + BID_AMOUNT);
+        assert_eq!(bidder_balance_b, bidder_balance_c);
+        Ok(())
+    }
+
+    #[test]
+    fn test_cancel_cooldown_period() -> anyhow::Result<()> {
+        let mock = MockBech32::new("bitsong");
+        let mut suite = BtsgAccountSuite::new(mock.clone());
+        suite.default_setup(mock.clone(), None, Some(mock.sender.clone()))?;
+        mock.wait_seconds(200)?;
+        let owner = mock.sender.clone();
+        mock.add_balance(&owner, vec![coin(10000000000u128, "ubtsg")])?;
+        let bidder = mock.addr_make("bidder");
+        mock.add_balance(&owner, vec![coin(10000000000u128, "uthiol")])?;
+        let account = "account";
+        suite.mint_and_list(mock.clone(), account, &owner)?;
+        suite.bid_w_funds(mock.clone(), account, bidder.clone(), BID_AMOUNT)?;
+        let owner_balance_a = mock.query_balance(&owner, "ubtsg")?;
+        let bidder_balance_a = mock.query_balance(&bidder, "ubtsg")?;
+        suite.market.accept_bid(bidder.clone(), account.into())?;
+        // no funds are transfered before cooldown is over
+        let owner_balance_b = mock.query_balance(&owner, "ubtsg")?;
+        let bidder_balance_b = mock.query_balance(&bidder, "ubtsg")?;
+        mock.wait_seconds(10)?;
+        assert_eq!(owner_balance_a, owner_balance_b);
+        assert_eq!(bidder_balance_a, bidder_balance_b);
+        assert_eq!(
+            suite.market.cooldown(account.to_string())?,
+            Some(PendingBid {
+                ask: Ask {
+                    token_id: account.to_string(),
+                    id: 1,
+                    seller: owner.clone(),
+                },
+                new_owner: bidder.clone(),
+                amount: BID_AMOUNT.into(),
+                unlock_time: mock.block_info()?.time.plus_seconds(50)
+            })
+        );
+        mock.wait_seconds(49)?;
+        assert_eq!(
+            suite
+                .market
+                .call_as(&bidder)
+                .cancel_cooldown(account.to_string())
+                .unwrap_err()
+                .root()
+                .to_string(),
+            ContractError::Unauthorized {}.to_string()
+        );
+        assert_eq!(
+            suite
+                .market
+                .execute(
+                    &ExecuteMsg::CancelCooldown {
+                        token_id: account.to_string()
+                    },
+                    &vec![]
+                )
+                .unwrap_err()
+                .root()
+                .to_string(),
+            "No funds sent"
+        );
+        assert_eq!(
+            suite
+                .market
+                .execute(
+                    &ExecuteMsg::CancelCooldown {
+                        token_id: account.to_string()
+                    },
+                    &vec![coin(499_000_000, "ubtsg")]
+                )
+                .unwrap_err()
+                .root()
+                .to_string(),
+            ContractError::IncorrectPayment {
+                got: 499_000_000u128,
+                expected: 500_000_000u128
+            }
+            .to_string()
+        );
+        assert_eq!(
+            suite
+                .market
+                .execute(
+                    &ExecuteMsg::CancelCooldown {
+                        token_id: account.to_string()
+                    },
+                    &vec![coin(499_000_000, "uthiol")]
+                )
+                .unwrap_err()
+                .root()
+                .to_string(),
+            "Must send reserve token 'ubtsg'"
+        );
+        suite.market.execute(
+            &ExecuteMsg::CancelCooldown {
+                token_id: account.to_string(),
+            },
+            &vec![coin(500_000_000, "ubtsg")],
+        )?;
+        let dd_balance = mock.query_balance(&Addr::unchecked(DEPLOYMENT_DAO), "ubtsg")?;
+        let bidder_balance_c = mock.query_balance(&bidder, "ubtsg")?;
+        assert_eq!(bidder_balance_c.u128(), BID_AMOUNT + 250_000_000u128);
+        assert_eq!(dd_balance.u128(), 250_000_000u128);
+        Ok(())
+        // assert_eq!(suite.market.cooldown(account.to_string())?, None,);
+
+        // assert_eq!(owner_balance_b, bidder_balance_c);
+        // assert_ne!(bidder_balance_b, owner_balance_c);
     }
 
     #[test]

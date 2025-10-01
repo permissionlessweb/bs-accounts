@@ -69,8 +69,8 @@ pub struct MarketplaceInstantiateMsg {
     /// The number of bids to query to when searching for the highest bid
     pub valid_bid_query_limit: u32,
     /// Minimum time accepted bids are in escrow until they can be finalized.
-    /// Improves security of account tokens.
-    pub cooldown_timeframe: Timestamp,
+    /// Improves security of account tokens. (in seconds)
+    pub cooldown_timeframe: u64,
     /// Fee required by token owner to cancel a bid they have accepted. Split betweeen Bitsong developers & biddee.
     pub cooldown_cancel_fee: Coin,
 }
@@ -271,7 +271,7 @@ pub struct SudoParams {
     pub ask_interval: u64,
     /// The number of bids to query to when searching for the highest bid
     pub valid_bid_query_limit: u32,
-    pub cooldown_duration: Timestamp,
+    pub cooldown_duration: u64,
     pub cooldown_fee: Coin,
 }
 

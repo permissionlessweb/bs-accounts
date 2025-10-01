@@ -219,7 +219,7 @@ pub fn execute_cancel_cooldown(
             }
 
             // cannot cancel if cooldown period is over
-            if env.block.time <= p.unlock_time {
+            if env.block.time >= p.unlock_time {
                 return Err(ContractError::InvalidDuration {});
             }
 
@@ -293,8 +293,8 @@ pub fn execute_finalize_bid(
     match pending {
         Some(p) => {
             // check sender is either current or new owner
-            if info.sender != p.ask.seller || info.sender != p.new_owner {
-                return Err(ContractError::Unauthorized {});
+            if info.sender != p.ask.seller && info.sender != p.new_owner {
+                return Err(ContractError::CannotFinalizeBid {});
             }
             // check if pending bid is ready to be finalized
             if env.block.time > p.unlock_time {
@@ -366,7 +366,7 @@ pub fn execute_accept_bid(
     bids().remove(deps.storage, bid_key)?;
 
     // begin cooldown period
-    let unlock_time = env.block.time.plus_seconds(cooldown.seconds());
+    let unlock_time = env.block.time.plus_seconds(cooldown);
     let pending = PendingBid::new(ask.clone(), bidder.clone(), bid.amount, unlock_time);
     cooldown_bids().save(deps.storage, &ask_key, &pending)?;
 

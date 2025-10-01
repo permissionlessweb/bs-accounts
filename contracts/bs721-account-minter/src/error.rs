@@ -21,7 +21,7 @@ pub enum ContractError {
     #[error("{0}")]
     Instantiate2AddressError(#[from] Instantiate2AddressError),
 
-    #[error("Account Minter: Unauthorized")]
+    #[error("Unauthorized")]
     Unauthorized {},
 
     #[error("MintingPaused")]
