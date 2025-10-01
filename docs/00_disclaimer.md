@@ -1,3 +1,4 @@
+# Tokenized Account Ownership
 
 ## Thoughts On Account Token Security Design
 
@@ -8,6 +9,8 @@ Since account tokens are the key for smart accounts, it is essential to keep in 
 If the code-id of the accounts used has a global contract admin, then the possible risk of the admins integrity being compromised, and an attack may occur on wallets. Bitsong mitigates this risk by having the governance module set as the admin able to migrate a contract for all of the contracts used in the accounts framework.
 
 There is still a risk of any wallet address compromized that is also authorized to execute actions as the module, however there are none.
+
+> Currently, we have introduced a migrate entrypoint for account packages, in preparation to upgrade to the latest version of cosmwasm. This can and will be removed in future releases to make these contracts immutable, further enhancing the security design. 
 
 ### Undesired Operator Or Approval Authorization
 
