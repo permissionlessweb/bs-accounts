@@ -1,7 +1,7 @@
 // use abstract_interface::Abstract;
 use crate::BtsgAccountMarketExecuteFns;
 use btsg_account::Metadata;
-use cosmwasm_std::Uint128;
+use cosmwasm_std::{coin, Timestamp, Uint128};
 
 use bs721_account::interface::BtsgAccountCollection;
 use bs721_account_marketplace::interface::BtsgAccountMarket;
@@ -74,8 +74,8 @@ impl<Chain: CwEnv> cw_orch::contract::Deploy<Chain> for BtsgAccountSuite<Chain> 
                 min_price: Uint128::from(5000000u64),
                 ask_interval: 60,
                 valid_bid_query_limit: 30,
-                cooldown_timeframe: todo!(),
-                cooldown_cancel_fee: todo!(),
+                cooldown_timeframe: Timestamp::plus_days(&chain.block_info().unwrap().time, 7),
+                cooldown_cancel_fee: coin(100_000_000u128, "ubtsg"),
             },
             Some(&Addr::unchecked(data.to_string())),
             &[],
