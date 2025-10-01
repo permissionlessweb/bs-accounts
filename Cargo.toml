@@ -21,31 +21,27 @@ documentation = "https://docs.bitsong.io"
 license    = "Apache-2.0"
 
 [workspace.dependencies]
-cosmwasm-schema = "2.2.0"
-cosmwasm-crypto = "2.2.2"
-cosmwasm-std = { version = "2.2.0", features = [
-  "cosmwasm_1_4",
-  "cosmwasm_2_0",
-] }
-cw2 = "2.0.0"
-cw-ownable = "2.1.0"
-cw-storage-plus = "2.0.0"
-cw-utils = "2.0.0"
-
-abstract-std = "0.26.0"
-cw-orch = "0.28.0"
-
-bs721                        = { git = "https://github.com/permissionlessweb/bs-nfts", branch = "feat/cw@v2",package = "bs721" }
-bs721-base                   = { git = "https://github.com/permissionlessweb/bs-nfts", branch = "feat/cw@v2"}
-bs-controllers               = { git = "https://github.com/permissionlessweb/bs-nfts", branch = "feat/cw@v2", library = "bs-controllers" } 
-btsg-nft-scripts             = { git = "https://github.com/permissionlessweb/bs-nfts", branch = "feat/cw@v2", package = "btsg-nft-scripts" }
-btsg-account                 = { path = "packages/btsg-account" }
-btsg-auth                    = { path = "packages/btsg-auth" }
-
-# Contract crates - explicitly defined to avoid confusion
 bs721-account                = { path = "contracts/bs721-account" }
 bs721-account-minter         = { path = "contracts/bs721-account-minter" }
 bs721-account-marketplace    = { path = "contracts/bs721-account-marketplace" }
+
+cosmwasm-schema       = { version = "2.2.0" }
+cosmwasm-crypto       = { version = "2.2.2" }
+cosmwasm-std          = { version = "2.2.0", features = ["cosmwasm_1_4","cosmwasm_2_0"] }
+cw2                   = { version = "2.0.0" }
+cw-ownable            = { version = "2.1.0" }
+cw-storage-plus       = { version = "2.0.0" }
+cw-utils              = { version = "2.0.0" }
+abstract-std          = { version = "0.26.0" }
+# cw-orch             = { version = "0.28.0" }
+cw-orch               = { git = "https://github.com/permissionlessweb/cw-orchestrator", branch = "feat/wasm-path" }
+bs721                 = { git = "https://github.com/permissionlessweb/bs-nfts", branch = "feat/cw@v2", package = "bs721" }
+bs721-base            = { git = "https://github.com/permissionlessweb/bs-nfts", branch = "feat/cw@v2" }
+bs-controllers        = { git = "https://github.com/permissionlessweb/bs-nfts", branch = "feat/cw@v2", library = "bs-controllers" }
+btsg-nft-scripts      = { git = "https://github.com/permissionlessweb/bs-nfts", branch = "feat/cw@v2", package = "btsg-nft-scripts" }
+btsg-account          = { path = "packages/btsg-account" }
+btsg-auth             = { path = "packages/btsg-auth" }
+
 
 bech32 = { version = "0.11.0", default-features = false, features = ["alloc"] }
 serde = { version = "1.0.197", default-features = false, features = ["derive"] }
