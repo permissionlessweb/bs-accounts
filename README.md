@@ -49,6 +49,7 @@ cd scripts/ && cargo test
 To learn more about the deployment scripts, [check here](./scripts/README).
 
 ### Documentation
+Checkout some documentation [here](./docs/00_disclaimer).
 
 ## DISCLAIMER
 
