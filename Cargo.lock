@@ -1452,7 +1452,6 @@ dependencies = [
  "cw-utils",
  "cw2",
  "schemars 0.8.22",
- "semver",
  "serde",
  "subtle-encoding",
  "thiserror 1.0.69",

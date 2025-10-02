@@ -1,8 +1,10 @@
+use std::path::PathBuf;
+
 // use abstract_interface::Abstract;
 use crate::BtsgAccountMarketExecuteFns;
+use anyhow::anyhow;
 use btsg_account::Metadata;
-use cosmwasm_std::{coin, Timestamp, Uint128};
-
+use cosmwasm_std::{coin, Uint128};
 use bs721_account::interface::BtsgAccountCollection;
 use bs721_account_marketplace::interface::BtsgAccountMarket;
 use bs721_account_minter::interface::BtsgAccountMinter;
@@ -60,6 +62,60 @@ impl<Chain: CwEnv> cw_orch::contract::Deploy<Chain> for BtsgAccountSuite<Chain> 
 
     fn load_from(chain: Chain) -> Result<Self, Self::Error> {
         let suite = Self::new(chain.clone());
+
+        // Read and parse state.json
+        let crate_path = env!("CARGO_MANIFEST_DIR");
+        let file_path = PathBuf::from(crate_path)
+            // State file of your deployment
+            .join("state.json")
+            .display()
+            .to_string();
+        let file = std::fs::File::open(&file_path)
+            .map_err(|e| anyhow!(format!("Failed to open {}: {}", file_path, e)))?;
+        let state: serde_json::Value = serde_json::from_reader(file)
+            .map_err(|e| anyhow!(format!("Failed to parse {}: {}", file_path, e)))?;
+
+        // parse json to extract the code-id & contracts
+        let chain_id = chain.env_info().chain_id;
+        let chain_data = state
+            .get(&chain_id)
+            .ok_or_else(|| anyhow!(format!("No data found for chain ID: {}", chain_id)))?;
+
+        let code_ids = chain_data
+            .get("code_ids")
+            .and_then(|v| v.as_object())
+            .ok_or_else(|| anyhow!("Missing or invalid 'code_ids' in state.json".to_string()))?;
+
+        let contracts = chain_data
+            .get("default")
+            .and_then(|v| v.as_object())
+            .ok_or_else(|| {
+                anyhow!("Missing or invalid 'default' contracts in state.json".to_string())
+            })?;
+
+        // Define a local macro that works on any suite object with .id(), .set_code_id(), .set_address()
+        macro_rules! set_from_state {
+            ($obj:expr) => {{
+                let key = $obj.id();
+                let code_id = code_ids
+                    .get(&key)
+                    .and_then(|v| v.as_u64())
+                    .ok_or_else(|| anyhow!(format!("Missing code ID for {}", key)))?;
+
+                let address = contracts
+                    .get(&key)
+                    .and_then(|v| v.as_str())
+                    .ok_or_else(|| anyhow!(format!("Missing address for {}", key)))?;
+
+                $obj.set_code_id(code_id);
+                $obj.set_address(&Addr::unchecked(address.to_string()));
+            }};
+        }
+
+        set_from_state!(suite.account);
+        set_from_state!(suite.market);
+        set_from_state!(suite.minter);
+
         Ok(suite)
     }
 
@@ -118,3 +174,5 @@ impl<Chain: CwEnv> cw_orch::contract::Deploy<Chain> for BtsgAccountSuite<Chain> 
         Ok(suite)
     }
 }
+
+//

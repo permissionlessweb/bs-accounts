@@ -4,7 +4,6 @@ pub mod helpers;
 pub mod msg;
 pub mod state;
 pub use crate::error::ContractError;
-use crate::msg::MigrateMsg;
 
 #[cfg(not(target_arch = "wasm32"))]
 pub mod interface;
@@ -193,31 +192,4 @@ pub mod entry {
             } => sudo_update_params(deps, max_record_count, max_rev_map_count),
         }
     }
-}
-
-#[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
-pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, ContractError> {
-    let current_version = cw2::get_contract_version(deps.storage)?;
-    if current_version.contract != ACCOUNT_CONTRACT {
-        return Err(StdError::generic_err("Cannot upgrade to a different contract").into());
-    }
-    let version: Version = current_version
-        .version
-        .parse()
-        .map_err(|_| StdError::generic_err("Invalid contract version"))?;
-    let new_version: Version = CONTRACT_VERSION
-        .parse()
-        .map_err(|_| StdError::generic_err("Invalid contract version"))?;
-
-    if version > new_version {
-        return Err(StdError::generic_err("Cannot upgrade to a previous contract version").into());
-    }
-    // if same version return
-    if version == new_version {
-        return Ok(Response::new());
-    }
-
-    // set new contract version
-    cw2::set_contract_version(deps.storage, ACCOUNT_CONTRACT, CONTRACT_VERSION)?;
-    Ok(Response::new())
 }

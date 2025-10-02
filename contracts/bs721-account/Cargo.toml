@@ -14,7 +14,6 @@ library = []
 interface = ["dep:cw-orch"]
 
 [dependencies]
-semver              = { version = "1.0" }
 abstract-std        = { workspace = true }
 bs721               = { workspace = true }
 bs721-base          = { workspace = true, features = ["library"] }
