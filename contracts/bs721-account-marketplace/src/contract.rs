@@ -1,11 +1,9 @@
 use cosmwasm_std::{
-    to_json_binary, Binary, Decimal, Deps, DepsMut, Env, MessageInfo, Response, StdError,
-    StdResult, Uint128,
+    to_json_binary, Binary, Decimal, Deps, DepsMut, Env, MessageInfo, Response, StdResult, Uint128,
 };
 use cw2::set_contract_version;
-use semver::Version;
 
-use crate::{commands::*, msgs::MigrateMsg, state::*, ContractError};
+use crate::{commands::*, state::*, ContractError};
 use btsg_account::market::{
     ExecuteMsg, MarketplaceInstantiateMsg, ParamInfo, QueryMsg, SudoMsg, SudoParams,
 };
@@ -144,7 +142,6 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     }
 }
 
-
 #[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
 pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> Result<Response, ContractError> {
     let api = deps.api;
@@ -154,6 +151,8 @@ pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> Result<Response, ContractE
             trading_fee_bps,
             min_price,
             ask_interval,
+            cooldown_duration,
+            cooldown_cancel_fee,
         } => sudo_update_params(
             deps,
             env,
@@ -161,6 +160,8 @@ pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> Result<Response, ContractE
                 trading_fee_bps,
                 min_price,
                 ask_interval,
+                cooldown_duration,
+                cooldown_cancel_fee,
             },
         ),
         SudoMsg::AddSaleHook { hook } => sudo_add_sale_hook(deps, api.addr_validate(&hook)?),

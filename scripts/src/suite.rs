@@ -3,11 +3,11 @@ use std::path::PathBuf;
 // use abstract_interface::Abstract;
 use crate::BtsgAccountMarketExecuteFns;
 use anyhow::anyhow;
-use btsg_account::Metadata;
-use cosmwasm_std::{coin, Uint128};
 use bs721_account::interface::BtsgAccountCollection;
 use bs721_account_marketplace::interface::BtsgAccountMarket;
 use bs721_account_minter::interface::BtsgAccountMinter;
+use btsg_account::{Metadata, CURRENT_BASE_DELEGATION, CURRENT_BASE_PRICE};
+use cosmwasm_std::{coin, Uint128};
 
 use cw_orch::prelude::*;
 pub struct BtsgAccountSuite<Chain>
@@ -127,11 +127,11 @@ impl<Chain: CwEnv> cw_orch::contract::Deploy<Chain> for BtsgAccountSuite<Chain> 
         suite.market.instantiate(
             &btsg_account::market::MarketplaceInstantiateMsg {
                 trading_fee_bps: 200,
-                min_price: Uint128::from(5000000u64),
+                min_price: Uint128::from(55_500_000u64),
                 ask_interval: 60,
                 valid_bid_query_limit: 30,
-                cooldown_timeframe: 60 * 60 * 24 as u64,
-                cooldown_cancel_fee: coin(100_000_000u128, "ubtsg"),
+                cooldown_timeframe: 60 * 60 * 24 * 14 as u64, // 14 days
+                cooldown_cancel_fee: coin(500_000_000u128, "ubtsg"),
             },
             Some(&Addr::unchecked(data.to_string())),
             &[],
@@ -146,8 +146,8 @@ impl<Chain: CwEnv> cw_orch::contract::Deploy<Chain> for BtsgAccountSuite<Chain> 
                     collection_code_id: suite.account.code_id()?,
                     min_account_length: 3u32,
                     max_account_length: 128u32,
-                    base_price: 10u128.into(),
-                    base_delegation: 0u128.into(),
+                    base_price: CURRENT_BASE_PRICE.into(),
+                    base_delegation: CURRENT_BASE_DELEGATION.into(),
                     marketplace_addr: suite.market.addr_str()?,
                     mint_start_delay: None,
                 },
@@ -161,10 +161,9 @@ impl<Chain: CwEnv> cw_orch::contract::Deploy<Chain> for BtsgAccountSuite<Chain> 
             suite.minter.addr_str()?
         );
         println!("bs721-account collection contract: {}", bs721_account);
-
-        suite
-            .account
-            .set_default_address(&Addr::unchecked(bs721_account));
+        let account = &Addr::unchecked(bs721_account);
+        suite.account.set_default_address(&account);
+        suite.account.set_address(&account);
 
         // Provide marketplace with collection and minter contracts.
         suite
@@ -174,5 +173,3 @@ impl<Chain: CwEnv> cw_orch::contract::Deploy<Chain> for BtsgAccountSuite<Chain> 
         Ok(suite)
     }
 }
-
-//

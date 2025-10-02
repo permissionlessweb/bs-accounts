@@ -684,6 +684,8 @@ pub fn sudo_update_params(
         trading_fee_bps,
         min_price,
         ask_interval,
+        cooldown_duration,
+        cooldown_cancel_fee,
     } = param_info;
     if let Some(trading_fee_bps) = trading_fee_bps {
         if trading_fee_bps > MAX_FEE_BPS {
@@ -698,8 +700,10 @@ pub fn sudo_update_params(
         .unwrap_or(params.trading_fee_percent);
 
     params.min_price = min_price.unwrap_or(params.min_price);
-
     params.ask_interval = ask_interval.unwrap_or(params.ask_interval);
+    params.cooldown_duration = cooldown_duration.unwrap_or(params.cooldown_duration);
+    params.cooldown_fee = cooldown_cancel_fee.unwrap_or(params.cooldown_fee);
+
 
     SUDO_PARAMS.save(deps.storage, &params)?;
 

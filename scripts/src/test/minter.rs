@@ -313,6 +313,8 @@ mod execute {
                 trading_fee_bps: Some(1000u64),
                 min_price: Some(Uint128::from(1000u128)),
                 ask_interval: Some(1000),
+                cooldown_duration: Some(69),
+                cooldown_cancel_fee: Some(coin(69u128, "jerets")),
             })?,
         }))?;
 
@@ -321,6 +323,8 @@ mod execute {
         assert_eq!(res.trading_fee_percent, Decimal::percent(10));
         assert_eq!(res.min_price, Uint128::from(1000u128));
         assert_eq!(res.ask_interval, 1000);
+        assert_eq!(res.cooldown_duration, 69);
+        assert_eq!(res.cooldown_fee, coin(69u128, "jerets"));
 
         Ok(())
     }

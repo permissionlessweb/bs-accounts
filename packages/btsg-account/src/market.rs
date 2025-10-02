@@ -211,6 +211,8 @@ pub enum SudoMsg {
         trading_fee_bps: Option<u64>,
         min_price: Option<Uint128>,
         ask_interval: Option<u64>,
+        cooldown_duration: Option<u64>,
+        cooldown_cancel_fee: Option<Coin>,
     },
     /// Update the contract address of the account factory
     UpdateAccountFactory { factory: String },
@@ -279,4 +281,6 @@ pub struct ParamInfo {
     pub trading_fee_bps: Option<u64>,
     pub min_price: Option<Uint128>,
     pub ask_interval: Option<u64>,
+    pub cooldown_duration: Option<u64>,
+    pub cooldown_cancel_fee: Option<Coin>,
 }
