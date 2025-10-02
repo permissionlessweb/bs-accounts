@@ -8,7 +8,6 @@ use cosmwasm_std::testing::mock_dependencies;
 use cosmwasm_std::{from_json, Api, Binary, StdError};
 use cw_orch::prelude::CallAs;
 use cw_orch::{anyhow, mock::MockBech32, prelude::*};
-use cw_ownable::OwnershipError;
 use std::error::Error;
 
 use crate::BtsgAccountSuite;
@@ -242,7 +241,7 @@ fn test_burn_function() -> anyhow::Result<()> {
 
     // cannot burn token you dont own
     let err = suite.account.call_as(&addr).burn(token_id).unwrap_err();
-    assert_eq!(err.root().to_string(), OwnershipError::NotOwner.to_string());
+    assert_eq!(err.root().to_string(), "Unauthorized".to_string());
 
     // token acutally gets burnt
     suite.account.burn(token_id)?;

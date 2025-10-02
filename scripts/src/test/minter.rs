@@ -159,7 +159,6 @@ mod execute {
             .account
             .call_as(&bidder)
             .approve(market, token_id, None)?;
-
         suite
             .market
             .call_as(&bidder)
@@ -168,7 +167,7 @@ mod execute {
         suite
             .market
             .call_as(&bidder)
-            .finalize_bid(bidder2.to_string())?;
+            .finalize_bid(token_id.to_string())?;
 
         Ok(())
     }

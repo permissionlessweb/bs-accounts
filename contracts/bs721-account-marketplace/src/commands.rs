@@ -206,43 +206,52 @@ pub fn execute_cancel_cooldown(
             // sender must be current token owner
             if info.sender != p.ask.seller {
                 return Err(ContractError::Unauthorized {});
-            }
-            // must have sent cancel cooldown fee
-            ;
-            let payment = must_pay(&info, NATIVE_DENOM)?;
-            let expected = SUDO_PARAMS.load(deps.storage)?.cooldown_fee.amount;
-            if payment != expected {
-                return Err(ContractError::IncorrectPayment {
-                    got: payment.u128(),
-                    expected: expected.u128(),
-                });
-            }
-
-            // cannot cancel if cooldown period is over
-            if env.block.time >= p.unlock_time {
-                return Err(ContractError::InvalidDuration {});
-            }
-
-            // refund bidder
-            let dev_cut = expected
-                .u128()
-                .checked_div(2)
-                .expect("fatal division error");
-
-            let dev_cut_msg = BankMsg::Send {
-                to_address: DEPLOYMENT_DAO.to_string(),
-                amount: vec![coin(dev_cut, NATIVE_DENOM.to_string())],
             };
-            // refund bidder
-            let seller_share_msg = BankMsg::Send {
-                to_address: p.new_owner.to_string(),
-                amount: vec![coin(
-                    p.amount.u128() + (expected.u128() - dev_cut),
-                    NATIVE_DENOM.to_string(),
-                )],
-            };
+            let mut res = Response::default();
+            let params = SUDO_PARAMS.load(deps.storage)?;
+            if params.cooldown_duration != 0 {
+                // must have sent cancel cooldown fee
+                let payment = must_pay(&info, NATIVE_DENOM)?;
+
+                if payment != params.cooldown_fee.amount {
+                    return Err(ContractError::IncorrectPayment {
+                        got: payment.u128(),
+                        expected: params.cooldown_fee.amount.u128(),
+                    });
+                }
+
+                // cannot cancel if cooldown period is over
+                if env.block.time >= p.unlock_time {
+                    return Err(ContractError::InvalidDuration {});
+                }
+
+                // refund bidder
+                let dev_cut = params
+                    .cooldown_fee
+                    .amount
+                    .u128()
+                    .checked_div(2)
+                    .expect("fatal division error");
+
+                let dev_cut_msg = BankMsg::Send {
+                    to_address: DEPLOYMENT_DAO.to_string(),
+                    amount: vec![coin(dev_cut, NATIVE_DENOM.to_string())],
+                };
+                // refund bidder
+                let seller_share_msg = BankMsg::Send {
+                    to_address: p.new_owner.to_string(),
+                    amount: vec![coin(
+                        p.amount.u128() + (params.cooldown_fee.amount.u128() - dev_cut),
+                        NATIVE_DENOM.to_string(),
+                    )],
+                };
+                res.messages.extend(vec![
+                    SubMsg::new(seller_share_msg),
+                    SubMsg::new(dev_cut_msg),
+                ]);
+            }
             cooldown_bids().remove(deps.storage, cd_key)?;
-            Ok(Response::default().add_messages(vec![seller_share_msg, dev_cut_msg]))
+            Ok(res)
         }
         None => return Err(ContractError::AskNotFound {}),
     }

@@ -8,7 +8,7 @@ use btsg_account::{
     NATIVE_DENOM,
 };
 use cosmwasm_std::testing::{message_info, mock_dependencies, mock_env};
-use cosmwasm_std::{coins, Addr, DepsMut, Timestamp, Uint128};
+use cosmwasm_std::{coin, coins, Addr, DepsMut, Timestamp, Uint128};
 
 const CREATOR: &str = "creator";
 const TOKEN_ID: &str = "account";
@@ -87,8 +87,8 @@ fn setup_contract(deps: DepsMut) {
         min_price: Uint128::from(5u128),
         ask_interval: 60,
         valid_bid_query_limit: 100,
-        cooldown_timeframe: todo!(),
-        cooldown_cancel_fee: todo!(),
+        cooldown_timeframe: 0u64,
+        cooldown_cancel_fee: coin(1u128, "ubtsg"),
     };
     let info = message_info(&Addr::unchecked(CREATOR), &[]);
     let res = instantiate(deps, mock_env(), info, msg).unwrap();
@@ -103,8 +103,8 @@ fn proper_initialization() {
         trading_fee_bps: TRADING_FEE_BASIS_POINTS,
         min_price: Uint128::from(5u128),
         ask_interval: 60,
-        cooldown_timeframe: todo!(),
-        cooldown_cancel_fee: todo!(),
+        cooldown_timeframe: 0u64,
+        cooldown_cancel_fee: coin(1u128, "ubtsg"),
         valid_bid_query_limit: 100,
     };
     let info = message_info(&Addr::unchecked("creator"), &coins(1000, NATIVE_DENOM));
@@ -124,8 +124,8 @@ fn bad_fees_initialization() {
         min_price: Uint128::from(5u128),
         ask_interval: 60,
         valid_bid_query_limit: 100,
-        cooldown_timeframe: todo!(),
-        cooldown_cancel_fee: todo!(),
+        cooldown_timeframe: 0u64,
+        cooldown_cancel_fee: coin(1u128, "ubtsg"),
     };
     let info = message_info(&Addr::unchecked("creator"), &coins(1000, NATIVE_DENOM));
     let res = instantiate(deps.as_mut(), mock_env(), info, msg);
