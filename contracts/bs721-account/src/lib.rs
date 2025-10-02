@@ -9,13 +9,11 @@ pub use crate::error::ContractError;
 pub mod interface;
 
 use cosmwasm_std::{
-    to_json_binary, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdError, StdResult,
+    to_json_binary, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdResult,
 };
 
 use btsg_account::Metadata;
 use msg::Bs721AccountsQueryMsg;
-
-use semver::Version;
 
 // version info for migration info
 const ACCOUNT_CONTRACT: &str = "crates.io:bs721-account";
@@ -28,16 +26,10 @@ pub type QueryMsg = Bs721AccountsQueryMsg;
 
 pub mod entry {
     use super::*;
-    use commands::{sudo_update_params, transcode};
+    use commands::{manifest::*, queries::*, sudo_update_params, transcode};
     use cw_utils::maybe_addr;
-    use msg::InstantiateMsg;
-
-    use commands::{manifest::*, queries::*};
-    use msg::SudoMsg;
-    use state::SudoParams;
-    use state::ACCOUNT_MARKETPLACE;
-    use state::SUDO_PARAMS;
-    use state::VERIFIER;
+    use msg::{InstantiateMsg, SudoMsg};
+    use state::{SudoParams, ACCOUNT_MARKETPLACE, SUDO_PARAMS, VERIFIER};
 
     #[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
     pub fn instantiate(

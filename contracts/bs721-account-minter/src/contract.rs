@@ -13,7 +13,7 @@ use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg, SudoMsg};
 use crate::state::{ACCOUNT_COLLECTION, ACCOUNT_MARKETPLACE, CONFIG, PAUSED, SUDO_PARAMS};
 
 // version info for migration info
-pub const CONTRACT_NAME: &str = "crates.io:bs721-account-minter";
+pub const ACCOUNT_MINTER: &str = "crates.io:bs721-account-minter";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
@@ -23,7 +23,7 @@ pub fn instantiate(
     info: MessageInfo,
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
-    set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+    set_contract_version(deps.storage, ACCOUNT_MINTER, CONTRACT_VERSION)?;
 
     cw_ownable::initialize_owner(
         deps.storage,
