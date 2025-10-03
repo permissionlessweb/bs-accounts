@@ -33,6 +33,9 @@ pub enum ContractError {
     #[error("AddressAlreadyMapped")]
     AddressAlreadyMapped {},
 
+    #[error("AddressIsStillMappedToEOA")]
+    AddressIsStillMappedToEOA {},
+
     #[error("InvalidAddress")]
     InvalidAddress {},
 

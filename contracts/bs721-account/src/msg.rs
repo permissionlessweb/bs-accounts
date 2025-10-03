@@ -75,6 +75,11 @@ pub enum ExecuteMsg<T> {
         operator: String,
         expires: Option<Expiration>,
     },
+    /// Allows user to define if token is being associated to an Abstract Account
+    UpdateAbsAccSupport {
+        token_id: String,
+        r#abstract: Option<String>,
+    },
     /// Remove previously granted ApproveAll permission
     RevokeAll { operator: String },
     /// Mint a new NFT, can only be called by the contract minter
@@ -343,7 +348,6 @@ pub enum SudoMsg {
         max_rev_map_count: u32,
     },
 }
-
 
 #[cosmwasm_schema::cw_serde]
 pub struct MigrateMsg {}

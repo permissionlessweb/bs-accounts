@@ -429,6 +429,34 @@
         "additionalProperties": false
       },
       {
+        "description": "Allows user to define if token is being associated to an Abstract Account",
+        "type": "object",
+        "required": [
+          "update_abs_acc_support"
+        ],
+        "properties": {
+          "update_abs_acc_support": {
+            "type": "object",
+            "required": [
+              "token_id"
+            ],
+            "properties": {
+              "abstract": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "token_id": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
         "description": "Remove previously granted ApproveAll permission",
         "type": "object",
         "required": [

@@ -32,7 +32,7 @@ pub mod manifest {
     pub fn associate_address(
         deps: DepsMut,
         info: MessageInfo,
-        this: Addr,
+        oca: Addr,
         account: String,
         address: Option<String>,
     ) -> Result<Response, ContractError> {
@@ -65,7 +65,7 @@ pub mod manifest {
                                 collection_addr,
                                 token_id,
                             } => {
-                                if address != token_id || collection_addr != this.to_string() {
+                                if account != token_id || collection_addr != oca.to_string() {
                                     // removes mapping
                                     REVERSE_MAP.remove(deps.storage, &Addr::unchecked(address));
                                 } else {
@@ -95,7 +95,7 @@ pub mod manifest {
                     collection_addr,
                     token_id,
                 } => {
-                    if account != token_id || collection_addr != this.to_string() {
+                    if account != token_id || collection_addr != oca.to_string() {
                         return Err(ContractError::IncorrectBitsongAccountOwnershipToken {
                             got: ownership.owner.to_string(),
                             wanted: ownership::GovernanceDetails::NFT {
@@ -178,6 +178,140 @@ pub mod manifest {
         Ok(Response::new().add_event(event))
     }
 
+    /// Update Abstract Account support for a token.
+    /// Enables, updates, or disables Abstract Account linkage safely.
+    pub fn execute_update_abstract_account_support(
+        deps: DepsMut,
+        env: Env,
+        info: MessageInfo,
+        account: &String,
+        abs_account: Option<String>,
+    ) -> Result<Response, ContractError> {
+        only_owner(deps.as_ref(), &info.sender, account)?;
+
+        let mut token = Bs721AccountContract::default()
+            .tokens
+            .load(deps.storage, account)?;
+
+        match (token.extension.account_ownership, abs_account) {
+            // Already enabled: updating
+            (true, Some(new_aa)) => {
+                // New AA must point to this token
+                validate_aa_ownership(
+                    deps.as_ref(),
+                    &new_aa,
+                    account,
+                    &env.contract.address,
+                    true, // must be in use
+                )?;
+
+                // Old AA must NOT still point to this token
+                if let Some(old_aa) = &token.token_uri {
+                    validate_aa_ownership(
+                        deps.as_ref(),
+                        old_aa,
+                        account,
+                        &env.contract.address,
+                        false,  // must not be in use
+                    )?;
+                    REVERSE_MAP.remove(deps.storage, &Addr::unchecked(old_aa));
+                }
+
+                REVERSE_MAP.save(deps.storage, &Addr::unchecked(&new_aa), account)?;
+                token.token_uri = Some(new_aa);
+            }
+
+            (true, None) => {
+                // Disable: ensure current AA isn't still using this token
+                if let Some(old_aa) = &token.token_uri {
+                    validate_aa_ownership(
+                        deps.as_ref(),
+                        old_aa,
+                        account,
+                        &env.contract.address,
+                        false,
+                    )?;
+                    REVERSE_MAP.remove(deps.storage, &Addr::unchecked(old_aa));
+                }
+                token.extension.account_ownership = false;
+            }
+
+            // Enable abstract-ownership
+            (false, Some(new_aa)) => {
+                validate_aa_ownership(
+                    deps.as_ref(),
+                    &new_aa,
+                    account,
+                    &env.contract.address,
+                    true,
+                )?;
+                REVERSE_MAP.save(deps.storage, &Addr::unchecked(&new_aa), account)?;
+                token.extension.account_ownership = true;
+                token.token_uri = Some(new_aa);
+            }
+
+            // No action
+            (false, None) => {}
+        }
+
+        Bs721AccountContract::default()
+            .tokens
+            .save(deps.storage, account, &token)?;
+
+        Ok(Response::new())
+    }
+
+    /// Validates whether the given Abstract Account's ownership state matches expected condition.
+    /// * `aa_addr` - Address of the Abstract Account
+    /// * `token_id` - This NFT's token ID
+    /// * `contract_addr` - This contract's address
+    /// * `must_be_in_use` -
+    ///   - `true`: AA MUST be using this token for ownership verification
+    ///   - `false`: AA MUST NOT be using this token for ownership verification (to prevent lockout)
+    fn validate_aa_ownership(
+        deps: Deps,
+        aa_addr: &str,
+        token_id: &str,
+        contract_addr: &Addr,
+        must_be_in_use: bool,
+    ) -> Result<(), ContractError> {
+        let owner: Ownership<String> = deps
+            .querier
+            .query_wasm_smart(aa_addr, &abstract_std::account::QueryMsg::Ownership {})?;
+
+        match &owner.owner {
+            GovernanceDetails::NFT {
+                collection_addr,
+                token_id: owner_token_id,
+            } => {
+                let is_correct_nft =
+                    owner_token_id == token_id && collection_addr == &contract_addr.to_string();
+
+                match is_correct_nft == must_be_in_use {
+                    true => Ok(()),
+                    false => match must_be_in_use {
+                        true => Err(ContractError::IncorrectBitsongAccountOwnershipToken {
+                            got: owner.owner.to_string(),
+                            wanted: GovernanceDetails::NFT {
+                                collection_addr: contract_addr.to_string(),
+                                token_id: token_id.to_string(),
+                            }
+                            .to_string(),
+                        }),
+                        false => Err(ContractError::AddressIsStillMappedToEOA {}),
+                    },
+                }
+            }
+            _ => {
+                match must_be_in_use {
+                    true => Err(ContractError::AccountIsNotTokenized {}),
+                    // non-NFT ownership is fine when we want to ensure it's *not* using this token
+                    false => Ok(()),
+                }
+            }
+        }
+    }
+
     /// updates the (usually) non `bitsong1...` addresses mapped to a `bitsong1...` account.
     /// Verify it is this account updating before removing.
     pub fn execute_update_reverse_map_keys(
@@ -201,9 +335,6 @@ pub mod manifest {
             let mut count = count.unwrap();
             // Calculate new count after adding and removing
             let mut new_count = count + to_add.len() as u32;
-            // println!("new_count: {:#?}", new_count);
-            // println!("to_remove.len(): {:#?}", to_remove.len());
-            // println!("max: {:#?}", max);
 
             // Check if we're trying to remove more than we're going to have
             if new_count != 0 && new_count < to_remove.len() as u32 || to_remove.len() as u32 > max
@@ -269,6 +400,7 @@ pub mod manifest {
         Ok(Response::new().add_attributes(attr))
     }
 
+    /// Remove all text records, diables abstract-account features
     fn reset_token_metadata_and_reverse_map(
         deps: &mut DepsMut,
         contract_addr: Addr,

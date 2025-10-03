@@ -143,6 +143,10 @@ pub mod entry {
             ExecuteMsg::UpdateMyReverseMapKey { to_add, to_remove } => {
                 execute_update_reverse_map_keys(deps, env, info, to_add, to_remove)
             }
+            ExecuteMsg::UpdateAbsAccSupport {
+                token_id,
+                r#abstract,
+            } => execute_update_abstract_account_support(deps, env, info, &token_id, r#abstract),
             _ => Bs721AccountContract::default()
                 .execute(deps, env, info, msg.into())
                 .map_err(|e| e.into()),
