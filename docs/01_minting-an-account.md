@@ -2,26 +2,15 @@
 
 ## Initial Fees
 
-The cost to mint is dependent on:
+The cost to mint is dependent on two requirements:
 
-1. Character Length
-2. Minters current BTSG delegation
+| Requirement | Character Length | Minimum Delegation
+| --- | --- | --- |
+| 5+ chars (Base Price) | 100 BTSG | 1,000 BTSG  |
+| 4 chars  | 1,000 BTSG | 3,000 BTSG |
+| 3 chars  | 10,000 BTSG | 5,000 BTSG |
 
-### Character Length
-
-```
-5+ chars = 100 BITSONG
-4 chars  = 1,000 BITSONG
-3 chars  = 10,000 BITSONG
-```
-
-### Delegation Requirements
-
-```
-5+ chars = 1,000 BITSONG
-4 chars  = 3000 BITSONG
-3 chars  = 5,000 BITSONG
-```
+ 
 
 ## Minting An Account
 
