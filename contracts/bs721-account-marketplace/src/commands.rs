@@ -195,7 +195,8 @@ pub fn execute_set_bid(
     Ok(res.add_event(event).add_submessages(hook))
 }
 
-/// Removes a bid made by the bidder. Bidders can only remove their own bids
+/// Cancels an accepted bid in cooldown period. Only seller may call.
+/// Requires seller to provide fee, which is split between bidder and developemnt team.
 pub fn execute_cancel_cooldown(
     deps: DepsMut,
     env: Env,
@@ -303,19 +304,18 @@ pub fn execute_finalize_bid(
     let mut res = Response::default();
     match pending {
         Some(mut p) => {
-            // check sender is either current or new owner
-            if info.sender != p.ask.seller && info.sender != p.new_owner {
-                return Err(ContractError::CannotFinalizeBid {});
-            }
             // check if pending bid is ready to be finalized
-            if env.block.time > p.unlock_time {
+            if env.block.time < p.unlock_time {
                 return Err(ContractError::InvalidDuration {});
             }
             // Check if token is approved for transfer
-            if Bs721Account(collection.clone())
-                .approval(&deps.querier, token_id, &p.ask.seller.to_string(), None)
-                .is_err()
-            {
+            let ops = Bs721Account(collection.clone()).approval(
+                &deps.querier,
+                token_id,
+                &env.contract.address.to_string(),
+                None,
+            );
+            if ops.is_err() || ops?.approval.expires.is_expired(&env.block) {
                 // market automatically approves msg for itself
                 res.messages
                     .push(SubMsg::new(Bs721Account(collection.clone()).call(
@@ -370,7 +370,6 @@ pub fn execute_finalize_bid(
             return Err(ContractError::AskNotFound {});
         }
     }
-
     Ok(res)
 }
 /// Seller can accept a bid which transfers funds as well as the token.
@@ -424,10 +423,11 @@ fn finalize_sale(
     // println!("1.1 finalize sale ----------------------------");
     payout(deps, price, ask.seller.clone(), res)?;
 
-    let cw721_transfer_msg: Bs721AccountExecuteMsg<Metadata> = Bs721AccountExecuteMsg::TransferNft {
-        token_id: ask.token_id.to_string(),
-        recipient: buyer.to_string(),
-    };
+    let cw721_transfer_msg: Bs721AccountExecuteMsg<Metadata> =
+        Bs721AccountExecuteMsg::TransferNft {
+            token_id: ask.token_id.to_string(),
+            recipient: buyer.to_string(),
+        };
 
     let collection = ACCOUNT_COLLECTION.load(deps.storage)?;
 
