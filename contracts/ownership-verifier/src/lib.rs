@@ -19,9 +19,6 @@ const OWNERSHIP: Item<Ownership<String>> = Item::new("ownership");
 pub enum ContractError {
     #[error("{0}")]
     Std(#[from] StdError),
-
-    #[error("Unauthorized")]
-    Unauthorized {},
 }
 #[cw_serde]
 pub struct InstantiateMsg {
@@ -78,7 +75,7 @@ pub fn execute(
                     pending_expiry: None,
                 },
             )?;
-            Ok(Response::new().add_attribute("method", "verify_ownership"))
+            Ok(Response::new())
         }
     }
 }

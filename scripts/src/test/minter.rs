@@ -17,16 +17,25 @@ pub fn init() -> anyhow::Result<()> {
     // new mock Bech32 chain environment
     let mock = MockBech32::new("mock");
     // simulate deploying the test suite to the mock chain env.
-    BtsgAccountSuite::deploy_on(mock.clone(), mock.sender)?;
+    let suite = BtsgAccountSuite::deploy_on(mock.clone(), mock.sender)?;
+
+    suite
+        .market
+        .setup(suite.account.address()?, suite.minter.address()?)
+        .unwrap_err();
+
     Ok(())
 }
 
 mod execute {
 
+    use std::error::Error;
+
+    use bs721_account_marketplace::ContractError as MarketContractError;
     use bs721_account_minter::ContractError;
     use btsg_account::market::{Ask, ExecuteMsg, PendingBid, QueryMsgFns};
     use btsg_account::DEPLOYMENT_DAO;
-    use cosmwasm_std::{coin, Binary};
+    use cosmwasm_std::{coin, Attribute, Binary, Event};
 
     use super::*;
 
@@ -108,8 +117,56 @@ mod execute {
         let token_id = "bandura";
 
         mock.wait_seconds(200)?;
+
+        // ensure operator approval is set
+        let err = suite
+            .market
+            .call_as(&suite.minter.address()?)
+            .set_ask(owner.clone(), token_id.to_string())
+            .unwrap_err();
+        assert_eq!(
+            err.source().unwrap().to_string(),
+            MarketContractError::NotApproved {}.to_string()
+        );
+
         suite.mint_and_list(mock.clone(), token_id, &owner)?;
+        let balance = mock.query_balance(&bidder, "ubtsg")?;
+        // assert overwritten bid returns funds from first bid
+        suite.bid_w_funds(mock.clone(), token_id, bidder.clone(), BID_AMOUNT * 2)?;
         suite.bid_w_funds(mock.clone(), token_id, bidder.clone(), BID_AMOUNT)?;
+        let balance2 = mock.query_balance(&bidder, "ubtsg")?;
+
+        assert_eq!(balance, Uint128::zero());
+        assert_eq!(balance2.u128(), BID_AMOUNT * 2);
+
+        // bid smaller than minimum
+        suite
+            .bid_w_funds(mock.clone(), token_id, bidder.clone(), 99u128)
+            .unwrap_err();
+
+        // ask only removed by minter
+        assert_eq!(
+            suite
+                .market
+                .remove_ask(token_id.to_string())
+                .unwrap_err()
+                .source()
+                .unwrap()
+                .to_string(),
+            MarketContractError::Unauthorized {}.to_string()
+        );
+
+        assert_eq!(
+            suite
+                .market
+                .call_as(&suite.account.address()?)
+                .remove_ask(token_id.to_string())
+                .unwrap_err()
+                .source()
+                .unwrap()
+                .to_string(),
+            MarketContractError::ExistingBids {}.to_string()
+        );
 
         // user (owner) starts off with 0 internet funny money
         assert_eq!(
@@ -141,6 +198,27 @@ mod execute {
         let res = suite.market.ask(token_id.to_string())?.unwrap();
         assert_eq!(res.seller, bidder);
         assert_eq!(res.token_id, token_id);
+
+        // remove ask
+        let res = suite.account.call_as(&bidder).burn(token_id.to_string())?;
+        println!("res: {:#?}", res);
+        res.assert_event(&Event::new("wasm-burn-account").add_attributes(vec![
+            Attribute {
+                key: "_contract_address".to_string(),
+                value: suite.account.addr_str()?,
+            },
+            Attribute::new("account", token_id.to_string()),
+        ]));
+        res.assert_event(&Event::new("wasm-remove-ask").add_attributes(vec![
+            Attribute {
+                key: "_contract_address".to_string(),
+                value: suite.market.addr_str()?,
+            },
+            Attribute::new("token_id", token_id.to_string()),
+        ]));
+
+        assert_eq!(suite.market.ask(token_id.to_string())?, None);
+
         Ok(())
     }
     #[test]
@@ -339,6 +417,40 @@ mod execute {
     }
 
     #[test]
+    fn test_cooldown_period_operator_approve() -> anyhow::Result<()> {
+        let mock = MockBech32::new("bitsong");
+        let mut suite = BtsgAccountSuite::new(mock.clone());
+        suite.default_setup(mock.clone(), None, Some(mock.sender.clone()))?;
+        mock.wait_seconds(200)?;
+        let owner = mock.sender.clone();
+        mock.add_balance(&owner, vec![coin(10000000000u128, "ubtsg")])?;
+        let bidder = mock.addr_make("bidder");
+        let account = "account";
+        suite.mint_and_list(mock.clone(), account, &owner)?;
+        suite.bid_w_funds(mock.clone(), account, bidder.clone(), BID_AMOUNT)?;
+        suite.market.accept_bid(bidder.clone(), account.into())?;
+        suite.account.revoke_all(suite.market.address()?)?;
+        mock.wait_seconds(60)?;
+        let res = suite.market.finalize_bid(account.to_string())?;
+        println!("mock.sender.to_string(): {:#?}", mock.sender.to_string());
+        println!("suite.account.addr_str()?: {:#?}", suite.account.addr_str()?);
+        println!("suite.market.addr_str()?: {:#?}", suite.market.addr_str()?);
+        println!("res: {:#?}", res);
+        res.assert_event(&Event::new("wasm").add_attributes(vec![
+            Attribute {
+                key: "_contract_address".to_string(),
+                value: suite.account.addr_str()?,
+            },
+            Attribute::new("action", "approve_all".to_string()),
+            Attribute::new("operator", suite.market.addr_str()?),
+        ]));
+        assert_eq!(
+            suite.market.ask(account.to_string())?.unwrap().seller,
+            &bidder
+        );
+        Ok(())
+    }
+    #[test]
     fn test_cooldown_period() -> anyhow::Result<()> {
         let mock = MockBech32::new("bitsong");
         let mut suite = BtsgAccountSuite::new(mock.clone());
@@ -404,7 +516,57 @@ mod execute {
             }
             .to_string()
         );
+
+        // cannot finalize until cooldown period is over
+
+        assert!(mock.block_info()?.time.seconds().lt(&suite
+            .market
+            .cooldown(account.to_string())?
+            .unwrap()
+            .unlock_time
+            .seconds()));
+        assert_eq!(
+            suite
+                .market
+                .finalize_bid(account.to_string())
+                .unwrap_err()
+                .root()
+                .to_string(),
+            MarketContractError::InvalidDuration {}.to_string()
+        );
+
         mock.wait_seconds(50)?;
+        // cannot cancel after cooldown completes
+        assert_eq!(
+            suite
+                .market
+                .execute(
+                    &ExecuteMsg::CancelCooldown {
+                        token_id: account.to_string(),
+                    },
+                    &vec![coin(500_000_000, "ubtsg")],
+                )
+                .unwrap_err()
+                .root()
+                .to_string(),
+            MarketContractError::InvalidDuration {}.to_string()
+        );
+        // token id doesnt exists
+        assert_eq!(
+            suite
+                .market
+                .execute(
+                    &ExecuteMsg::CancelCooldown {
+                        token_id: "babber".to_string(),
+                    },
+                    &vec![coin(500_000_000, "ubtsg")],
+                )
+                .unwrap_err()
+                .root()
+                .to_string(),
+            MarketContractError::AskNotFound {}.to_string()
+        );
+
         suite
             .market
             .call_as(&owner)

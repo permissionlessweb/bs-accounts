@@ -1,5 +1,6 @@
+use crate::{BtsgAccountExecuteFns, BtsgAccountMarketExecuteFns};
 use ::bs721_account::{commands::transcode, ContractError};
-use bs721_account::msg::{Bs721AccountsQueryMsgFns, ExecuteMsgFns};
+use bs721_account::msg::Bs721AccountsQueryMsgFns;
 use bs721_account::state::REVERSE_MAP_KEY;
 use btsg_account::verify_generic::{
     preamble_msg_arb_036, pubkey_to_address, CosmosArbitrary, TestCosmosArb,
@@ -225,20 +226,12 @@ fn test_burn_function() -> anyhow::Result<()> {
     let mock = MockBech32::new("bitsong");
     let mut suite = BtsgAccountSuite::new(mock.clone());
     suite.default_setup(mock.clone(), None, None)?;
-    let minter = suite.minter.address()?;
     let addr = mock.addr_make("babber23");
+    let token_id = "enterprise";
+    mock.wait_seconds(200u64)?;
 
     // mint token
-    let token_id = "Enterprise";
-
-    suite.account.call_as(&minter).mint(
-        btsg_account::Metadata::default(),
-        mock.sender.clone(),
-        token_id,
-        None,
-        None,
-        None,
-    )?;
+    suite.mint_and_list(mock.clone(), token_id, &mock.sender.clone())?;
 
     // cannot burn token you dont own
     let err = suite.account.call_as(&addr).burn(token_id).unwrap_err();
