@@ -25,7 +25,7 @@ pub mod manifest {
     use btsg_account::{
         market::PendingBid, validate_aa_ownership, verify_generic::CosmosArbitrary, Metadata,
     };
-    use cosmwasm_std::{to_json_binary, Attribute, WasmMsg};
+    use cosmwasm_std::{to_json_binary, Attribute, CosmosMsg, WasmMsg};
 
     use crate::state::{REVERSE_MAP_KEY, REVMAP_LIMIT};
 
@@ -202,7 +202,6 @@ pub mod manifest {
 
         Ok(Response::new()
             .add_attribute("action", "approve_all")
-            .add_attribute("sender", info.sender)
             .add_attribute("operator", market.to_string()))
     }
 
@@ -764,12 +763,8 @@ pub mod manifest {
         account: String,
     ) -> Result<Response, ContractError> {
         nonpayable(&info)?;
-
-        ensure_not_in_cooldown(
-            deps.as_ref(),
-            &ACCOUNT_MARKETPLACE.load(deps.storage)?,
-            &account,
-        )?;
+        let market = &ACCOUNT_MARKETPLACE.load(deps.storage)?;
+        ensure_not_in_cooldown(deps.as_ref(), market, &account)?;
 
         let bs721 = Bs721AccountContract::default();
 
@@ -781,7 +776,16 @@ pub mod manifest {
                 token_id: account.to_string(),
             },
         )?;
-        Ok(Response::new().add_event(Event::new("burn-account").add_attribute("account", account)))
+
+        Ok(Response::new()
+            .add_message(CosmosMsg::Wasm(WasmMsg::Execute {
+                contract_addr: market.to_string(),
+                msg: to_json_binary(&btsg_account::market::ExecuteMsg::RemoveAsk {
+                    token_id: account.to_string(),
+                })?,
+                funds: vec![],
+            }))
+            .add_event(Event::new("burn-account").add_attribute("account", account)))
     }
 
     pub fn execute_transfer_nft(
