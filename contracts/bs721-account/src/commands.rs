@@ -111,8 +111,6 @@ pub mod manifest {
                 }
                 _ => {
                     let addr = deps.api.addr_validate(&address)?;
-                    // println!("2.account:{:#?}", account);
-                    // println!("2.addr:{:#?}", addr);
                     Ok(validate_address(deps.as_ref(), &info.sender, addr).map(|_| address)?)
                 }
             })
@@ -125,8 +123,6 @@ pub mod manifest {
                 .unwrap_or(None)
         });
 
-        // println!("3.old_account:{:#?}", old_account);
-        // println!("3.old_account:{:#?}", token_uri);
         // println!("// 4. remove old token_uri / address from previous account");
         old_account.map(|token_id| {
             Bs721AccountContract::default()
@@ -164,9 +160,6 @@ pub mod manifest {
         // println!("// 6. update new manager in token metadata");
         let canonv = deps.api.addr_canonicalize(info.sender.as_str())?;
         REVMAP_LIMIT.save(deps.storage, &canonv.to_string(), &0u32)?;
-        // println!("// 7. save new reverse map entry");
-        // println!("token_uri:{:#?}", token_uri);
-        // println!("account:{:#?}", account);
         token_uri.map(|addr| REVERSE_MAP.save(deps.storage, &Addr::unchecked(addr), &account));
 
         let mut event = Event::new("associate-address")
@@ -178,6 +171,39 @@ pub mod manifest {
         }
 
         Ok(Response::new().add_event(event))
+    }
+
+    pub fn execute_approve_all_via_market(
+        deps: DepsMut,
+        env: Env,
+        info: MessageInfo,
+        owner: String,
+        expires: Option<Expiration>,
+    ) -> Result<Response, ContractError> {
+        let market = ACCOUNT_MARKETPLACE.load(deps.storage)?;
+        if &market != &info.sender {
+            return Err(ContractError::UnauthorizedCreatorOrAdmin {});
+        }
+
+        // reject expired data as invalid
+        let expires = expires.unwrap_or_default();
+        if expires.is_expired(&env.block) {
+            return Err(ContractError::Std(StdError::generic_err("unauthorized")));
+        }
+
+        // set the operator for us
+        let owner_addr = deps.api.addr_validate(&owner)?;
+
+        Bs721AccountContract::default().operators.save(
+            deps.storage,
+            (&owner_addr, &market),
+            &expires,
+        )?;
+
+        Ok(Response::new()
+            .add_attribute("action", "approve_all")
+            .add_attribute("sender", info.sender)
+            .add_attribute("operator", market.to_string()))
     }
 
     /// Update Abstract Account support for a token.

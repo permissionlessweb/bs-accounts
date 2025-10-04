@@ -1463,7 +1463,7 @@ version = "0.2.0"
 dependencies = [
  "bs-controllers",
  "bs721",
- "bs721-base",
+ "bs721-account",
  "btsg-account",
  "cosmwasm-schema",
  "cosmwasm-std",

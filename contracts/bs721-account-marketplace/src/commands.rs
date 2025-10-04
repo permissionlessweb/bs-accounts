@@ -5,6 +5,7 @@ use crate::{
     // hooks::{prepare_ask_hook, prepare_bid_hook, prepare_sale_hook},
     state::*,
 };
+use bs721_account::msg::ExecuteMsg as Bs721AccountExecuteMsg;
 use btsg_account::{
     charge_fees, validate_aa_ownership, Metadata, DEFAULT_QUERY_LIMIT, DEPLOYMENT_DAO,
     MAX_QUERY_LIMIT, NATIVE_DENOM,
@@ -18,8 +19,8 @@ use cosmwasm_std::{
 };
 use std::marker::PhantomData;
 
-use bs721::{Bs721ExecuteMsg, Bs721QueryMsg, NftInfoResponse, OwnerOfResponse};
-use bs721_base::helpers::Bs721Contract;
+use bs721::{NftInfoResponse, OwnerOfResponse};
+use bs721_account::helpers::Bs721Account;
 use cw_storage_plus::Bound;
 use cw_utils::{must_pay, nonpayable};
 
@@ -59,7 +60,7 @@ pub fn execute_set_ask(
     let collection = ACCOUNT_COLLECTION.load(deps.storage)?;
 
     // check if collection is approved to transfer on behalf of the seller
-    let ops = Bs721Contract::<Empty, Empty>(collection, PhantomData, PhantomData).all_operators(
+    let ops = Bs721Account(collection).all_operators(
         &deps.querier,
         seller.to_string(),
         false,
@@ -311,16 +312,22 @@ pub fn execute_finalize_bid(
                 return Err(ContractError::InvalidDuration {});
             }
             // Check if token is approved for transfer
-            Bs721Contract::<Empty, Empty>(collection.clone(), PhantomData, PhantomData).approval(
-                &deps.querier,
-                token_id,
-                &p.ask.seller.to_string(),
-                None,
-            )?;
+            if Bs721Account(collection.clone())
+                .approval(&deps.querier, token_id, &p.ask.seller.to_string(), None)
+                .is_err()
+            {
+                // market automatically approves msg for itself
+                res.messages
+                    .push(SubMsg::new(Bs721Account(collection.clone()).call(
+                        Bs721AccountExecuteMsg::ApproveAllViaMarket {
+                            owner: p.ask.seller.to_string(),
+                            expires: None,
+                        },
+                    )?));
+            };
 
             let token: NftInfoResponse<Metadata> =
-                Bs721Contract::<Empty, Empty>(collection.clone(), PhantomData, PhantomData)
-                    .nft_info(&deps.querier, token_id)?;
+                Bs721Account(collection.clone()).nft_info(&deps.querier, token_id)?;
 
             // get the associated abstarct account we expect to exist
             if token.extension.account_ownership
@@ -388,12 +395,7 @@ pub fn execute_accept_bid(
     let bid = bids().load(deps.storage, bid_key.clone())?;
 
     // Check if token is approved for transfer
-    Bs721Contract::<Empty, Empty>(collection, PhantomData, PhantomData).approval(
-        &deps.querier,
-        token_id,
-        info.sender.as_ref(),
-        None,
-    )?;
+    Bs721Account(collection).approval(&deps.querier, token_id, info.sender.as_ref(), None)?;
 
     // Remove accepted bid
     bids().remove(deps.storage, bid_key)?;
@@ -422,7 +424,7 @@ fn finalize_sale(
     // println!("1.1 finalize sale ----------------------------");
     payout(deps, price, ask.seller.clone(), res)?;
 
-    let cw721_transfer_msg: Bs721ExecuteMsg<Metadata, Empty> = Bs721ExecuteMsg::TransferNft {
+    let cw721_transfer_msg: Bs721AccountExecuteMsg<Metadata> = Bs721AccountExecuteMsg::TransferNft {
         token_id: ask.token_id.to_string(),
         recipient: buyer.to_string(),
     };
@@ -492,8 +494,7 @@ fn only_owner(
     collection: &Addr,
     token_id: &str,
 ) -> Result<OwnerOfResponse, ContractError> {
-    let res = Bs721Contract::<Empty, Empty>(collection.clone(), PhantomData, PhantomData)
-        .owner_of(&deps.querier, token_id, false)?;
+    let res = Bs721Account(collection.clone()).owner_of(&deps.querier, token_id, false)?;
     if res.owner != info.sender.to_string() {
         return Err(ContractError::UnauthorizedOwner {});
     }

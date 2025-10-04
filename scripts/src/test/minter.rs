@@ -2,9 +2,9 @@ use cw_orch::{anyhow, mock::MockBech32, prelude::*};
 
 use crate::BtsgAccountSuite;
 use crate::{
-    Bs721AccountsQueryMsgFns, BtsgAccountExecuteFns, BtsgAccountMarketExecuteFns,
-    BtsgAccountMarketQueryFns, TestOwnershipExecuteMsgFns, TestOwnershipInitMsg,
-    TestOwnershipQueryMsgFns,
+    Bs721AccountMarketExecuteMsgTypes, Bs721AccountsQueryMsgFns, BtsgAccountExecuteFns,
+    BtsgAccountMarketExecuteFns, BtsgAccountMarketQueryFns, TestOwnershipExecuteMsgFns,
+    TestOwnershipInitMsg, TestOwnershipQueryMsgFns,
 };
 use bs721_account_minter::msg::{ExecuteMsgFns as _, QueryMsgFns as _};
 use cosmwasm_std::Uint128;
@@ -63,6 +63,14 @@ mod execute {
 
         mock.wait_seconds(200)?;
         suite.mint_and_list(mock.clone(), token_id, &owner)?;
+
+        // only minter sets asks
+        suite
+            .market
+            .set_ask(owner.clone(), token_id.to_string())
+            .unwrap_err();
+
+        //  must set approval for
 
         // check if account is listed in marketplace
         let res = suite.market.ask(token_id.to_string())?.unwrap();
@@ -625,7 +633,7 @@ mod admin {
 }
 mod query {
     use btsg_account::market::{Bid, BidOffset};
-    use cosmwasm_std::coin;
+    use cosmwasm_std::{coin, Attribute, Event};
 
     use super::*;
 
@@ -759,11 +767,47 @@ mod query {
         mock.wait_seconds(200)?;
         suite.mint_and_list(mock.clone(), account, &admin)?;
 
-        suite.bid_w_funds(mock.clone(), account, bidder1, BID_AMOUNT * 3)?;
+        suite.bid_w_funds(mock.clone(), account, bidder1.clone(), BID_AMOUNT * 3)?;
         suite.bid_w_funds(mock.clone(), account, bidder2, BID_AMOUNT * 2)?;
-        let res = suite.market.bids_for_seller(admin, None, Some(filter))?;
+        let res = suite
+            .market
+            .bids_for_seller(admin.clone(), None, Some(filter.clone()))?;
         // should be length 2 because there is token_id "jump" with 2 bids
         assert_eq!(res.len(), 2);
+
+        suite
+            .market
+            .call_as(&bidder1)
+            .execute(
+                &Bs721AccountMarketExecuteMsgTypes::RemoveBid {
+                    token_id: account.to_string(),
+                },
+                &[coin(1, "ubtsg")],
+            )
+            .unwrap_err();
+
+        let res = suite
+            .market
+            .call_as(&bidder1)
+            .remove_bid(account.to_string())?;
+
+        println!("res: {:#?}", res);
+        res.assert_event(&Event::new("transfer").add_attributes(vec![
+            Attribute::new("recipient", bidder1.to_string()),
+            Attribute::new("sender", suite.market.addr_str()?),
+            Attribute::new("amount", coin(BID_AMOUNT * 3, "ubtsg").to_string()),
+        ]));
+        res.assert_event(&Event::new("wasm-remove-bid").add_attributes(vec![
+            Attribute {
+                key: "_contract_address".to_string(),
+                value: suite.market.addr_str()?,
+            },
+            Attribute::new("token_id", account.to_string()),
+            Attribute::new("bidder", bidder1.to_string()),
+        ]));
+
+        let res = suite.market.bids_for_seller(admin, None, Some(filter))?;
+        assert_eq!(res.len(), 1);
 
         Ok(())
     }

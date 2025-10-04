@@ -69,6 +69,10 @@ pub enum ExecuteMsg<T> {
     },
     /// Remove previously granted Approval
     Revoke { spender: String, token_id: String },
+    ApproveAllViaMarket {
+        owner: String,
+        expires: Option<Expiration>,
+    },
     /// Allows operator to transfer / send any token from the owner's account.
     /// If expiration is set, then this allowance has a time/height limit
     ApproveAll {

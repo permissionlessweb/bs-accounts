@@ -147,6 +147,9 @@ pub mod entry {
                 token_id,
                 r#abstract,
             } => execute_update_abstract_account_support(deps, env, info, &token_id, r#abstract),
+            ExecuteMsg::ApproveAllViaMarket { owner, expires } => {
+                execute_approve_all_via_market(deps, env, info, owner, expires)
+            }
             _ => Bs721AccountContract::default()
                 .execute(deps, env, info, msg.into())
                 .map_err(|e| e.into()),
