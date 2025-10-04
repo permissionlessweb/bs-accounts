@@ -6,7 +6,8 @@ use crate::{
     state::*,
 };
 use btsg_account::{
-    charge_fees, Metadata, DEFAULT_QUERY_LIMIT, DEPLOYMENT_DAO, MAX_QUERY_LIMIT, NATIVE_DENOM,
+    charge_fees, validate_aa_ownership, Metadata, DEFAULT_QUERY_LIMIT, DEPLOYMENT_DAO,
+    MAX_QUERY_LIMIT, NATIVE_DENOM,
 };
 use btsg_account::{market::*, TokenId};
 
@@ -17,7 +18,7 @@ use cosmwasm_std::{
 };
 use std::marker::PhantomData;
 
-use bs721::{Bs721ExecuteMsg, OwnerOfResponse};
+use bs721::{Bs721ExecuteMsg, Bs721QueryMsg, NftInfoResponse, OwnerOfResponse};
 use bs721_base::helpers::Bs721Contract;
 use cw_storage_plus::Bound;
 use cw_utils::{must_pay, nonpayable};
@@ -300,7 +301,7 @@ pub fn execute_finalize_bid(
     let pending = cooldown_bids().may_load(deps.storage, cd_key)?;
     let mut res = Response::default();
     match pending {
-        Some(p) => {
+        Some(mut p) => {
             // check sender is either current or new owner
             if info.sender != p.ask.seller && info.sender != p.new_owner {
                 return Err(ContractError::CannotFinalizeBid {});
@@ -310,12 +311,35 @@ pub fn execute_finalize_bid(
                 return Err(ContractError::InvalidDuration {});
             }
             // Check if token is approved for transfer
-            Bs721Contract::<Empty, Empty>(collection, PhantomData, PhantomData).approval(
+            Bs721Contract::<Empty, Empty>(collection.clone(), PhantomData, PhantomData).approval(
                 &deps.querier,
                 token_id,
                 &p.ask.seller.to_string(),
                 None,
             )?;
+
+            let token: NftInfoResponse<Metadata> =
+                Bs721Contract::<Empty, Empty>(collection.clone(), PhantomData, PhantomData)
+                    .nft_info(&deps.querier, token_id)?;
+
+            // get the associated abstarct account we expect to exist
+            if token.extension.account_ownership
+                && validate_aa_ownership(
+                    deps.as_ref(),
+                    &token.token_uri.expect(
+                        "should never have aa support enabled and not have account associated",
+                    ),
+                    token_id,
+                    &collection.clone(),
+                    true,
+                )
+                .is_err()
+            {
+                // abstract account does not use this token for its ownership method.
+                // we refund the bidder by setting their address in the current ask, and still transfer the token to the bidder.
+                // this penalizes the original owner for changing ownership of their account during the cooldown phase.
+                p.ask.seller = p.new_owner.clone();
+            }
 
             // Transfer funds and NFT
             finalize_sale(
@@ -703,7 +727,6 @@ pub fn sudo_update_params(
     params.ask_interval = ask_interval.unwrap_or(params.ask_interval);
     params.cooldown_duration = cooldown_duration.unwrap_or(params.cooldown_duration);
     params.cooldown_fee = cooldown_cancel_fee.unwrap_or(params.cooldown_fee);
-
 
     SUDO_PARAMS.save(deps.storage, &params)?;
 

@@ -4,6 +4,7 @@ use bs721_account::state::REVERSE_MAP_KEY;
 use btsg_account::verify_generic::{
     preamble_msg_arb_036, pubkey_to_address, CosmosArbitrary, TestCosmosArb,
 };
+use btsg_account::{Metadata, TextRecord, NFT};
 use cosmwasm_std::testing::mock_dependencies;
 use cosmwasm_std::{from_json, Api, Binary, StdError};
 use cw_orch::prelude::CallAs;
@@ -469,4 +470,72 @@ fn test_transcode() -> anyhow::Result<()> {
     let res = transcode(deps.as_ref(), cosmos1.as_ref()).unwrap();
     assert_eq!(bitsong1.to_string(), res);
     Ok(())
+}
+
+#[test]
+fn test_nft_new() {
+    let deps = mock_dependencies();
+    NFT::new(
+        deps.as_ref(),
+        "solana1y54exmx84cqtasvjnskf9f63djuuj68pcrqfm3".into(),
+        "1".into(),
+    )
+    .unwrap_err();
+    let nft = NFT::new(
+        deps.as_ref(),
+        "cosmwasm1y54exmx84cqtasvjnskf9f63djuuj68pv3cnl5".into(),
+        "1".into(),
+    )
+    .unwrap();
+    assert_eq!(
+        nft.collection.as_str(),
+        "cosmwasm1y54exmx84cqtasvjnskf9f63djuuj68pv3cnl5"
+    );
+    assert_eq!(nft.token_id, "1");
+    assert!(NFT::new(deps.as_ref(), "".into(), "1".into()).is_err());
+}
+
+#[test]
+fn test_metadata() {
+    // Test 1: default() sets account_ownership to false
+    let default_metadata = Metadata::default();
+    assert_eq!(default_metadata.account_ownership, false);
+    assert_eq!(default_metadata.image_nft, None);
+    assert_eq!(default_metadata.records, vec![]);
+
+    // Test 2: default_with_account() enables account_ownership
+    let account_metadata = Metadata::default_with_account();
+    assert_eq!(account_metadata.account_ownership, true);
+    assert_eq!(account_metadata.image_nft, None);
+    assert_eq!(account_metadata.records, vec![]);
+
+    // Test 3: construct custom metadata with values
+    let custom_metadata = Metadata {
+        account_ownership: true,
+        image_nft: Some(NFT {
+            token_id: "1".to_string(),
+            collection: Addr::unchecked("contract123"),
+        }),
+        records: vec![TextRecord {
+            account: "website".to_string(),
+            value: "bitsong.io".to_string(),
+            verified: None,
+        }],
+    };
+
+    // Test 4: into_json_string produces valid JSON
+    let json_str = custom_metadata.into_json_string().unwrap();
+    let expected_json = r#"{"account_ownership":true,"image_nft":{"token_id":"1","collection":"contract123"},"records":[{"account":"website","value":"bitsong.io","verified": null}]}"#;
+
+    // Parse both to ensure structural equality (avoid whitespace issues)
+    let parsed_output: serde_json::Value = serde_json::from_str(&json_str).unwrap();
+    let parsed_expected: serde_json::Value = serde_json::from_str(expected_json).unwrap();
+
+    assert_eq!(parsed_output, parsed_expected);
+
+    // Test 5: round-trip serde test (optional but strong)
+    let deserialized: Metadata = cosmwasm_std::from_json(&json_str).unwrap();
+    assert_eq!(deserialized.account_ownership, true);
+    assert_eq!(deserialized.image_nft.as_ref().unwrap().token_id, "1");
+    assert_eq!(deserialized.records[0].account, "website");
 }

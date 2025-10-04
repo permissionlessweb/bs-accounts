@@ -17,6 +17,7 @@ cw-orch = { workspace = true }
 cosmwasm-crypto  = { workspace = true }
 cosmwasm-schema = { workspace = true }
 cw-ownable   = { workspace = true }
+abstract-std   = { workspace = true }
 
 ecdsa = "0.16.2"             
 sha2         = { workspace = true }

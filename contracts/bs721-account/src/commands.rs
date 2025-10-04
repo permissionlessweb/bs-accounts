@@ -22,7 +22,9 @@ pub mod manifest {
     };
     use bs721::Expiration;
     use bs721_base::state::TokenInfo;
-    use btsg_account::{market::PendingBid, verify_generic::CosmosArbitrary, Metadata};
+    use btsg_account::{
+        market::PendingBid, validate_aa_ownership, verify_generic::CosmosArbitrary, Metadata,
+    };
     use cosmwasm_std::{to_json_binary, Attribute, WasmMsg};
 
     use crate::state::{REVERSE_MAP_KEY, REVMAP_LIMIT};
@@ -212,7 +214,7 @@ pub mod manifest {
                         old_aa,
                         account,
                         &env.contract.address,
-                        false,  // must not be in use
+                        false, // must not be in use
                     )?;
                     REVERSE_MAP.remove(deps.storage, &Addr::unchecked(old_aa));
                 }
@@ -259,57 +261,6 @@ pub mod manifest {
             .save(deps.storage, account, &token)?;
 
         Ok(Response::new())
-    }
-
-    /// Validates whether the given Abstract Account's ownership state matches expected condition.
-    /// * `aa_addr` - Address of the Abstract Account
-    /// * `token_id` - This NFT's token ID
-    /// * `contract_addr` - This contract's address
-    /// * `must_be_in_use` -
-    ///   - `true`: AA MUST be using this token for ownership verification
-    ///   - `false`: AA MUST NOT be using this token for ownership verification (to prevent lockout)
-    fn validate_aa_ownership(
-        deps: Deps,
-        aa_addr: &str,
-        token_id: &str,
-        contract_addr: &Addr,
-        must_be_in_use: bool,
-    ) -> Result<(), ContractError> {
-        let owner: Ownership<String> = deps
-            .querier
-            .query_wasm_smart(aa_addr, &abstract_std::account::QueryMsg::Ownership {})?;
-
-        match &owner.owner {
-            GovernanceDetails::NFT {
-                collection_addr,
-                token_id: owner_token_id,
-            } => {
-                let is_correct_nft =
-                    owner_token_id == token_id && collection_addr == &contract_addr.to_string();
-
-                match is_correct_nft == must_be_in_use {
-                    true => Ok(()),
-                    false => match must_be_in_use {
-                        true => Err(ContractError::IncorrectBitsongAccountOwnershipToken {
-                            got: owner.owner.to_string(),
-                            wanted: GovernanceDetails::NFT {
-                                collection_addr: contract_addr.to_string(),
-                                token_id: token_id.to_string(),
-                            }
-                            .to_string(),
-                        }),
-                        false => Err(ContractError::AddressIsStillMappedToEOA {}),
-                    },
-                }
-            }
-            _ => {
-                match must_be_in_use {
-                    true => Err(ContractError::AccountIsNotTokenized {}),
-                    // non-NFT ownership is fine when we want to ensure it's *not* using this token
-                    false => Ok(()),
-                }
-            }
-        }
     }
 
     /// updates the (usually) non `bitsong1...` addresses mapped to a `bitsong1...` account.
@@ -1071,6 +1022,7 @@ pub fn sudo_update_params(
 }
 
 mod test {
+
     #[test]
     pub fn test_transcode() {
         let deps = cosmwasm_std::testing::mock_dependencies();

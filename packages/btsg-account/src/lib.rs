@@ -1,3 +1,7 @@
+use abstract_std::objects::gov_type::GovernanceDetails;
+use abstract_std::objects::ownership::Ownership;
+use cosmwasm_std::{Addr, Deps, StdError};
+
 pub mod market;
 pub mod minter;
 pub mod verify_generic;
@@ -88,5 +92,51 @@ pub fn charge_fees(res: &mut cosmwasm_std::Response, fee: cosmwasm_std::Uint128)
             .push(cosmwasm_std::SubMsg::new(cosmwasm_std::BankMsg::Burn {
                 amount: cosmwasm_std::coins(fee.u128(), NATIVE_DENOM),
             }));
+    }
+}
+
+/// Validates whether the given Abstract Account's ownership state matches expected condition.
+/// * `aa_addr` - Address of the Abstract Account
+/// * `token_id` - This NFT's token ID
+/// * `contract_addr` - This contract's address
+/// * `must_be_in_use` -
+///   - `true`: AA MUST be using this token for ownership verification
+///   - `false`: AA MUST NOT be using this token for ownership verification (to prevent lockout)
+pub fn validate_aa_ownership(
+    deps: Deps,
+    aa_addr: &str,
+    token_id: &str,
+    contract_addr: &Addr,
+    must_be_in_use: bool,
+) -> Result<(), StdError> {
+    let owner: Ownership<String> = deps
+        .querier
+        .query_wasm_smart(aa_addr, &abstract_std::account::QueryMsg::Ownership {})?;
+
+    match &owner.owner {
+        GovernanceDetails::NFT {
+            collection_addr,
+            token_id: owner_token_id,
+        } => {
+            let is_correct_nft =
+                owner_token_id == token_id && collection_addr == &contract_addr.to_string();
+
+            match is_correct_nft == must_be_in_use {
+                true => Ok(()),
+                false => match must_be_in_use {
+                    true => Err(StdError::generic_err(
+                        "Abstract Account is not using this token as its ownership key.",
+                    )),
+                    false => Err(StdError::generic_err("Account is still mapped to EOA")),
+                },
+            }
+        }
+        _ => {
+            match must_be_in_use {
+                true => Err(StdError::generic_err("Account is not tokenized")),
+                // non-NFT ownership is fine when we want to ensure it's *not* using this token
+                false => Ok(()),
+            }
+        }
     }
 }
