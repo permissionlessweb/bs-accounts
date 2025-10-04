@@ -4,7 +4,8 @@ members = [
     "contracts/bs721-account-minter",
     "contracts/bs721-account-marketplace",
     "packages/*",
-    "scripts"
+    "scripts",
+    "contracts/ownership-verifier"
     ]
  
 resolver = "2"
@@ -24,6 +25,7 @@ license    = "Apache-2.0"
 bs721-account                = { path = "contracts/bs721-account" }
 bs721-account-minter         = { path = "contracts/bs721-account-minter" }
 bs721-account-marketplace    = { path = "contracts/bs721-account-marketplace" }
+ownership-verifier           = { path = "contracts/ownership-verifier" }
 
 cosmwasm-schema       = { version = "2.2.0" }
 cosmwasm-crypto       = { version = "2.2.2" }

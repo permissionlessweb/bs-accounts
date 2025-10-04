@@ -1603,6 +1603,7 @@ dependencies = [
 name = "btsg-account"
 version = "0.2.0"
 dependencies = [
+ "abstract-std",
  "bech32 0.11.0",
  "bs-controllers",
  "cosmwasm-crypto",
@@ -1645,6 +1646,7 @@ dependencies = [
  "env_logger 0.10.2",
  "k256",
  "log",
+ "ownership-verifier",
  "pretty_env_logger",
  "reqwest 0.11.27",
  "ripemd",
@@ -9095,6 +9097,20 @@ dependencies = [
  "getrandom 0.3.3",
  "subtle",
  "zeroize",
+]
+
+[[package]]
+name = "ownership-verifier"
+version = "0.2.0"
+dependencies = [
+ "abstract-std",
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-orch 0.27.0 (git+https://github.com/permissionlessweb/cw-orchestrator?branch=feat%2Fwasm-path)",
+ "cw-storage-plus",
+ "cw2",
+ "serde",
+ "thiserror 1.0.69",
 ]
 
 [[package]]

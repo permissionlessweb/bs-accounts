@@ -44,7 +44,7 @@ impl BtsgAccountSuite<MockBech32> {
         mock.add_balance(&mock.sender, vec![coin(10500000000, "ubtsg")])?;
         // a. uploads all contracts
         self.upload()?;
-        // a.1 deploy abstract accounts
+        self.test_owner.upload()?;
         // b. instantiates marketplace
         self.market.instantiate(
             &AccountMarketInitMsg {

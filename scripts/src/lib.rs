@@ -22,5 +22,11 @@ pub use btsg_account::market::{
     QueryMsg as BtsgAccountMarketQueryMsgTypes, QueryMsgFns as BtsgAccountMarketQueryFns,
 };
 
+pub use ownership_verifier::{
+    ExecuteMsg as TestOwnershipExecuteMsg, ExecuteMsgFns as TestOwnershipExecuteMsgFns,
+    InstantiateMsg as TestOwnershipInitMsg, QueryMsg as TestOwnershipQueryMsg,
+    QueryMsgFns as TestOwnershipQueryMsgFns,
+};
+
 #[cfg(test)]
 pub mod test;

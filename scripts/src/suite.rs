@@ -8,6 +8,7 @@ use bs721_account_marketplace::interface::BtsgAccountMarket;
 use bs721_account_minter::interface::BtsgAccountMinter;
 use btsg_account::{Metadata, CURRENT_BASE_DELEGATION, CURRENT_BASE_PRICE};
 use cosmwasm_std::{coin, Uint128};
+use ownership_verifier::interface::TestingOwnershipVerifier;
 
 use cw_orch::prelude::*;
 pub struct BtsgAccountSuite<Chain>
@@ -17,7 +18,7 @@ where
     pub account: BtsgAccountCollection<Chain, Metadata>,
     pub minter: BtsgAccountMinter<Chain>,
     pub market: BtsgAccountMarket<Chain>,
-    // pub abs: Abstract<Chain>,
+    pub(crate) test_owner: TestingOwnershipVerifier<Chain>, // pub abs: Abstract<Chain>,
 }
 
 pub const BLS_PUBKEY: &str = "";
@@ -28,6 +29,7 @@ impl<Chain: CwEnv> BtsgAccountSuite<Chain> {
             account: BtsgAccountCollection::new("bs721_account", chain.clone()),
             minter: BtsgAccountMinter::new("bs721_account_minter", chain.clone()),
             market: BtsgAccountMarket::new("bs721_account_marketplace", chain.clone()),
+            test_owner: TestingOwnershipVerifier::new("ownership_verifier", chain.clone()),
         }
     }
 
