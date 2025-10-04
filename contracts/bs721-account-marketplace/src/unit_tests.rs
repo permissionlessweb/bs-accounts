@@ -1,11 +1,14 @@
 use crate::commands::{query_asks_by_seller, query_bids_by_bidder};
 use crate::contract::{execute, instantiate};
-use crate::msgs::{ExecuteMsg, InstantiateMsg};
 #[cfg(test)]
 use crate::state::*;
-use btsg_account::NATIVE_DENOM;
-use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
-use cosmwasm_std::{coins, Addr, DepsMut, Timestamp, Uint128};
+use btsg_account::market::{Ask, Bid};
+use btsg_account::{
+    market::{ExecuteMsg, MarketplaceInstantiateMsg},
+    NATIVE_DENOM,
+};
+use cosmwasm_std::testing::{message_info, mock_dependencies, mock_env};
+use cosmwasm_std::{coin, coins, Addr, DepsMut, Timestamp, Uint128};
 
 const CREATOR: &str = "creator";
 const TOKEN_ID: &str = "account";
@@ -18,8 +21,6 @@ const TRADING_FEE_BASIS_POINTS: u64 = 200; // 2%
 fn ask_indexed_map() {
     let mut deps = mock_dependencies();
     let seller = Addr::unchecked("seller");
-
-    let env = mock_env();
 
     let ask = Ask {
         token_id: TOKEN_ID.to_string(),
@@ -81,13 +82,15 @@ fn bid_indexed_map() {
 }
 
 fn setup_contract(deps: DepsMut) {
-    let msg = InstantiateMsg {
+    let msg = MarketplaceInstantiateMsg {
         trading_fee_bps: TRADING_FEE_BASIS_POINTS,
         min_price: Uint128::from(5u128),
         ask_interval: 60,
         valid_bid_query_limit: 100,
+        cooldown_timeframe: 0u64,
+        cooldown_cancel_fee: coin(1u128, "ubtsg"),
     };
-    let info = mock_info(CREATOR, &[]);
+    let info = message_info(&Addr::unchecked(CREATOR), &[]);
     let res = instantiate(deps, mock_env(), info, msg).unwrap();
     assert_eq!(0, res.messages.len());
 }
@@ -96,14 +99,15 @@ fn setup_contract(deps: DepsMut) {
 fn proper_initialization() {
     let mut deps = mock_dependencies();
 
-    let msg = InstantiateMsg {
+    let msg = MarketplaceInstantiateMsg {
         trading_fee_bps: TRADING_FEE_BASIS_POINTS,
         min_price: Uint128::from(5u128),
         ask_interval: 60,
-
+        cooldown_timeframe: 0u64,
+        cooldown_cancel_fee: coin(1u128, "ubtsg"),
         valid_bid_query_limit: 100,
     };
-    let info = mock_info("creator", &coins(1000, NATIVE_DENOM));
+    let info = message_info(&Addr::unchecked("creator"), &coins(1000, NATIVE_DENOM));
 
     // we can just call .unwrap() to assert this was a success
     let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
@@ -115,13 +119,15 @@ fn bad_fees_initialization() {
     let mut deps = mock_dependencies();
 
     // throw error if trading fee bps > 100%
-    let msg = InstantiateMsg {
+    let msg = MarketplaceInstantiateMsg {
         trading_fee_bps: 10001,
         min_price: Uint128::from(5u128),
         ask_interval: 60,
         valid_bid_query_limit: 100,
+        cooldown_timeframe: 0u64,
+        cooldown_cancel_fee: coin(1u128, "ubtsg"),
     };
-    let info = mock_info("creator", &coins(1000, NATIVE_DENOM));
+    let info = message_info(&Addr::unchecked("creator"), &coins(1000, NATIVE_DENOM));
     let res = instantiate(deps.as_mut(), mock_env(), info, msg);
     assert!(res.is_err());
 }
@@ -131,7 +137,7 @@ fn try_set_bid() {
     let mut deps = mock_dependencies();
     setup_contract(deps.as_mut());
 
-    let bidder = mock_info("bidder", &coins(1000, NATIVE_DENOM));
+    let bidder = message_info(&Addr::unchecked("bidder"), &coins(1000, NATIVE_DENOM));
 
     // Bidder calls SetBid before an Ask is set, fails
     let set_bid_msg = ExecuteMsg::SetBid {
@@ -152,7 +158,7 @@ fn try_set_ask() {
     };
 
     // Reject if not called by the media owner
-    let not_allowed = mock_info("random", &[]);
+    let not_allowed = message_info(&Addr::unchecked("random"), &[]);
     let err = execute(deps.as_mut(), mock_env(), not_allowed, set_ask);
     assert!(err.is_err());
 }

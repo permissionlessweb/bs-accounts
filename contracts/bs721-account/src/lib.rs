@@ -3,18 +3,20 @@ mod error;
 pub mod helpers;
 pub mod msg;
 pub mod state;
-
 pub use crate::error::ContractError;
+
+#[cfg(not(target_arch = "wasm32"))]
+pub mod interface;
+
 use cosmwasm_std::{
-    entry_point, to_json_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult,
+    to_json_binary, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdResult,
 };
 
 use btsg_account::Metadata;
-use cosmwasm_std::Empty;
 use msg::Bs721AccountsQueryMsg;
 
 // version info for migration info
-const CONTRACT_NAME: &str = "crates.io:bs721-account";
+const ACCOUNT_CONTRACT: &str = "crates.io:bs721-account";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub type Bs721AccountContract<'a> =
@@ -23,30 +25,20 @@ pub type ExecuteMsg = crate::msg::ExecuteMsg<Metadata>;
 pub type QueryMsg = Bs721AccountsQueryMsg;
 
 pub mod entry {
-    use crate::commands::transcode;
-
     use super::*;
-
-    use commands::sudo_update_params;
+    use commands::{manifest::*, queries::*, sudo_update_params, transcode};
     use cw_utils::maybe_addr;
-    use msg::InstantiateMsg;
+    use msg::{InstantiateMsg, SudoMsg};
+    use state::{SudoParams, ACCOUNT_MARKETPLACE, SUDO_PARAMS, VERIFIER};
 
-    use commands::manifest::*;
-    use commands::queries::*;
-    use msg::SudoMsg;
-    use state::SudoParams;
-    use state::ACCOUNT_MARKETPLACE;
-    use state::SUDO_PARAMS;
-    use state::VERIFIER;
-
-    #[cfg_attr(not(feature = "library"), entry_point)]
+    #[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
     pub fn instantiate(
         mut deps: DepsMut,
         env: Env,
         info: MessageInfo,
         msg: InstantiateMsg,
     ) -> StdResult<Response> {
-        cw2::set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+        cw2::set_contract_version(deps.storage, ACCOUNT_CONTRACT, CONTRACT_VERSION)?;
 
         SUDO_PARAMS.save(
             deps.storage,
@@ -71,7 +63,8 @@ pub mod entry {
             .add_attribute("action", "instantiate")
             .add_attribute("bs721_account_address", env.contract.address.to_string()))
     }
-    #[cfg_attr(not(feature = "library"), entry_point)]
+
+    #[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
     pub fn execute(
         deps: DepsMut,
         env: Env,
@@ -150,13 +143,20 @@ pub mod entry {
             ExecuteMsg::UpdateMyReverseMapKey { to_add, to_remove } => {
                 execute_update_reverse_map_keys(deps, env, info, to_add, to_remove)
             }
+            ExecuteMsg::UpdateAbsAccSupport {
+                token_id,
+                r#abstract,
+            } => execute_update_abstract_account_support(deps, env, info, &token_id, r#abstract),
+            ExecuteMsg::ApproveAllViaMarket { owner, expires } => {
+                execute_approve_all_via_market(deps, env, info, owner, expires)
+            }
             _ => Bs721AccountContract::default()
                 .execute(deps, env, info, msg.into())
                 .map_err(|e| e.into()),
         }
     }
 
-    #[entry_point]
+    #[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
     pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         match msg {
             QueryMsg::Params {} => to_json_binary(&query_params(deps)?),

@@ -12,20 +12,14 @@ target/
 .idea/
 *.iml
 
+contracts/*/schema*
+contracts/smart-accounts/*/schema*
+
 # Auto-gen
 .cargo-ok
-
-# Build artifacts
-*.wasm
-hash.txt
-contracts.txt
-artifacts/
 
 # code coverage
 tarpaulin-report.*
 
 *.env
-*.wasm
-# *.json
-
 **/node_modules/

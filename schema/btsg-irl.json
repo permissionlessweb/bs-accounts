@@ -1,0 +1,407 @@
+{
+  "contract_name": "btsg-irl",
+  "contract_version": "0.2.0",
+  "idl_version": "1.0.0",
+  "instantiate": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "InstantiateMsg",
+    "type": "object",
+    "required": [
+      "enable_zktls"
+    ],
+    "properties": {
+      "enable_zktls": {
+        "description": "if enabled, this contract is also being used as a x/smart-account authenticator, in order to be managed by an AVS.",
+        "type": "boolean"
+      },
+      "minter_params": {
+        "description": "Params for your events fungible token",
+        "anyOf": [
+          {
+            "$ref": "#/definitions/FantokenMinterParams"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    },
+    "additionalProperties": false,
+    "definitions": {
+      "FantokenMinterParams": {
+        "type": "object",
+        "required": [
+          "max_supply",
+          "name",
+          "symbol",
+          "uri"
+        ],
+        "properties": {
+          "max_supply": {
+            "$ref": "#/definitions/Uint128"
+          },
+          "name": {
+            "type": "string"
+          },
+          "symbol": {
+            "type": "string"
+          },
+          "uri": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Uint128": {
+        "description": "A thin wrapper around u128 that is using strings for JSON encoding/decoding, such that the full u128 range can be used for clients that convert JSON numbers to floats, like JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u128` to get the value out:\n\n``` # use cosmwasm_std::Uint128; let a = Uint128::from(123u128); assert_eq!(a.u128(), 123);\n\nlet b = Uint128::from(42u64); assert_eq!(b.u128(), 42);\n\nlet c = Uint128::from(70u32); assert_eq!(c.u128(), 70); ```",
+        "type": "string"
+      }
+    }
+  },
+  "execute": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "ExecuteMsg",
+    "oneOf": [
+      {
+        "description": "Mint fantokens to recipients",
+        "type": "object",
+        "required": [
+          "mint_fantokens"
+        ],
+        "properties": {
+          "mint_fantokens": {
+            "type": "object",
+            "required": [
+              "data"
+            ],
+            "properties": {
+              "data": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/MintTicketObject"
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "description": "Update the URI for the fantoken",
+        "type": "object",
+        "required": [
+          "set_uri"
+        ],
+        "properties": {
+          "set_uri": {
+            "type": "object",
+            "required": [
+              "uri"
+            ],
+            "properties": {
+              "uri": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "description": "Update operator set for this given event",
+        "type": "object",
+        "required": [
+          "add_epoch"
+        ],
+        "properties": {
+          "add_epoch": {
+            "type": "object",
+            "required": [
+              "minimum_witness",
+              "witness"
+            ],
+            "properties": {
+              "minimum_witness": {
+                "$ref": "#/definitions/Uint128"
+              },
+              "witness": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/Witness"
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    ],
+    "definitions": {
+      "MintTicketObject": {
+        "type": "object",
+        "required": [
+          "amount",
+          "ticket"
+        ],
+        "properties": {
+          "amount": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
+          },
+          "ticket": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Uint128": {
+        "description": "A thin wrapper around u128 that is using strings for JSON encoding/decoding, such that the full u128 range can be used for clients that convert JSON numbers to floats, like JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u128` to get the value out:\n\n``` # use cosmwasm_std::Uint128; let a = Uint128::from(123u128); assert_eq!(a.u128(), 123);\n\nlet b = Uint128::from(42u64); assert_eq!(b.u128(), 42);\n\nlet c = Uint128::from(70u32); assert_eq!(c.u128(), 70); ```",
+        "type": "string"
+      },
+      "Witness": {
+        "type": "object",
+        "required": [
+          "address",
+          "host"
+        ],
+        "properties": {
+          "address": {
+            "type": "string"
+          },
+          "host": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "query": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "QueryMsg",
+    "oneOf": [
+      {
+        "description": "Get fantoken information",
+        "type": "object",
+        "required": [
+          "get_fantoken_info"
+        ],
+        "properties": {
+          "get_fantoken_info": {
+            "type": "object",
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "description": "Get total minted amount",
+        "type": "object",
+        "required": [
+          "get_minted_amount"
+        ],
+        "properties": {
+          "get_minted_amount": {
+            "type": "object",
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "get_all_epoch"
+        ],
+        "properties": {
+          "get_all_epoch": {
+            "type": "object",
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "get_epoch"
+        ],
+        "properties": {
+          "get_epoch": {
+            "type": "object",
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "id": {
+                "type": "integer",
+                "format": "uint128",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    ]
+  },
+  "migrate": null,
+  "sudo": null,
+  "responses": {
+    "get_all_epoch": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "GetAllEpochResponse",
+      "type": "object",
+      "required": [
+        "ids"
+      ],
+      "properties": {
+        "ids": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint128",
+            "minimum": 0.0
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "get_epoch": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "GetEpochResponse",
+      "type": "object",
+      "required": [
+        "epoch"
+      ],
+      "properties": {
+        "epoch": {
+          "$ref": "#/definitions/Epoch"
+        }
+      },
+      "additionalProperties": false,
+      "definitions": {
+        "Epoch": {
+          "type": "object",
+          "required": [
+            "id",
+            "minimum_witness_for_claim_creation",
+            "timestamp_end",
+            "timestamp_start",
+            "witness"
+          ],
+          "properties": {
+            "id": {
+              "$ref": "#/definitions/Uint128"
+            },
+            "minimum_witness_for_claim_creation": {
+              "$ref": "#/definitions/Uint128"
+            },
+            "timestamp_end": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "timestamp_start": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "witness": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Witness"
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "Uint128": {
+          "description": "A thin wrapper around u128 that is using strings for JSON encoding/decoding, such that the full u128 range can be used for clients that convert JSON numbers to floats, like JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u128` to get the value out:\n\n``` # use cosmwasm_std::Uint128; let a = Uint128::from(123u128); assert_eq!(a.u128(), 123);\n\nlet b = Uint128::from(42u64); assert_eq!(b.u128(), 42);\n\nlet c = Uint128::from(70u32); assert_eq!(c.u128(), 70); ```",
+          "type": "string"
+        },
+        "Witness": {
+          "type": "object",
+          "required": [
+            "address",
+            "host"
+          ],
+          "properties": {
+            "address": {
+              "type": "string"
+            },
+            "host": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    "get_fantoken_info": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Nullable_FantokenInfo",
+      "anyOf": [
+        {
+          "$ref": "#/definitions/FantokenInfo"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "definitions": {
+        "FantokenInfo": {
+          "type": "object",
+          "required": [
+            "authority",
+            "denom",
+            "max_supply",
+            "minter",
+            "name",
+            "symbol",
+            "uri"
+          ],
+          "properties": {
+            "authority": {
+              "type": "string"
+            },
+            "denom": {
+              "type": "string"
+            },
+            "max_supply": {
+              "$ref": "#/definitions/Uint128"
+            },
+            "minter": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "symbol": {
+              "type": "string"
+            },
+            "uri": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "Uint128": {
+          "description": "A thin wrapper around u128 that is using strings for JSON encoding/decoding, such that the full u128 range can be used for clients that convert JSON numbers to floats, like JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u128` to get the value out:\n\n``` # use cosmwasm_std::Uint128; let a = Uint128::from(123u128); assert_eq!(a.u128(), 123);\n\nlet b = Uint128::from(42u64); assert_eq!(b.u128(), 42);\n\nlet c = Uint128::from(70u32); assert_eq!(c.u128(), 70); ```",
+          "type": "string"
+        }
+      }
+    },
+    "get_minted_amount": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Uint128",
+      "description": "A thin wrapper around u128 that is using strings for JSON encoding/decoding, such that the full u128 range can be used for clients that convert JSON numbers to floats, like JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u128` to get the value out:\n\n``` # use cosmwasm_std::Uint128; let a = Uint128::from(123u128); assert_eq!(a.u128(), 123);\n\nlet b = Uint128::from(42u64); assert_eq!(b.u128(), 42);\n\nlet c = Uint128::from(70u32); assert_eq!(c.u128(), 70); ```",
+      "type": "string"
+    }
+  }
+}

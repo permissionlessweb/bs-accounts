@@ -1,9 +1,10 @@
-use bs721_account_marketplace::msgs::{ExecuteMsg, InstantiateMsg, QueryMsg};
+#![cfg(not(test))]
+use btsg_account::market::{ExecuteMsg, MarketplaceInstantiateMsg, QueryMsg};
 use cosmwasm_schema::write_api;
 
 fn main() {
     write_api! {
-        instantiate: InstantiateMsg,
+        instantiate: MarketplaceInstantiateMsg,
         execute: ExecuteMsg,
         query: QueryMsg,
     }

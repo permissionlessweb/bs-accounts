@@ -9,49 +9,37 @@ edition = "2021"
 [lib]
 crate-type = ["cdylib", "rlib"]
 
-[profile.release]
-opt-level = 3
-debug = false
-rpath = false
-lto = true
-debug-assertions = false
-codegen-units = 1
-panic = 'abort'
-incremental = false
-overflow-checks = true
-
 [features]
 # use library feature to disable all instantiate/execute/query exports
 library = []
 
-[package.metadata.scripts]
-optimize = """docker run --rm -v "$(pwd)":/code \
-  --mount type=volume,source="$(basename "$(pwd)")_cache",target=/target \
-  --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-  cosmwasm/optimizer:0.15.0
-"""
-
 [dependencies]
-bs721.workspace = true 
-bs721-base   = { workspace = true, features = ["library"]}
-bs721-account = { path = "../bs721-account", features = ["library"] }
-bs721-account-marketplace = { path = "../bs721-account-marketplace", features = ["library"] }
-btsg-account     = { path = "../../packages/btsg-account"}
-cw-ownable.workspace = true
-cosmwasm-schema.workspace = true
-cw-utils.workspace = true
-bs-controllers.workspace = true
-cw-orch.workspace = true
-cosmwasm-std = { workspace = true, features = [
-  "cosmwasm_1_4",
-  # Enable this if you only deploy to chains that have CosmWasm 2.0 or higher
-  "cosmwasm_2_0",
-] }
-cw-storage-plus.workspace = true
-cw2.workspace = true
-schemars.workspace = true
-serde = { workspace = true, default-features = false, features = ["derive"] }
-thiserror.workspace = true
+# ─── Local & Workspace Crates ────────────────────────────────────────
+bs721                   = { workspace = true }
+bs721-base              = { workspace = true, features = ["library"] }
+bs721-account           = { workspace = true, features = ["library"] }
+btsg-account            = { workspace = true }
+
+# ─── CW & CosmWasm Ecosystem (Workspace) ─────────────────────────────
+cosmwasm-std            = { workspace = true, features = ["staking","cosmwasm_1_4","cosmwasm_2_0"] }
+cosmwasm-schema         = { workspace = true }
+cw-ownable              = { workspace = true }
+cw-storage-plus         = { workspace = true }
+cw-utils                = { workspace = true }
+cw2                     = { workspace = true }
+
+# ─── Utilities & Serialization ───────────────────────────────────────
+serde                   = { workspace = true, default-features = false, features = ["derive"] }
+schemars                = { workspace = true }
+thiserror               = { workspace = true }
+
+# ─── Orchestrator (CW-Orch) ──────────────────────────────────────────
+cw-orch                 = { workspace = true }
+
+# ─── Custom Controllers ──────────────────────────────────────────────
+bs-controllers          = { workspace = true }
+
 
 [dev-dependencies]
-cw-multi-test = "2.0.0"
+# ─── Testing ─────────────────────────────────────────────────────────
+cw-multi-test           = { version = "2.2.0", features = ["stargate", "cosmwasm_2_1"] }

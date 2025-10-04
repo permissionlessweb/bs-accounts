@@ -1,15 +1,15 @@
 use cw_orch::environment::{ChainKind, NetworkInfo};
 //////////////// SUPPORTED NETWORK CONFIGS ////////////////
 /// Add more chains in SUPPORTED_CHAINS to include in account framework instance.
-use cw_orch::prelude::{networks::UNI_6, *};
+use cw_orch::prelude::{networks::OSMOSIS_1, *};
 /// Cw-orch imports
 use reqwest::Url;
 use std::net::TcpStream;
 
-pub const SUPPORTED_CHAINS: &[ChainInfo] = &[UNI_6, BITSONG_MAINNET];
-pub const BITSONG_SUPPORTED_NETWORKS: &[ChainInfo] = &SUPPORTED_CHAINS;
-
+pub const SUPPORTED_CHAINS: &[ChainInfo] = &[BITSONG_MAINNET, OSMOSIS_1];
+pub const BITSONG_SUPPORTED_NETWORKS: &[ChainInfo] = SUPPORTED_CHAINS;
 pub const GAS_TO_DEPLOY: u64 = 60_000_000;
+
 
 /// A helper function to retrieve a [`ChainInfo`] struct for a given chain-id.
 /// supported chains are defined by the `SUPPORTED_CHAINS` variable
@@ -33,7 +33,7 @@ pub const BITSONG_MAINNET: ChainInfo = ChainInfo {
     chain_id: "bitsong-2b",
     gas_denom: "ubtsg",
     gas_price: 0.025,
-    grpc_urls: &["http://grpc"],
+    grpc_urls: &["http://bitsong-grpc.polkachu.com:16090"],
     network_info: BITSONG_NETWORK,
     lcd_url: None,
     fcd_url: None,
@@ -44,7 +44,7 @@ pub const BITSONG_TESTNET: ChainInfo = ChainInfo {
     chain_id: "bobnet",
     gas_denom: "ubtsg",
     gas_price: 0.025,
-    grpc_urls: &["http://142.132.147.182:9090"],
+    grpc_urls: &["http://"],
     network_info: BITSONG_NETWORK,
     lcd_url: None,
     fcd_url: None,
@@ -55,28 +55,6 @@ const LOCAL_NET: NetworkInfo = NetworkInfo {
     chain_name: "Local Network",
     pub_address_prefix: "mock",
     coin_type: 114u32,
-};
-
-pub const LOCAL_NETWORK1: ChainInfo = ChainInfo {
-    kind: ChainKind::Testnet,
-    chain_id: "test-1",
-    gas_denom: "uterp",
-    gas_price: 0.025,
-    grpc_urls: &["tcp://localhost:9090"],
-    network_info: BITSONG_NETWORK,
-    lcd_url: None,
-    fcd_url: None,
-};
-
-pub const LOCAL_NETWORK2: ChainInfo = ChainInfo {
-    kind: ChainKind::Testnet,
-    chain_id: "local-2",
-    gas_denom: "uskeret",
-    gas_price: 0.025,
-    grpc_urls: &["http://grpc"],
-    network_info: LOCAL_NET,
-    lcd_url: None,
-    fcd_url: None,
 };
 
 pub async fn ping_grpc(url_str: &str) -> anyhow::Result<()> {
@@ -97,4 +75,3 @@ pub async fn ping_grpc(url_str: &str) -> anyhow::Result<()> {
     let _ = TcpStream::connect(socket_addr);
     Ok(())
 }
-

@@ -1,6 +1,6 @@
 {
   "contract_name": "bs721-account",
-  "contract_version": "0.1.0",
+  "contract_version": "0.2.0",
   "idl_version": "1.0.0",
   "instantiate": {
     "$schema": "http://json-schema.org/draft-07/schema#",
@@ -149,7 +149,7 @@
         "additionalProperties": false
       },
       {
-        "description": "Add text record ex: twitter handle, discord account, etc",
+        "description": "Add text record ex: abstract account, twitter handle, discord account, etc",
         "type": "object",
         "required": [
           "add_text_record"
@@ -429,6 +429,34 @@
         "additionalProperties": false
       },
       {
+        "description": "Allows user to define if token is being associated to an Abstract Account",
+        "type": "object",
+        "required": [
+          "update_abs_acc_support"
+        ],
+        "properties": {
+          "update_abs_acc_support": {
+            "type": "object",
+            "required": [
+              "token_id"
+            ],
+            "properties": {
+              "abstract": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "token_id": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
         "description": "Remove previously granted ApproveAll permission",
         "type": "object",
         "required": [
@@ -545,6 +573,38 @@
           }
         },
         "additionalProperties": false
+      },
+      {
+        "description": "Updates the mapping of wallet accounts to the sender.",
+        "type": "object",
+        "required": [
+          "update_my_reverse_map_key"
+        ],
+        "properties": {
+          "update_my_reverse_map_key": {
+            "type": "object",
+            "required": [
+              "to_add",
+              "to_remove"
+            ],
+            "properties": {
+              "to_add": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/CosmosArbitrary"
+                }
+              },
+              "to_remove": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
       }
     ],
     "definitions": {
@@ -555,6 +615,32 @@
       "Binary": {
         "description": "Binary is a wrapper around Vec<u8> to add base64 de/serialization with serde. It also adds some helper methods to help encode inline.\n\nThis is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>. See also <https://github.com/CosmWasm/cosmwasm/blob/main/docs/MESSAGE_TYPES.md>.",
         "type": "string"
+      },
+      "CosmosArbitrary": {
+        "type": "object",
+        "required": [
+          "message",
+          "pubkey",
+          "signature"
+        ],
+        "properties": {
+          "hrp": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "message": {
+            "$ref": "#/definitions/Binary"
+          },
+          "pubkey": {
+            "$ref": "#/definitions/Binary"
+          },
+          "signature": {
+            "$ref": "#/definitions/Binary"
+          }
+        },
+        "additionalProperties": false
       },
       "Expiration": {
         "description": "Expiration represents a point in time when some event happens. It can compare with a BlockInfo and will return is_expired() == true once the condition is hit (and for every block in the future)",
@@ -607,9 +693,14 @@
         "description": "Custom bitsong name metadata.",
         "type": "object",
         "required": [
+          "account_ownership",
           "records"
         ],
         "properties": {
+          "account_ownership": {
+            "description": "signals if this account token is making use of an tokenized-account authentication system.",
+            "type": "boolean"
+          },
           "image_nft": {
             "anyOf": [
               {
@@ -700,7 +791,7 @@
         "additionalProperties": false
       },
       {
-        "description": "Reverse lookup of account for address",
+        "description": "query an address to return the account owned by this address",
         "type": "object",
         "required": [
           "account"
@@ -713,6 +804,28 @@
             ],
             "properties": {
               "address": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "description": "query an account address to return the associated address. This will be the abstract account contract addr if nft used as ownership token",
+        "type": "object",
+        "required": [
+          "associated_address"
+        ],
+        "properties": {
+          "associated_address": {
+            "type": "object",
+            "required": [
+              "account"
+            ],
+            "properties": {
+              "account": {
                 "type": "string"
               }
             },
@@ -736,19 +849,41 @@
         "additionalProperties": false
       },
       {
-        "description": "Returns the associated address for a account",
+        "description": "Query a non `bitsong1...` address to retrieve the `bitsong1...` associated with it",
         "type": "object",
         "required": [
-          "associated_address"
+          "reverse_map_address"
         ],
         "properties": {
-          "associated_address": {
+          "reverse_map_address": {
             "type": "object",
             "required": [
-              "account"
+              "address"
             ],
             "properties": {
-              "account": {
+              "address": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "description": "Query a non `bitsong1...` address to retrieve the account token associated with it. *Same as `QueryMsg::Account`*",
+        "type": "object",
+        "required": [
+          "reverse_map_account"
+        ],
+        "properties": {
+          "reverse_map_account": {
+            "type": "object",
+            "required": [
+              "address"
+            ],
+            "properties": {
+              "address": {
                 "type": "string"
               }
             },
@@ -1250,9 +1385,14 @@
           "description": "Custom bitsong name metadata.",
           "type": "object",
           "required": [
+            "account_ownership",
             "records"
           ],
           "properties": {
+            "account_ownership": {
+              "description": "signals if this account token is making use of an tokenized-account authentication system.",
+              "type": "boolean"
+            },
             "image_nft": {
               "anyOf": [
                 {
@@ -1295,7 +1435,7 @@
           ],
           "properties": {
             "extension": {
-              "description": "You can add any custom metadata here when you extend cw721-base",
+              "description": "You can add any custom metadata here when you extend bs721-base",
               "allOf": [
                 {
                   "$ref": "#/definitions/Metadata"
@@ -1889,7 +2029,7 @@
       ],
       "properties": {
         "extension": {
-          "description": "You can add any custom metadata here when you extend cw721-base",
+          "description": "You can add any custom metadata here when you extend bs721-base",
           "allOf": [
             {
               "$ref": "#/definitions/Metadata"
@@ -1934,9 +2074,14 @@
           "description": "Custom bitsong name metadata.",
           "type": "object",
           "required": [
+            "account_ownership",
             "records"
           ],
           "properties": {
+            "account_ownership": {
+              "description": "signals if this account token is making use of an tokenized-account authentication system.",
+              "type": "boolean"
+            },
             "image_nft": {
               "anyOf": [
                 {
@@ -2218,16 +2363,34 @@
       "title": "SudoParams",
       "type": "object",
       "required": [
-        "max_record_count"
+        "max_record_count",
+        "max_reverse_map_key_limit"
       ],
       "properties": {
         "max_record_count": {
           "type": "integer",
           "format": "uint32",
           "minimum": 0.0
+        },
+        "max_reverse_map_key_limit": {
+          "description": "maximum # of items a `bitsong1...` addr can map to `REVERSE_MAP_KEY`",
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
         }
       },
       "additionalProperties": false
+    },
+    "reverse_map_account": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "String",
+      "type": "string"
+    },
+    "reverse_map_address": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Addr",
+      "description": "A human readable address.\n\nIn Cosmos, this is typically bech32 encoded. But for multi-chain smart contracts no assumptions should be made other than being UTF-8 encoded and of reasonable length.\n\nThis type represents a validated address. It can be created in the following ways 1. Use `Addr::unchecked(input)` 2. Use `let checked: Addr = deps.api.addr_validate(input)?` 3. Use `let checked: Addr = deps.api.addr_humanize(canonical_addr)?` 4. Deserialize from JSON. This must only be done from JSON that was validated before such as a contract's state. `Addr` must not be used in messages sent by the user because this would result in unvalidated instances.\n\nThis type is immutable. If you really need to mutate it (Really? Are you sure?), create a mutable copy using `let mut mutable = Addr::to_string()` and operate on that `String` instance.",
+      "type": "string"
     },
     "text_records": {
       "$schema": "http://json-schema.org/draft-07/schema#",

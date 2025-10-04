@@ -1,11 +1,16 @@
 use crate::hooks::{prepare_ask_hook, prepare_bid_hook, prepare_sale_hook};
-use crate::msgs::{BidOffset, Bidder, ConfigResponse, HookAction};
+use crate::msgs::HookAction;
 use crate::{
     error::ContractError,
     // hooks::{prepare_ask_hook, prepare_bid_hook, prepare_sale_hook},
     state::*,
 };
-use btsg_account::{charge_fees, Metadata, NATIVE_DENOM};
+use bs721_account::msg::ExecuteMsg as Bs721AccountExecuteMsg;
+use btsg_account::{
+    charge_fees, validate_aa_ownership, Metadata, DEFAULT_QUERY_LIMIT, DEPLOYMENT_DAO,
+    MAX_QUERY_LIMIT, NATIVE_DENOM,
+};
+use btsg_account::{market::*, TokenId};
 
 use cosmwasm_std::{
     coin, to_json_binary, Addr, BankMsg, Decimal, Deps, DepsMut, Empty, Env, Event, Fraction,
@@ -14,18 +19,10 @@ use cosmwasm_std::{
 };
 use std::marker::PhantomData;
 
-use bs721::{Bs721ExecuteMsg, OwnerOfResponse};
-use bs721_base::helpers::Bs721Contract;
+use bs721::{NftInfoResponse, OwnerOfResponse};
+use bs721_account::helpers::Bs721Account;
 use cw_storage_plus::Bound;
 use cw_utils::{must_pay, nonpayable};
-
-// Query limits
-const DEFAULT_QUERY_LIMIT: u32 = 10;
-const MAX_QUERY_LIMIT: u32 = 100;
-pub const PROPOSE_BIDDER_A: u64 = 1;
-pub const ACCEPT_BIDDER_A: u64 = 2;
-pub const PROPOSE_BIDDER_B: u64 = 3;
-pub const ACCEPT_BIDDER_B: u64 = 4;
 
 /// Setup this contract (can be run once only)
 pub fn execute_setup(
@@ -63,7 +60,7 @@ pub fn execute_set_ask(
     let collection = ACCOUNT_COLLECTION.load(deps.storage)?;
 
     // check if collection is approved to transfer on behalf of the seller
-    let ops = Bs721Contract::<Empty, Empty>(collection, PhantomData, PhantomData).all_operators(
+    let ops = Bs721Account(collection).all_operators(
         &deps.querier,
         seller.to_string(),
         false,
@@ -143,8 +140,6 @@ pub fn execute_update_ask(
         return Err(ContractError::Unauthorized {});
     }
 
-    let mut res = Response::new();
-
     // refund any renewal funds and update the seller
     let mut ask = asks().load(deps.storage, ask_key(token_id))?;
     ask.seller = seller.clone();
@@ -154,7 +149,7 @@ pub fn execute_update_ask(
         .add_attribute("token_id", token_id)
         .add_attribute("seller", seller);
 
-    Ok(res.add_event(event))
+    Ok(Response::new().add_event(event))
 }
 
 /// Places a bid on a account. The bid is escrowed in the contract.
@@ -200,6 +195,70 @@ pub fn execute_set_bid(
     Ok(res.add_event(event).add_submessages(hook))
 }
 
+/// Cancels an accepted bid in cooldown period. Only seller may call.
+/// Requires seller to provide fee, which is split between bidder and developemnt team.
+pub fn execute_cancel_cooldown(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    token_id: &str,
+) -> Result<Response, ContractError> {
+    let cd_key = &ask_key(token_id);
+    match cooldown_bids().may_load(deps.storage, cd_key)? {
+        Some(p) => {
+            // sender must be current token owner
+            if info.sender != p.ask.seller {
+                return Err(ContractError::Unauthorized {});
+            };
+            let mut res = Response::default();
+            let params = SUDO_PARAMS.load(deps.storage)?;
+            if params.cooldown_duration != 0 {
+                // must have sent cancel cooldown fee
+                let payment = must_pay(&info, NATIVE_DENOM)?;
+
+                if payment != params.cooldown_fee.amount {
+                    return Err(ContractError::IncorrectPayment {
+                        got: payment.u128(),
+                        expected: params.cooldown_fee.amount.u128(),
+                    });
+                }
+
+                // cannot cancel if cooldown period is over
+                if env.block.time >= p.unlock_time {
+                    return Err(ContractError::InvalidDuration {});
+                }
+
+                // refund bidder
+                let dev_cut = params
+                    .cooldown_fee
+                    .amount
+                    .u128()
+                    .checked_div(2)
+                    .expect("fatal division error");
+
+                let dev_cut_msg = BankMsg::Send {
+                    to_address: DEPLOYMENT_DAO.to_string(),
+                    amount: vec![coin(dev_cut, NATIVE_DENOM.to_string())],
+                };
+                // refund bidder
+                let seller_share_msg = BankMsg::Send {
+                    to_address: p.new_owner.to_string(),
+                    amount: vec![coin(
+                        p.amount.u128() + (params.cooldown_fee.amount.u128() - dev_cut),
+                        NATIVE_DENOM.to_string(),
+                    )],
+                };
+                res.messages.extend(vec![
+                    SubMsg::new(seller_share_msg),
+                    SubMsg::new(dev_cut_msg),
+                ]);
+            }
+            cooldown_bids().remove(deps.storage, cd_key)?;
+            Ok(res)
+        }
+        None => return Err(ContractError::AskNotFound {}),
+    }
+}
 /// Removes a bid made by the bidder. Bidders can only remove their own bids
 pub fn execute_remove_bid(
     deps: DepsMut,
@@ -233,6 +292,86 @@ pub fn execute_remove_bid(
     Ok(res)
 }
 
+pub fn execute_finalize_bid(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    token_id: &str,
+) -> Result<Response, ContractError> {
+    let collection = ACCOUNT_COLLECTION.load(deps.storage)?;
+    let cd_key = &ask_key(token_id);
+    let pending = cooldown_bids().may_load(deps.storage, cd_key)?;
+    let mut res = Response::default();
+    match pending {
+        Some(mut p) => {
+            // check if pending bid is ready to be finalized
+            if env.block.time < p.unlock_time {
+                return Err(ContractError::InvalidDuration {});
+            }
+            // Check if token is approved for transfer
+            let ops = Bs721Account(collection.clone()).approval(
+                &deps.querier,
+                token_id,
+                &env.contract.address.to_string(),
+                None,
+            );
+            if ops.is_err() || ops?.approval.expires.is_expired(&env.block) {
+                // market automatically approves msg for itself
+                res.messages
+                    .push(SubMsg::new(Bs721Account(collection.clone()).call(
+                        Bs721AccountExecuteMsg::ApproveAllViaMarket {
+                            owner: p.ask.seller.to_string(),
+                            expires: None,
+                        },
+                    )?));
+            };
+
+            let token: NftInfoResponse<Metadata> =
+                Bs721Account(collection.clone()).nft_info(&deps.querier, token_id)?;
+
+            // get the associated abstarct account we expect to exist
+            if token.extension.account_ownership
+                && validate_aa_ownership(
+                    deps.as_ref(),
+                    &token.token_uri.expect(
+                        "should never have aa support enabled and not have account associated",
+                    ),
+                    token_id,
+                    &collection.clone(),
+                    true,
+                )
+                .is_err()
+            {
+                // abstract account does not use this token for its ownership method.
+                // we refund the bidder by setting their address in the current ask, and still transfer the token to the bidder.
+                // this penalizes the original owner for changing ownership of their account during the cooldown phase.
+                p.ask.seller = p.new_owner.clone();
+            }
+
+            // Transfer funds and NFT
+            finalize_sale(
+                deps.as_ref(),
+                p.ask.clone(),
+                p.amount,
+                p.new_owner.clone(),
+                &mut res,
+            )?;
+            cooldown_bids().remove(deps.storage, cd_key)?;
+            store_ask(
+                deps.storage,
+                &Ask {
+                    token_id: token_id.to_string(),
+                    id: p.ask.id,
+                    seller: p.new_owner.clone(),
+                },
+            )?;
+        }
+        None => {
+            return Err(ContractError::AskNotFound {});
+        }
+    }
+    Ok(res)
+}
 /// Seller can accept a bid which transfers funds as well as the token.
 /// The bid is removed, then a new ask is created for the same token.
 pub fn execute_accept_bid(
@@ -245,50 +384,32 @@ pub fn execute_accept_bid(
     // println!("1.0 execute_accept bid ----------------------------");
     nonpayable(&info)?;
     let collection = ACCOUNT_COLLECTION.load(deps.storage)?;
+    let cooldown = SUDO_PARAMS.load(deps.storage)?.cooldown_duration;
     only_owner(deps.as_ref(), &info, &collection, token_id)?;
 
     let ask_key = ask_key(token_id);
     let bid_key = bid_key(token_id, &bidder);
 
-    let ask = asks().load(deps.storage, ask_key)?;
+    let ask = asks().load(deps.storage, ask_key.clone())?;
     let bid = bids().load(deps.storage, bid_key.clone())?;
 
     // Check if token is approved for transfer
-    Bs721Contract::<Empty, Empty>(collection, PhantomData, PhantomData).approval(
-        &deps.querier,
-        token_id,
-        info.sender.as_ref(),
-        None,
-    )?;
+    Bs721Account(collection).approval(&deps.querier, token_id, info.sender.as_ref(), None)?;
 
     // Remove accepted bid
     bids().remove(deps.storage, bid_key)?;
 
-    let mut res = Response::new();
+    // begin cooldown period
+    let unlock_time = env.block.time.plus_seconds(cooldown);
+    let pending = PendingBid::new(ask.clone(), bidder.clone(), bid.amount, unlock_time);
+    cooldown_bids().save(deps.storage, &ask_key, &pending)?;
 
-    // Transfer funds and NFT
-    finalize_sale(
-        deps.as_ref(),
-        ask.clone(),
-        bid.amount,
-        bidder.clone(),
-        &mut res,
-    )?;
-
-    // Update Ask with new seller and renewal time
-    let ask = Ask {
-        token_id: token_id.to_string(),
-        id: ask.id,
-        seller: bidder.clone(),
-    };
-    store_ask(deps.storage, &ask)?;
-
-    let event = Event::new("accept-bid")
-        .add_attribute("token_id", token_id)
-        .add_attribute("bidder", bidder)
-        .add_attribute("price", bid.amount.to_string());
-
-    Ok(res.add_event(event))
+    Ok(Response::default().add_event(
+        Event::new("accept-bid")
+            .add_attribute("token_id", token_id)
+            .add_attribute("bidder", bidder)
+            .add_attribute("price", bid.amount.to_string()),
+    ))
 }
 
 /// Transfers funds and NFT, updates bid
@@ -302,10 +423,11 @@ fn finalize_sale(
     // println!("1.1 finalize sale ----------------------------");
     payout(deps, price, ask.seller.clone(), res)?;
 
-    let cw721_transfer_msg: Bs721ExecuteMsg<Metadata, Empty> = Bs721ExecuteMsg::TransferNft {
-        token_id: ask.token_id.to_string(),
-        recipient: buyer.to_string(),
-    };
+    let cw721_transfer_msg: Bs721AccountExecuteMsg<Metadata> =
+        Bs721AccountExecuteMsg::TransferNft {
+            token_id: ask.token_id.to_string(),
+            recipient: buyer.to_string(),
+        };
 
     let collection = ACCOUNT_COLLECTION.load(deps.storage)?;
 
@@ -372,8 +494,7 @@ fn only_owner(
     collection: &Addr,
     token_id: &str,
 ) -> Result<OwnerOfResponse, ContractError> {
-    let res = Bs721Contract::<Empty, Empty>(collection.clone(), PhantomData, PhantomData)
-        .owner_of(&deps.querier, token_id, false)?;
+    let res = Bs721Account(collection.clone()).owner_of(&deps.querier, token_id, false)?;
     if res.owner != info.sender.to_string() {
         return Err(ContractError::UnauthorizedOwner {});
     }
@@ -388,11 +509,7 @@ pub fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
     Ok(ConfigResponse { minter, collection })
 }
 
-pub fn query_asks(
-    deps: Deps,
-    start_after: Option<crate::state::Id>,
-    limit: Option<u32>,
-) -> StdResult<Vec<Ask>> {
+pub fn query_asks(deps: Deps, start_after: Option<Id>, limit: Option<u32>) -> StdResult<Vec<Ask>> {
     let limit = limit.unwrap_or(DEFAULT_QUERY_LIMIT).min(MAX_QUERY_LIMIT) as usize;
 
     asks()
@@ -592,6 +709,8 @@ pub fn sudo_update_params(
         trading_fee_bps,
         min_price,
         ask_interval,
+        cooldown_duration,
+        cooldown_cancel_fee,
     } = param_info;
     if let Some(trading_fee_bps) = trading_fee_bps {
         if trading_fee_bps > MAX_FEE_BPS {
@@ -606,8 +725,9 @@ pub fn sudo_update_params(
         .unwrap_or(params.trading_fee_percent);
 
     params.min_price = min_price.unwrap_or(params.min_price);
-
     params.ask_interval = ask_interval.unwrap_or(params.ask_interval);
+    params.cooldown_duration = cooldown_duration.unwrap_or(params.cooldown_duration);
+    params.cooldown_fee = cooldown_cancel_fee.unwrap_or(params.cooldown_fee);
 
     SUDO_PARAMS.save(deps.storage, &params)?;
 

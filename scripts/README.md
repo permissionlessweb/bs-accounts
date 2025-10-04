@@ -1,39 +1,38 @@
 # Bitsong NFT Scripts
 
 ## Contents
-This library contains both Rust & Bash scripts for the BS-NFT repository.
 
+This library contains both Rust & Bash scripts for the BS-NFT repository.
 
 | Name | Language | Version | Description |
 |----------|----------|----------|----------|
 | [**Testing Suite**](./src/test/mod.rs) | `Rust`   | `tbd`  | Integration test suite for all contracts.  |
-| [**Cw-Orch Deployment** ](./src/deploy/mod.rs)  | `Rust`   | `tbd`   | Used for production and simulation environment contract deployment workflows.  |
+| [**Cw-Orch Deployment**](./src/deploy/mod.rs)  | `Rust`   | `tbd`   | Used for production and simulation environment contract deployment workflows.  |
 | **Bitsong Account Framework Deployment**  | `Rust` |`tbd`  | Automation scripts for deployment of smart contract and IBC infrastructure that powers Bitsong Accounts.   |
 
-
 ## Current Orchestrator Suites
+
 | Suite Name | Description |
 |----------|----------|
 | [`BtsgAccountSuite`](./src/deploy/bundles/account.rs#12)| Account Collection, Marketplace, and Minter. |
 
+## Cw-Orchestrator Commands
 
-
-## Cw-Orchestrator Commands 
 | Command | Description |
 |----------|----------|
 | `cargo test` | Run all test in codebase |
-| `cargo run --bin deploy -- --network [<testnet>,<mainnet>,<local>] ` | Deploy workflow for all contracts needed for bs-accounts. |
-| `cargo run -- --bin deploy` | Same as `deploy`, but with authz wrapper for msgs. |
+| `cargo run --bin manual_deploy -- --network [<testnet>,<mainnet>,<local>] --method <load_from,deploy_on>` | Deploy workflow for all contracts needed for bs-accounts. |
 
+## Bash Commands
 
-## Bash Commands 
-before running, copy `.env.testnet` to `.env`.
+before running, `sh/.env.testnet` to `sh/.env`.
+
 | Command | Description |
 |----------|----------|
-| `./1_upload` | store wasm code |
-| `./2a_init_marketplace.sh` | instantiate marketplace, make sure you have updated `.env` with code-ids. |
-| `./2b_init_minter.sh` | instantiate minter. make sure you have updated `.env` with Marketplace address (MKT). |
-| `./3_setup_minter` | setup marketplace . Update .env with both the minter and collection addresses (MINTER and COLLECTION).|
+| `./sh/1_upload` | store wasm code |
+| `./sh/2a_init_marketplace.sh` | instantiate marketplace, make sure you have updated `.env` with code-ids. |
+| `./sh/2b_init_minter.sh` | instantiate minter. make sure you have updated `.env` with Marketplace address (MKT). |
+| `./sh/3_setup_minter` | setup marketplace . Update .env with both the minter and collection addresses (MINTER and COLLECTION).|
 <!-- | `sh broadcast.sh` | Broadcast a transaction or a message to the network or chain |
 | `sh exec_accept_bid.sh` | accept bid as account owner|
 | `sh exec_add_text.sh` | add text records to an account token |

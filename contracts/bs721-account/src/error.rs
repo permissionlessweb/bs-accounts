@@ -33,6 +33,9 @@ pub enum ContractError {
     #[error("AddressAlreadyMapped")]
     AddressAlreadyMapped {},
 
+    #[error("AddressIsStillMappedToEOA")]
+    AddressIsStillMappedToEOA {},
+
     #[error("InvalidAddress")]
     InvalidAddress {},
 
@@ -71,6 +74,9 @@ pub enum ContractError {
 
     #[error("CannotRemoveEmptyMap")]
     CannotRemoveEmptyMap {},
+
+    #[error("AccountCannotBeTransfered: {reason}")]
+    AccountCannotBeTransfered { reason: String },
 
     #[error("CannotRemoveMoreThanWillExists")]
     CannotRemoveMoreThanWillExists {},

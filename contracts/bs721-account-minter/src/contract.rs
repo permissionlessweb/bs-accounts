@@ -1,9 +1,7 @@
 use btsg_account::minter::{Config, SudoParams};
-#[cfg(not(feature = "library"))]
-use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    instantiate2_address, to_json_binary, Binary, CanonicalAddr, Deps, DepsMut, Env, MessageInfo,
-    Reply, Response, StdResult, SubMsg, WasmMsg,
+    instantiate2_address, to_json_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response,
+    StdResult, WasmMsg,
 };
 use cw2::set_contract_version;
 
@@ -15,17 +13,17 @@ use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg, SudoMsg};
 use crate::state::{ACCOUNT_COLLECTION, ACCOUNT_MARKETPLACE, CONFIG, PAUSED, SUDO_PARAMS};
 
 // version info for migration info
-const CONTRACT_NAME: &str = "crates.io:bs721-account-minter";
+pub const ACCOUNT_MINTER: &str = "crates.io:bs721-account-minter";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
-#[cfg_attr(not(feature = "library"), entry_point)]
+#[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
 pub fn instantiate(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
-    set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+    set_contract_version(deps.storage, ACCOUNT_MINTER, CONTRACT_VERSION)?;
 
     cw_ownable::initialize_owner(
         deps.storage,
@@ -44,32 +42,36 @@ pub fn instantiate(
             min_account_length: msg.min_account_length,
             max_account_length: msg.max_account_length,
             base_price: msg.base_price,
+            base_delegation: msg.base_delegation,
         },
     )?;
 
     CONFIG.save(
         deps.storage,
         &Config {
-            public_mint_start_time: env.block.time.plus_seconds(1),
+            public_mint_start_time: env
+                .block
+                .time
+                .plus_seconds(msg.mint_start_delay.unwrap_or(1)),
         },
     )?;
 
     let account_collection_init_msg = bs721_account::msg::InstantiateMsg {
         verifier: msg.verifier,
-        base_init_msg: bs721_base::msg::InstantiateMsg {
+        marketplace: deps.api.addr_validate(&msg.marketplace_addr)?,
+        base_init_msg: bs721_base::InstantiateMsg {
             name: "Bitsong Account Tokens".to_string(),
             symbol: "ACCOUNTS".to_string(),
-            minter: env.contract.address.to_string(),
             uri: None,
+            minter: env.contract.address.to_string(),
         },
-        marketplace,
     };
     let salt = &env.block.height.to_be_bytes();
     let code_info = deps.querier.query_wasm_code_info(msg.collection_code_id)?;
 
     let addr = instantiate2_address(
         code_info.checksum.as_slice(),
-        &deps.api.addr_canonicalize(&env.contract.address.as_str())?,
+        &deps.api.addr_canonicalize(env.contract.address.as_str())?,
         salt,
     )?;
 
@@ -81,12 +83,12 @@ pub fn instantiate(
         label: "Account Collection".to_string(),
         salt: salt.into(),
     };
-    let submsg = SubMsg::reply_on_success(wasm_msg, INIT_COLLECTION_REPLY_ID).with_payload(addr);
+    ACCOUNT_COLLECTION.save(deps.storage, &deps.api.addr_humanize(&addr)?)?;
 
     Ok(Response::new()
+        .add_message(wasm_msg)
         .add_attribute("action", "instantiate")
-        .add_attribute("account_minter_addr", env.contract.address.to_string())
-        .add_submessage(submsg))
+        .add_attribute("account_minter_addr", env.contract.address.to_string()))
 }
 
 #[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
@@ -116,19 +118,6 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     }
 }
 
-/// Mint a account for the sender, or `contract` if specified
-const INIT_COLLECTION_REPLY_ID: u64 = 1;
-#[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
-pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
-    if msg.id != INIT_COLLECTION_REPLY_ID {
-        return Err(ContractError::InvalidReplyID {});
-    }
-    let human_addr = deps.api.addr_humanize(&CanonicalAddr::from(msg.payload))?;
-    ACCOUNT_COLLECTION.save(deps.storage, &human_addr)?;
-
-    Ok(Response::default().add_attribute("action", "init_collection_reply"))
-}
-
 #[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
 pub fn sudo(deps: DepsMut, _env: Env, msg: SudoMsg) -> Result<Response, ContractError> {
     let api = deps.api;
@@ -138,13 +127,14 @@ pub fn sudo(deps: DepsMut, _env: Env, msg: SudoMsg) -> Result<Response, Contract
             min_account_length,
             max_account_length,
             base_price,
+            base_delegation,
             // fair_burn_bps,
         } => sudo_update_params(
             deps,
             min_account_length,
             max_account_length,
             base_price,
-            // fair_burn_bps,
+            base_delegation,
         ),
         SudoMsg::UpdateAccountCollection { collection } => {
             sudo_update_account_collection(deps, api.addr_validate(&collection)?)

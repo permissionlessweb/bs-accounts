@@ -29,7 +29,7 @@ impl CosmosArbitrary {
             StdError::generic_err("Must provide prefix for the public key".to_string())
         );
         Ok(sha256(
-            &preamble_msg_arb_036(
+            preamble_msg_arb_036(
                 pubkey_to_address(&self.pubkey, self.hrp.as_ref().unwrap())?.as_str(),
                 &self.message.to_string(),
             )
@@ -43,9 +43,9 @@ impl CosmosArbitrary {
 
     // generic object validations
     fn _validate(&self) -> Result<(), StdError> {
-        if !(self.signature.len() > 0
-            && self.message.to_string().len() > 0
-            && self.pubkey.len() > 0)
+        if !(!self.signature.is_empty()
+            && !self.message.to_string().is_empty()
+            && !self.pubkey.is_empty())
         {
             return Err(StdError::generic_err("Empty credential data".to_string()));
         }
@@ -69,10 +69,7 @@ impl CosmosArbitrary {
 
     pub fn verify_return_readable(&self) -> Result<String, StdError> {
         self.verify()?;
-        Ok(pubkey_to_address(
-            &self.pubkey,
-            &self.hrp().expect("must have prefix"),
-        )?)
+        pubkey_to_address(&self.pubkey, &self.hrp().expect("must have prefix"))
     }
 }
 
@@ -108,30 +105,26 @@ pub fn ripemd160(bytes: &[u8]) -> Vec<u8> {
 
 #[cfg(test)]
 mod tests {
-    use cosmwasm_std::{testing::mock_dependencies, Api, Binary, CanonicalAddr};
-    use cw_orch::anyhow;
+    use cosmwasm_std::StdError;
+    use cosmwasm_std::{testing::mock_dependencies, Binary};
+
     use ecdsa::signature::rand_core::OsRng;
-    use hex_literal::hex;
-    use k256::{
-        ecdsa::signature::DigestSigner, // trait
-        ecdsa::{RecoveryId, Signature, SigningKey, VerifyingKey},
-    };
+
+    use k256::ecdsa::{Signature, SigningKey, VerifyingKey};
     // use serde::Deserialize;
     use sha2::digest::Update;
     use sha2::Digest;
     use sha2::Sha256;
-    use std::fs::File;
-    use std::io::BufReader;
 
-    use crate::verify_generic::{preamble_msg_arb_036, pubkey_to_address, sha256, CosmosArbitrary};
+    use crate::verify_generic::{preamble_msg_arb_036, pubkey_to_address, CosmosArbitrary};
 
     // "Cosmos" secp256k1 signature verification. Matches tendermint/PubKeySecp256k1 pubkey.
-    const COSMOS_SECP256K1_PUBKEY_HEX: &str =
-        "034f04181eeba35391b858633a765c4a0c189697b40d216354d50890d350c70290";
-    const MSG: &str = "Hello World!";
+    // const COSMOS_SECP256K1_PUBKEY_HEX: &str =
+    //     "034f04181eeba35391b858633a765c4a0c189697b40d216354d50890d350c70290";
+    // const MSG: &str = "Hello World!";
 
     #[test]
-    fn test_example() -> anyhow::Result<()> {
+    fn test_example() -> Result<(), StdError> {
         // Signing
         let secret_key: ecdsa::SigningKey<k256::Secp256k1> = SigningKey::random(&mut OsRng); // Serialize with `::to_bytes()`
         let public_key: ecdsa::VerifyingKey<k256::Secp256k1> = VerifyingKey::from(&secret_key); // Serialize with `::to_encoded_point()`
@@ -153,10 +146,7 @@ mod tests {
         // Note: the signature type must be annotated or otherwise inferable as
         // `Signer` has many impls of the `Signer` trait (for both regular and
         // recoverable signature types).
-        let signature: Signature = secret_key
-            .sign_prehash_recoverable(&msg_hash.to_vec())
-            .unwrap()
-            .0;
+        let signature: Signature = secret_key.sign_prehash_recoverable(&msg_hash).unwrap().0;
 
         // Verification (uncompressed public key)
         assert!(cosmwasm_crypto::secp256k1_verify(

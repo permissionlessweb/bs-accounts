@@ -22,8 +22,10 @@ pub mod manifest {
     };
     use bs721::Expiration;
     use bs721_base::state::TokenInfo;
-    use btsg_account::{verify_generic::CosmosArbitrary, Metadata};
-    use cosmwasm_std::{to_json_binary, Attribute, WasmMsg};
+    use btsg_account::{
+        market::PendingBid, validate_aa_ownership, verify_generic::CosmosArbitrary, Metadata,
+    };
+    use cosmwasm_std::{to_json_binary, Attribute, CosmosMsg, WasmMsg};
 
     use crate::state::{REVERSE_MAP_KEY, REVMAP_LIMIT};
 
@@ -32,7 +34,7 @@ pub mod manifest {
     pub fn associate_address(
         deps: DepsMut,
         info: MessageInfo,
-        this: Addr,
+        oca: Addr,
         account: String,
         address: Option<String>,
     ) -> Result<Response, ContractError> {
@@ -65,7 +67,7 @@ pub mod manifest {
                                 collection_addr,
                                 token_id,
                             } => {
-                                if address != token_id || collection_addr != this.to_string() {
+                                if account != token_id || collection_addr != oca.to_string() {
                                     // removes mapping
                                     REVERSE_MAP.remove(deps.storage, &Addr::unchecked(address));
                                 } else {
@@ -95,7 +97,7 @@ pub mod manifest {
                     collection_addr,
                     token_id,
                 } => {
-                    if account != token_id || collection_addr != this.to_string() {
+                    if account != token_id || collection_addr != oca.to_string() {
                         return Err(ContractError::IncorrectBitsongAccountOwnershipToken {
                             got: ownership.owner.to_string(),
                             wanted: ownership::GovernanceDetails::NFT {
@@ -109,8 +111,6 @@ pub mod manifest {
                 }
                 _ => {
                     let addr = deps.api.addr_validate(&address)?;
-                    // println!("2.account:{:#?}", account);
-                    // println!("2.addr:{:#?}", addr);
                     Ok(validate_address(deps.as_ref(), &info.sender, addr).map(|_| address)?)
                 }
             })
@@ -123,8 +123,6 @@ pub mod manifest {
                 .unwrap_or(None)
         });
 
-        // println!("3.old_account:{:#?}", old_account);
-        // println!("3.old_account:{:#?}", token_uri);
         // println!("// 4. remove old token_uri / address from previous account");
         old_account.map(|token_id| {
             Bs721AccountContract::default()
@@ -160,11 +158,8 @@ pub mod manifest {
         )?;
 
         // println!("// 6. update new manager in token metadata");
-        let canonv = deps.api.addr_canonicalize(&info.sender.as_str())?;
+        let canonv = deps.api.addr_canonicalize(info.sender.as_str())?;
         REVMAP_LIMIT.save(deps.storage, &canonv.to_string(), &0u32)?;
-        // println!("// 7. save new reverse map entry");
-        // println!("token_uri:{:#?}", token_uri);
-        // println!("account:{:#?}", account);
         token_uri.map(|addr| REVERSE_MAP.save(deps.storage, &Addr::unchecked(addr), &account));
 
         let mut event = Event::new("associate-address")
@@ -176,6 +171,121 @@ pub mod manifest {
         }
 
         Ok(Response::new().add_event(event))
+    }
+
+    pub fn execute_approve_all_via_market(
+        deps: DepsMut,
+        env: Env,
+        info: MessageInfo,
+        owner: String,
+        expires: Option<Expiration>,
+    ) -> Result<Response, ContractError> {
+        let market = ACCOUNT_MARKETPLACE.load(deps.storage)?;
+        if &market != &info.sender {
+            return Err(ContractError::UnauthorizedCreatorOrAdmin {});
+        }
+
+        // reject expired data as invalid
+        let expires = expires.unwrap_or_default();
+        if expires.is_expired(&env.block) {
+            return Err(ContractError::Std(StdError::generic_err("unauthorized")));
+        }
+
+        // set the operator for us
+        let owner_addr = deps.api.addr_validate(&owner)?;
+
+        Bs721AccountContract::default().operators.save(
+            deps.storage,
+            (&owner_addr, &market),
+            &expires,
+        )?;
+
+        Ok(Response::new()
+            .add_attribute("action", "approve_all")
+            .add_attribute("operator", market.to_string()))
+    }
+
+    /// Update Abstract Account support for a token.
+    /// Enables, updates, or disables Abstract Account linkage safely.
+    pub fn execute_update_abstract_account_support(
+        deps: DepsMut,
+        env: Env,
+        info: MessageInfo,
+        account: &String,
+        abs_account: Option<String>,
+    ) -> Result<Response, ContractError> {
+        only_owner(deps.as_ref(), &info.sender, account)?;
+
+        let mut token = Bs721AccountContract::default()
+            .tokens
+            .load(deps.storage, account)?;
+
+        match (token.extension.account_ownership, abs_account) {
+            // Already enabled: updating
+            (true, Some(new_aa)) => {
+                // New AA must point to this token
+                validate_aa_ownership(
+                    deps.as_ref(),
+                    &new_aa,
+                    account,
+                    &env.contract.address,
+                    true, // must be in use
+                )?;
+
+                // Old AA must NOT still point to this token
+                if let Some(old_aa) = &token.token_uri {
+                    validate_aa_ownership(
+                        deps.as_ref(),
+                        old_aa,
+                        account,
+                        &env.contract.address,
+                        false, // must not be in use
+                    )?;
+                    REVERSE_MAP.remove(deps.storage, &Addr::unchecked(old_aa));
+                }
+
+                REVERSE_MAP.save(deps.storage, &Addr::unchecked(&new_aa), account)?;
+                token.token_uri = Some(new_aa);
+            }
+
+            (true, None) => {
+                // Disable: ensure current AA isn't still using this token
+                if let Some(old_aa) = &token.token_uri {
+                    validate_aa_ownership(
+                        deps.as_ref(),
+                        old_aa,
+                        account,
+                        &env.contract.address,
+                        false,
+                    )?;
+                    REVERSE_MAP.remove(deps.storage, &Addr::unchecked(old_aa));
+                }
+                token.extension.account_ownership = false;
+            }
+
+            // Enable abstract-ownership
+            (false, Some(new_aa)) => {
+                validate_aa_ownership(
+                    deps.as_ref(),
+                    &new_aa,
+                    account,
+                    &env.contract.address,
+                    true,
+                )?;
+                REVERSE_MAP.save(deps.storage, &Addr::unchecked(&new_aa), account)?;
+                token.extension.account_ownership = true;
+                token.token_uri = Some(new_aa);
+            }
+
+            // No action
+            (false, None) => {}
+        }
+
+        Bs721AccountContract::default()
+            .tokens
+            .save(deps.storage, account, &token)?;
+
+        Ok(Response::new())
     }
 
     /// updates the (usually) non `bitsong1...` addresses mapped to a `bitsong1...` account.
@@ -190,7 +300,7 @@ pub mod manifest {
         let mut attr = vec![];
         nonpayable(&info)?;
         // the sender is always the value mapped to the store.
-        let canonv = deps.api.addr_canonicalize(&info.sender.as_str())?;
+        let canonv = deps.api.addr_canonicalize(info.sender.as_str())?;
 
         let max = SUDO_PARAMS.load(deps.storage)?.max_reverse_map_key_limit;
         let count = REVMAP_LIMIT.may_load(deps.storage, &canonv.to_string())?;
@@ -200,22 +310,16 @@ pub mod manifest {
         } else {
             let mut count = count.unwrap();
             // Calculate new count after adding and removing
-            let mut new_count = count as u32 + to_add.len() as u32;
-            // println!("new_count: {:#?}", new_count);
-            // println!("to_remove.len(): {:#?}", to_remove.len());
-            // println!("max: {:#?}", max);
+            let mut new_count = count + to_add.len() as u32;
 
             // Check if we're trying to remove more than we're going to have
-            if new_count != 0 && new_count < to_remove.len() as u32 {
+            if new_count != 0 && new_count < to_remove.len() as u32 || to_remove.len() as u32 > max
+            {
                 return Err(ContractError::CannotRemoveMoreThanWillExists {});
-            } else {
-                if to_remove.len() as u32 > max {
-                    return Err(ContractError::CannotRemoveMoreThanWillExists {});
-                }
             }
 
             if new_count != 0 {
-                new_count = new_count - to_remove.len() as u32;
+                new_count -= to_remove.len() as u32;
             }
 
             if new_count > max {
@@ -272,6 +376,7 @@ pub mod manifest {
         Ok(Response::new().add_attributes(attr))
     }
 
+    /// Remove all text records, diables abstract-account features
     fn reset_token_metadata_and_reverse_map(
         deps: &mut DepsMut,
         contract_addr: Addr,
@@ -289,16 +394,14 @@ pub mod manifest {
                     .querier
                     .query_wasm_smart(tokenuri, &abstract_std::account::QueryMsg::Ownership {})?;
 
-                match owner.owner {
-                    ownership::GovernanceDetails::NFT {
-                        collection_addr,
-                        token_id,
-                    } => {
-                        if collection_addr == contract_addr.to_string() && token_id == account {
-                            extension = Metadata::default_with_account();
-                        }
+                if let ownership::GovernanceDetails::NFT {
+                    collection_addr,
+                    token_id,
+                } = owner.owner
+                {
+                    if collection_addr == contract_addr.to_string() && token_id == account {
+                        extension = Metadata::default_with_account();
                     }
-                    _ => {}
                 }
             }
         }
@@ -593,8 +696,6 @@ pub mod manifest {
     }
 
     /// BS721 FUNCTIONS
-    ///
-
     pub fn execute_mint(
         deps: DepsMut,
         info: MessageInfo,
@@ -662,7 +763,9 @@ pub mod manifest {
         account: String,
     ) -> Result<Response, ContractError> {
         nonpayable(&info)?;
-        only_owner(deps.as_ref(), &info.sender, &account)?;
+        let market = &ACCOUNT_MARKETPLACE.load(deps.storage)?;
+        ensure_not_in_cooldown(deps.as_ref(), market, &account)?;
+
         let bs721 = Bs721AccountContract::default();
 
         bs721.execute(
@@ -673,7 +776,16 @@ pub mod manifest {
                 token_id: account.to_string(),
             },
         )?;
-        Ok(Response::new().add_event(Event::new("burn-account").add_attribute("account", account)))
+
+        Ok(Response::new()
+            .add_message(CosmosMsg::Wasm(WasmMsg::Execute {
+                contract_addr: market.to_string(),
+                msg: to_json_binary(&btsg_account::market::ExecuteMsg::RemoveAsk {
+                    token_id: account.to_string(),
+                })?,
+                funds: vec![],
+            }))
+            .add_event(Event::new("burn-account").add_attribute("account", account)))
     }
 
     pub fn execute_transfer_nft(
@@ -687,6 +799,7 @@ pub mod manifest {
         let recipient = deps.api.addr_validate(&recipient)?;
 
         let names_marketplace = ACCOUNT_MARKETPLACE.load(deps.storage)?;
+        ensure_not_in_cooldown(deps.as_ref(), &names_marketplace, &token_id)?;
 
         let update_ask_msg =
             _transfer_nft(deps, env, &info, &recipient, &token_id, &names_marketplace)?;
@@ -700,17 +813,41 @@ pub mod manifest {
     }
 
     // Update the ask on the marketplace
-    fn update_ask_on_marketplace(
+    fn ensure_not_in_cooldown(
         deps: Deps,
+        names_marketplace: &Addr,
+        token_id: &str,
+    ) -> Result<(), ContractError> {
+        // ensure token is not in cooldown
+        let res: Option<PendingBid> = deps.querier.query_wasm_smart(
+            names_marketplace.clone(),
+            &btsg_account::market::QueryMsg::Cooldown {
+                token_id: token_id.to_string(),
+            },
+        )?;
+
+        match res {
+            Some(_) => {
+                return Err(ContractError::AccountCannotBeTransfered {
+                    reason: "Account is in cooldown".to_string(),
+                })
+            }
+            None => Ok(()),
+        }
+    }
+
+    // Update the ask on the marketplace
+    fn update_ask_on_marketplace(
         token_id: &str,
         recipient: Addr,
+        names_marketplace: &Addr,
     ) -> Result<WasmMsg, ContractError> {
-        let msg = bs721_account_marketplace::msgs::ExecuteMsg::UpdateAsk {
+        let msg = btsg_account::market::ExecuteMsg::UpdateAsk {
             token_id: token_id.to_string(),
             seller: recipient.to_string(),
         };
         let update_ask_msg = WasmMsg::Execute {
-            contract_addr: ACCOUNT_MARKETPLACE.load(deps.storage)?.to_string(),
+            contract_addr: names_marketplace.to_string(),
             funds: vec![],
             msg: to_json_binary(&msg)?,
         };
@@ -725,7 +862,8 @@ pub mod manifest {
         token_id: &str,
         names_marketplace: &Addr,
     ) -> Result<WasmMsg, ContractError> {
-        let update_ask_msg = update_ask_on_marketplace(deps.as_ref(), token_id, recipient.clone())?;
+        let update_ask_msg =
+            update_ask_on_marketplace(token_id, recipient.clone(), names_marketplace)?;
 
         reset_token_metadata_and_reverse_map(&mut deps, env.contract.address.clone(), token_id)?;
 
@@ -757,8 +895,10 @@ pub mod manifest {
         msg: Binary,
     ) -> Result<Response, ContractError> {
         let contract_addr = deps.api.addr_validate(&contract)?;
+        let names_marketplace = ACCOUNT_MARKETPLACE.load(deps.storage)?;
+        ensure_not_in_cooldown(deps.as_ref(), &names_marketplace, &token_id)?;
         let update_ask_msg =
-            update_ask_on_marketplace(deps.as_ref(), &token_id, contract_addr.clone())?;
+            update_ask_on_marketplace(&token_id, contract_addr.clone(), &names_marketplace)?;
 
         reset_token_metadata_and_reverse_map(&mut deps, env.contract.address.clone(), &token_id)?;
 
@@ -847,9 +987,9 @@ pub fn transcode(deps: Deps, addr: &str) -> StdResult<String> {
         let human = &CanonicalAddr::from(canonv);
         Ok(deps.api.addr_humanize(human)?.to_string())
     } else {
-        return Err(StdError::generic_err(
+        Err(StdError::generic_err(
             "no mappping set. Set a non `bitsong1...` addr mapped to your`bitsong1..` that owns this account token with UpdateMyReverseMapKey",
-        ));
+        ))
     }
 }
 
@@ -878,13 +1018,13 @@ fn validate_address(deps: Deps, sender: &Addr, addr: Addr) -> Result<Addr, Contr
 
     if let Some(admin) = admin {
         ensure!(
-            &admin == sender,
+            admin == sender,
             ContractError::UnauthorizedCreatorOrAdmin {}
         );
     } else {
         // If there is no admin and the creator is not the sender, check creator's admin
         let creator_info = deps.querier.query_wasm_contract_info(creator)?;
-        if creator_info.admin.map_or(true, |a| &a != sender) {
+        if creator_info.admin.is_none_or(|a| a != sender) {
             return Err(ContractError::UnauthorizedCreatorOrAdmin {});
         }
     }
@@ -912,8 +1052,9 @@ pub fn sudo_update_params(
 }
 
 mod test {
+
     #[test]
-    pub fn test_transcode() -> () {
+    pub fn test_transcode() {
         let deps = cosmwasm_std::testing::mock_dependencies();
 
         let res = super::transcode(

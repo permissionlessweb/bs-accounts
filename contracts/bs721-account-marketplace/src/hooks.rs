@@ -1,5 +1,4 @@
-#[cfg(not(feature = "library"))]
-use cosmwasm_std::entry_point;
+use btsg_account::market::{Ask, Bid};
 use cosmwasm_std::{Addr, Deps, DepsMut, Env, Reply, Response, StdResult, SubMsg, WasmMsg};
 
 use crate::{
@@ -25,7 +24,8 @@ impl From<u64> for HookReply {
     }
 }
 
-#[cfg_attr(not(feature = "library"), entry_point)]
+
+#[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
 pub fn reply(_deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
     match HookReply::from(msg.id) {
         HookReply::Ask => {

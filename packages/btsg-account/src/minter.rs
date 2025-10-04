@@ -11,6 +11,8 @@ pub struct SudoParams {
     pub max_account_length: u32,
     /// 100_000_000 (5+ ASCII char price)
     pub base_price: cosmwasm_std::Uint128,
+    /// 100_000_000 (5+ ASCII char price)
+    pub base_delegation: cosmwasm_std::Uint128,
     // Fair Burn fee (rest goes to Community Pool)
     // pub fair_burn_percent: Decimal,
 }

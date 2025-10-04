@@ -20,6 +20,10 @@ pub struct InstantiateMsg {
     pub max_account_length: u32,
     /// Base price for a account. Used to calculate premium for small account accounts
     pub base_price: Uint128,
+    /// Base delegated tokens for an account. Used to calculate minimum required to mint a name
+    pub base_delegation: Uint128,
+    /// # of seconds to delay allowing minting to occur from contract creation. Defaults to 1 second
+    pub mint_start_delay: Option<u64>,
 }
 
 #[cw_ownable_execute]
@@ -40,6 +44,7 @@ pub enum SudoMsg {
         min_account_length: u32,
         max_account_length: u32,
         base_price: Uint128,
+        base_delegation: Uint128,
     },
     UpdateAccountCollection {
         collection: String,

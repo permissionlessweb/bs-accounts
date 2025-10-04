@@ -1,18 +1,23 @@
 pub mod account;
 pub mod market;
 pub mod minter;
+pub mod smart_accounts;
 
-use abstract_interface::Abstract;
-use bs721_account::msg::{Bs721AccountsQueryMsgFns as _, ExecuteMsgFns as _};
-use bs721_account_marketplace::msgs::{
-    ExecuteMsgFns as _, InstantiateMsg as AccountMarketInitMsg, QueryMsgFns,
-};
 use bs721_account_minter::msg::InstantiateMsg as AccountMinterInitMsg;
-use cosmwasm_std::{coins, Uint128};
-use cw_orch::{anyhow, prelude::*};
-
+use btsg_account::market::MarketplaceInstantiateMsg as AccountMarketInitMsg;
+use cosmwasm_std::{coin, coins, Decimal, StakingMsg, Uint128};
+use cw_orch::{
+    anyhow,
+    mock::cw_multi_test::{Module, StakingInfo},
+    prelude::*,
+};
 const BASE_PRICE: u128 = 100_000_000;
-
+const BASE_DELEGATION: u128 = 2100000000;
+const VALIDATOR_1: &str = "val-1";
+use crate::{
+    Bs721AccountsQueryMsgFns, BtsgAccountExecuteFns, BtsgAccountMarketExecuteFns,
+    BtsgAccountMarketQueryFns,
+};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -36,11 +41,10 @@ impl BtsgAccountSuite<MockBech32> {
         admin: Option<Addr>,
     ) -> anyhow::Result<()> {
         let admin2 = mock.addr_make("admin2");
+        mock.add_balance(&mock.sender, vec![coin(10500000000, "ubtsg")])?;
         // a. uploads all contracts
         self.upload()?;
-        // a.1 deploy abstract accounts
-        let abs = Abstract::deploy_on(mock.clone(), ())?;
-        self.abs = abs;
+        self.test_owner.upload()?;
         // b. instantiates marketplace
         self.market.instantiate(
             &AccountMarketInitMsg {
@@ -48,7 +52,8 @@ impl BtsgAccountSuite<MockBech32> {
                 min_price: 100u128.into(),
                 ask_interval: 30u64,
                 valid_bid_query_limit: 100u32,
-                // operator: mock.sender_addr().to_string(),
+                cooldown_timeframe: 60u64,
+                cooldown_cancel_fee: coin(500_000_000, "ubtsg"),
             },
             None,
             &[],
@@ -68,6 +73,8 @@ impl BtsgAccountSuite<MockBech32> {
                     min_account_length: 3u32,
                     max_account_length: 128u32,
                     base_price: BASE_PRICE.into(),
+                    base_delegation: BASE_DELEGATION.into(),
+                    mint_start_delay: Some(200u64),
                 },
                 None,
                 &[],
@@ -80,6 +87,36 @@ impl BtsgAccountSuite<MockBech32> {
         // Provide marketplace with collection and minter contracts.
         self.market
             .setup(self.account.address()?, self.minter.address()?)?;
+
+        let block_info = mock.block_info()?;
+
+        // create validator
+        mock.app.borrow_mut().init_modules(|router, api, storage| {
+            router.staking.setup(
+                storage,
+                StakingInfo {
+                    bonded_denom: "ubtsg".into(),
+                    unbonding_time: 69u64,
+                    apr: Decimal::from_ratio(69u128, 100u128),
+                },
+            )?;
+            router.staking.add_validator(
+                api,
+                storage,
+                &block_info,
+                cosmwasm_std::Validator::create(
+                    VALIDATOR_1.to_string(),
+                    Decimal::from_ratio(1u128, 2u128),
+                    Decimal::one(),
+                    Decimal::one(),
+                ),
+            )
+        })?;
+
+        // delgate some tokens to val one to satisfy delegation requirements
+        // mock.wait_blocks(1)?;
+        self.delegate_to_val(mock.clone(), mock.sender.clone(), 10500000000)?;
+
         // println!("TOKEN:   {:#?}", self.account.addr_str()?);
         // println!("MARKET:  {:#?}", self.market.addr_str()?);
         // println!("MINTER:  {:#?}", self.minter.addr_str()?);
@@ -91,6 +128,32 @@ impl BtsgAccountSuite<MockBech32> {
         Ok(())
     }
     /// mint and list an account token.
+    pub fn delegate_to_val(
+        &mut self,
+        mock: MockBech32,
+        delegator: Addr,
+        amount: u128,
+    ) -> anyhow::Result<()> {
+        // delgate some tokens to val one to satisfy delegation requirements
+        // mock.wait_blocks(1)?;
+        let block_info = mock.block_info()?;
+        mock.app.borrow_mut().init_modules(|router, api, storage| {
+            router.staking.execute(
+                api,
+                storage,
+                router,
+                &block_info,
+                delegator,
+                StakingMsg::Delegate {
+                    validator: VALIDATOR_1.into(),
+                    amount: coin(amount, "ubtsg"),
+                },
+            )
+        })?;
+        // mock.wait_blocks(1)?;
+        Ok(())
+    }
+
     pub fn mint_and_list(
         &mut self,
         mock: MockBech32,
@@ -141,7 +204,7 @@ impl BtsgAccountSuite<MockBech32> {
         mock.add_balance(&bidder, bid_amnt.clone())?;
 
         self.market.call_as(&bidder).execute(
-            &bs721_account_marketplace::msgs::ExecuteMsg::SetBid {
+            &btsg_account::market::ExecuteMsg::SetBid {
                 token_id: account.into(),
             },
             &bid_amnt,

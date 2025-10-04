@@ -1,27 +1,22 @@
+#![cfg(not(test))]
+use btsg_account::DEPLOYMENT_DAO;
+use btsg_account_scripts::{
+    networks::{ping_grpc, BITSONG_MAINNET, BITSONG_TESTNET},
+    *,
+};
 use clap::Parser;
-use cw_orch::{
-    daemon::{DaemonBuilder, TxSender},
-    prelude::*,
-};
-use scripts::{
-    networks::{ping_grpc, BITSONG_MAINNET, BITSONG_TESTNET, LOCAL_NETWORK1},
-    BtsgAccountSuite,
-};
+use cw_orch::{daemon::DaemonBuilder, prelude::*};
 use tokio::runtime::Runtime;
-
-// todo: move to .env file
-pub const MNEMONIC: &str =
-    "garage dial step tourist hint select patient eternal lesson raccoon shaft palace flee purpose vivid spend place year file life cliff winter race fox";
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
 struct Args {
     /// Network to deploy on: main, testnet, local
-    #[clap(short, long)]
+    #[clap(short, long, default_value = "main")]
     network: String,
-    // optional address to broadcast msg on behalf of. This address must have authorized the wallet calling these scripts
-    // #[clap(short, long)]
-    // authz: Option<String>,
+
+    #[clap(short, long, default_value = "deploy_on")]
+    method: String,
 }
 
 fn main() {
@@ -31,14 +26,15 @@ fn main() {
     env_logger::init();
 
     println!("Deploying Bitsong Accounts Framework...");
+
     let bitsong_chain = match args.network.as_str() {
         "main" => BITSONG_MAINNET.to_owned(),
         "testnet" => BITSONG_TESTNET.to_owned(),
-        "local" => LOCAL_NETWORK1.to_owned(),
+        // "local" => LOCAL_NETWORK1.to_owned(),
         _ => panic!("Invalid network"),
     };
 
-    if let Err(ref err) = manual_deploy(bitsong_chain.into()) {
+    if let Err(ref err) = manual_deploy(bitsong_chain.into(), args.method) {
         log::error!("{}", err);
         err.chain()
             .skip(1)
@@ -48,21 +44,27 @@ fn main() {
     }
 }
 
-fn manual_deploy(network: ChainInfoOwned) -> anyhow::Result<()> {
+fn manual_deploy(network: ChainInfoOwned, _method: String) -> anyhow::Result<()> {
     let rt = Runtime::new()?;
-    // rt.block_on(assert_wallet_balance(vec![network.clone()]));
-
     let urls = network.grpc_urls.to_vec();
     for url in urls {
         rt.block_on(ping_grpc(&url))?;
     }
 
-    let chain = DaemonBuilder::new(network.clone())
+    let mut chain = DaemonBuilder::new(network.clone())
         .handle(rt.handle())
-        .mnemonic(MNEMONIC)
         .build()?;
-    let _suite = BtsgAccountSuite::deploy_on(chain.clone(), chain.sender().address())?;
-    // query account for connected wallet´
+
+    let le_granter = &Addr::unchecked(DEPLOYMENT_DAO.to_string());
+    println!("Using AuthZ granter: {}", le_granter);
+    chain.sender_mut().set_authz_granter(le_granter);
+
+    let _btsg = BtsgAccountSuite::deploy_on(chain.clone(), le_granter.clone())?;
 
     Ok(())
 }
+
+// TODO:
+// fn standard_mint() {}
+// fn select_bids() {}
+// fn load_from_state() {}

@@ -69,11 +69,20 @@ pub enum ExecuteMsg<T> {
     },
     /// Remove previously granted Approval
     Revoke { spender: String, token_id: String },
+    ApproveAllViaMarket {
+        owner: String,
+        expires: Option<Expiration>,
+    },
     /// Allows operator to transfer / send any token from the owner's account.
     /// If expiration is set, then this allowance has a time/height limit
     ApproveAll {
         operator: String,
         expires: Option<Expiration>,
+    },
+    /// Allows user to define if token is being associated to an Abstract Account
+    UpdateAbsAccSupport {
+        token_id: String,
+        r#abstract: Option<String>,
     },
     /// Remove previously granted ApproveAll permission
     RevokeAll { operator: String },
@@ -343,3 +352,6 @@ pub enum SudoMsg {
         max_rev_map_count: u32,
     },
 }
+
+#[cosmwasm_schema::cw_serde]
+pub struct MigrateMsg {}

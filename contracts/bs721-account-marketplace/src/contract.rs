@@ -1,26 +1,22 @@
 use cosmwasm_std::{
-    to_json_binary, Binary, Decimal, Deps, DepsMut, Env, MessageInfo, Response, StdError,
-    StdResult, Uint128,
+    to_json_binary, Binary, Decimal, Deps, DepsMut, Env, MessageInfo, Response, StdResult, Uint128,
 };
 use cw2::set_contract_version;
-use semver::Version;
 
-use crate::{
-    commands::*,
-    msgs::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg, SudoMsg},
-    state::*,
-    ContractError,
+use crate::{commands::*, state::*, ContractError};
+use btsg_account::market::{
+    ExecuteMsg, MarketplaceInstantiateMsg, ParamInfo, QueryMsg, SudoMsg, SudoParams,
 };
 
 pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
-pub const ACCOUNT_MARKETPLACE: &str = "bs721_account_marketplace";
+pub const ACCOUNT_MARKETPLACE: &str = "crates.io:bs721-account-marketplace";
 
 #[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
 pub fn instantiate(
     deps: DepsMut,
     _env: Env,
     _info: MessageInfo,
-    msg: InstantiateMsg,
+    msg: MarketplaceInstantiateMsg,
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, ACCOUNT_MARKETPLACE, CONTRACT_VERSION)?;
     if msg.trading_fee_bps > MAX_FEE_BPS {
@@ -32,6 +28,8 @@ pub fn instantiate(
         min_price: msg.min_price,
         ask_interval: msg.ask_interval,
         valid_bid_query_limit: msg.valid_bid_query_limit,
+        cooldown_duration: msg.cooldown_timeframe,
+        cooldown_fee: msg.cooldown_cancel_fee,
     };
 
     SUDO_PARAMS.save(deps.storage, &params)?;
@@ -65,6 +63,10 @@ pub fn execute(
         ExecuteMsg::RemoveBid { token_id } => execute_remove_bid(deps, env, info, &token_id),
         ExecuteMsg::AcceptBid { token_id, bidder } => {
             execute_accept_bid(deps, env, info, &token_id, api.addr_validate(&bidder)?)
+        }
+        ExecuteMsg::FinalizeBid { token_id } => execute_finalize_bid(deps, env, info, &token_id),
+        ExecuteMsg::CancelCooldown { token_id } => {
+            execute_cancel_cooldown(deps, env, info, &token_id)
         }
     }
 }
@@ -134,34 +136,10 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::BidHooks {} => to_json_binary(&BID_HOOKS.query_hooks(deps)?),
         QueryMsg::SaleHooks {} => to_json_binary(&SALE_HOOKS.query_hooks(deps)?),
         QueryMsg::Config {} => to_json_binary(&query_config(deps)?),
+        QueryMsg::Cooldown { token_id } => {
+            to_json_binary(&cooldown_bids().may_load(deps.storage, &ask_key(&token_id))?)
+        }
     }
-}
-
-#[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
-pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, ContractError> {
-    let current_version = cw2::get_contract_version(deps.storage)?;
-    if current_version.contract != ACCOUNT_MARKETPLACE {
-        return Err(StdError::generic_err("Cannot upgrade to a different contract").into());
-    }
-    let version: Version = current_version
-        .version
-        .parse()
-        .map_err(|_| StdError::generic_err("Invalid contract version"))?;
-    let new_version: Version = CONTRACT_VERSION
-        .parse()
-        .map_err(|_| StdError::generic_err("Invalid contract version"))?;
-
-    if version > new_version {
-        return Err(StdError::generic_err("Cannot upgrade to a previous contract version").into());
-    }
-    // if same version return
-    if version == new_version {
-        return Ok(Response::new());
-    }
-
-    // set new contract version
-    set_contract_version(deps.storage, ACCOUNT_MARKETPLACE, CONTRACT_VERSION)?;
-    Ok(Response::new())
 }
 
 #[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
@@ -173,6 +151,8 @@ pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> Result<Response, ContractE
             trading_fee_bps,
             min_price,
             ask_interval,
+            cooldown_duration,
+            cooldown_cancel_fee,
         } => sudo_update_params(
             deps,
             env,
@@ -180,6 +160,8 @@ pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> Result<Response, ContractE
                 trading_fee_bps,
                 min_price,
                 ask_interval,
+                cooldown_duration,
+                cooldown_cancel_fee,
             },
         ),
         SudoMsg::AddSaleHook { hook } => sudo_add_sale_hook(deps, api.addr_validate(&hook)?),

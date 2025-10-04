@@ -1,5 +1,5 @@
-use cosmwasm_std::{Instantiate2AddressError, StdError, Timestamp};
 use bs_controllers::AdminError;
+use cosmwasm_std::{Instantiate2AddressError, StdError, Timestamp};
 use cw_ownable::OwnershipError;
 use cw_utils::PaymentError;
 use thiserror::Error;
@@ -21,7 +21,7 @@ pub enum ContractError {
     #[error("{0}")]
     Instantiate2AddressError(#[from] Instantiate2AddressError),
 
-    #[error("Account Minter: Unauthorized")]
+    #[error("Unauthorized")]
     Unauthorized {},
 
     #[error("MintingPaused")]
@@ -38,6 +38,9 @@ pub enum ContractError {
 
     #[error("Account too long")]
     AccountTooLong {},
+
+    #[error("Incorrect delegation.  got: {got}, expected {expected}")]
+    IncorrectDelegation { got: u128, expected: u128 },
 
     #[error("Incorrect payment, got: {got}, expected {expected}")]
     IncorrectPayment { got: u128, expected: u128 },
