@@ -10,7 +10,7 @@ use thiserror::Error;
 pub mod interface;
 
 pub const CONTRACT_NAME: &str = "crates.io:ownership-verifier";
-pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
+const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 /// Storage constant for the contract's ownership
 const OWNERSHIP: Item<Ownership<String>> = Item::new("ownership");
@@ -23,6 +23,17 @@ pub enum ContractError {
 #[cw_serde]
 pub struct InstantiateMsg {
     pub ownership: GovernanceDetails<String>,
+}
+
+impl InstantiateMsg {
+    pub fn new(contract: &String, token: &str) -> Self {
+        Self {
+            ownership: GovernanceDetails::NFT {
+                collection_addr: contract.into(),
+                token_id: token.into(),
+            },
+        }
+    }
 }
 
 #[cw_serde]
@@ -47,6 +58,7 @@ pub fn instantiate(
     _info: MessageInfo,
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
+    cw2::set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
     OWNERSHIP.save(
         deps.storage,
         &Ownership {

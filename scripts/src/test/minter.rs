@@ -432,10 +432,6 @@ mod execute {
         suite.account.revoke_all(suite.market.address()?)?;
         mock.wait_seconds(60)?;
         let res = suite.market.finalize_bid(account.to_string())?;
-        println!("mock.sender.to_string(): {:#?}", mock.sender.to_string());
-        println!("suite.account.addr_str()?: {:#?}", suite.account.addr_str()?);
-        println!("suite.market.addr_str()?: {:#?}", suite.market.addr_str()?);
-        println!("res: {:#?}", res);
         res.assert_event(&Event::new("wasm").add_attributes(vec![
             Attribute {
                 key: "_contract_address".to_string(),
@@ -450,6 +446,7 @@ mod execute {
         );
         Ok(())
     }
+
     #[test]
     fn test_cooldown_period() -> anyhow::Result<()> {
         let mock = MockBech32::new("bitsong");
@@ -1417,7 +1414,7 @@ mod public_start_time {
 mod associate_address {
 
     use bs721_account::msg::InstantiateMsg;
-    use cosmwasm_std::coin;
+    use cosmwasm_std::{coin, Attribute, Event};
 
     use super::*;
 
@@ -1430,6 +1427,7 @@ mod associate_address {
         let admin_user = mock.sender.clone();
         let cw721_id = suite.account.code_id()?;
         let token_id = "bandura";
+        let bidder = mock.addr_make("bidder");
 
         mock.wait_seconds(200)?;
         suite.mint_and_list(mock.clone(), token_id, &admin_user)?;
@@ -1456,6 +1454,33 @@ mod associate_address {
             suite.account.associated_address(token_id)?,
             suite.test_owner.address()?
         );
+
+        // ensure if ownership is changed before cooldown
+        suite
+            .test_owner
+            .update_ownership(abstract_std::objects::gov_type::GovernanceDetails::Renounced {})?;
+
+        let owner_bal = mock.query_balance(&admin_user, "ubtsg")?;
+        let bidder_bal = mock.query_balance(&bidder, "ubtsg")?;
+        suite.bid_w_funds(mock.clone(), token_id, bidder.clone(), BID_AMOUNT)?;
+        assert_eq!(bidder_bal, Uint128::zero());
+        let res = suite.market.accept_bid(bidder.clone(), token_id.into())?;
+        // assert funds go back to bidder, along with tokens if owner changes ownership prior to finalizing bid
+        mock.wait_seconds(60)?;
+        let res = suite.market.finalize_bid(token_id.into())?;
+        let owner_bal2 = mock.query_balance(&admin_user, "ubtsg")?;
+        let bidder_bal2 = mock.query_balance(&bidder, "ubtsg")?;
+        assert_eq!(BID_AMOUNT, bidder_bal2.u128());
+        assert_eq!(owner_bal, owner_bal2);
+        assert_eq!(
+            suite.account.owner_of(token_id, None)?.owner,
+            bidder.to_string()
+        );
+        res.assert_event(&Event::new("transfer").add_attributes(vec![
+            Attribute::new("recipient", bidder.to_string()),
+            Attribute::new("sender", suite.market.addr_str()?),
+            Attribute::new("amount", coin(BID_AMOUNT, "ubtsg").to_string()),
+        ]));
 
         Ok(())
     }
