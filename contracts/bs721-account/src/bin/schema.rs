@@ -1,3 +1,4 @@
+#![cfg(not(test))]
 use cosmwasm_schema::write_api;
 
 use bs721_account::{

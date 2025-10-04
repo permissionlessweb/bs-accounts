@@ -1,3 +1,4 @@
+#![cfg(not(test))]
 use btsg_account::market::{ExecuteMsg, MarketplaceInstantiateMsg, QueryMsg};
 use cosmwasm_schema::write_api;
 

@@ -1,6 +1,7 @@
+#![cfg(not(test))]
 use btsg_account::DEPLOYMENT_DAO;
 use btsg_account_scripts::{
-    networks::{ping_grpc, BITSONG_MAINNET, BITSONG_TESTNET, LOCAL_NETWORK1},
+    networks::{ping_grpc, BITSONG_MAINNET, BITSONG_TESTNET},
     *,
 };
 use clap::Parser;
@@ -29,7 +30,7 @@ fn main() {
     let bitsong_chain = match args.network.as_str() {
         "main" => BITSONG_MAINNET.to_owned(),
         "testnet" => BITSONG_TESTNET.to_owned(),
-        "local" => LOCAL_NETWORK1.to_owned(),
+        // "local" => LOCAL_NETWORK1.to_owned(),
         _ => panic!("Invalid network"),
     };
 
