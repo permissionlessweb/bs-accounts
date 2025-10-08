@@ -452,7 +452,7 @@ fn finalize_sale(
 }
 
 /// Payout a bid
-fn payout(
+pub fn payout(
     deps: Deps,
     payment: Uint128,
     payment_recipient: Addr,
@@ -801,18 +801,4 @@ pub fn sudo_remove_bid_hook(deps: DepsMut, hook: Addr) -> Result<Response, Contr
     let event = Event::new("remove-bid-hook").add_attribute("hook", hook);
     Ok(Response::new().add_event(event))
 }
-
-/// Propose the marketplace as owner for escrow of account
-fn _propose_accepted_bidder_a(_deps: Deps, _env: Env, _res: &mut Response) -> StdResult<()> {
-    // propose owner as marketplace for escrow purposes
-    Ok(())
-}
-
-pub(crate) fn _propose_accepted_bidder_a_response(
-    _env: Env,
-    _deps: DepsMut,
-    _result: SubMsgResult,
-) -> Result<Response, ContractError> {
-    let res = Response::new();
-    Ok(res)
-}
+ 

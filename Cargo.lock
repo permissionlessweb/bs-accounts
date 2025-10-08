@@ -1451,9 +1451,7 @@ dependencies = [
  "cw-storage-plus",
  "cw-utils",
  "cw2",
- "schemars 0.8.22",
  "serde",
- "subtle-encoding",
  "thiserror 1.0.69",
 ]
 
@@ -1469,14 +1467,10 @@ dependencies = [
  "cosmwasm-std",
  "cw-multi-test",
  "cw-orch 0.27.0 (git+https://github.com/permissionlessweb/cw-orchestrator?branch=feat%2Fwasm-path)",
- "cw-ownable",
  "cw-storage-macro",
  "cw-storage-plus",
  "cw-utils",
  "cw2",
- "schemars 0.8.22",
- "semver",
- "serde",
  "thiserror 1.0.69",
 ]
 
@@ -1485,7 +1479,6 @@ name = "bs721-account-minter"
 version = "0.2.0"
 dependencies = [
  "bs-controllers",
- "bs721",
  "bs721-account",
  "bs721-base",
  "btsg-account",
@@ -1497,8 +1490,6 @@ dependencies = [
  "cw-storage-plus",
  "cw-utils",
  "cw2",
- "schemars 0.8.22",
- "serde",
  "thiserror 1.0.69",
 ]
 
@@ -1623,7 +1614,6 @@ version = "0.2.0"
 dependencies = [
  "abstract-std",
  "anyhow",
- "bech32 0.11.0",
  "bs721-account",
  "bs721-account-marketplace",
  "bs721-account-minter",
@@ -9109,7 +9099,6 @@ dependencies = [
  "cw-orch 0.27.0 (git+https://github.com/permissionlessweb/cw-orchestrator?branch=feat%2Fwasm-path)",
  "cw-storage-plus",
  "cw2",
- "serde",
  "thiserror 1.0.69",
 ]
 

@@ -1,3 +1,4 @@
+use btsg_account::market::ConfigResponse;
 use cw_orch::{anyhow, mock::MockBech32, prelude::*};
 
 use crate::BtsgAccountSuite;
@@ -10,6 +11,15 @@ use bs721_account_minter::msg::{ExecuteMsgFns as _, QueryMsgFns as _};
 use cosmwasm_std::Uint128;
 use cosmwasm_std::{coins, to_json_binary, Decimal};
 use cw_orch::mock::cw_multi_test::{SudoMsg, WasmSudo};
+
+use std::error::Error;
+
+use bs721_account_marketplace::state::MAX_FEE_BPS;
+use bs721_account_marketplace::ContractError as MarketContractError;
+use bs721_account_minter::ContractError as MinterContractError;
+use btsg_account::market::{Ask, Bid, ExecuteMsg, PendingBid, QueryMsgFns};
+use btsg_account::DEPLOYMENT_DAO;
+use cosmwasm_std::{coin, Attribute, Binary, Event};
 
 const BID_AMOUNT: u128 = 1_000_000_000;
 #[test]
@@ -24,18 +34,99 @@ pub fn init() -> anyhow::Result<()> {
         .setup(suite.account.address()?, suite.minter.address()?)
         .unwrap_err();
 
+    assert_eq!(
+        suite.market.config()?,
+        ConfigResponse {
+            minter: suite.minter.address()?,
+            collection: suite.account.address()?
+        }
+    );
+
     Ok(())
 }
 
+mod hooks {
+    use super::*;
+
+    #[test]
+    fn test_add_sale_hook() -> anyhow::Result<()> {
+        // new mock Bech32 chain environment
+        let mock = MockBech32::new("mock");
+        // simulate deploying the test suite to the mock chain env.
+        let suite = BtsgAccountSuite::deploy_on(mock.clone(), mock.sender.clone())?;
+        let hooks = mock.addr_make("askhooks");
+        mock.app.borrow_mut().sudo(SudoMsg::Wasm(WasmSudo {
+            contract_addr: suite.market.address()?,
+            message: to_json_binary(&btsg_account::market::SudoMsg::AddSaleHook {
+                hook: hooks.to_string(),
+            })?,
+        }))?;
+        assert_eq!(suite.market.sale_hooks()?.hooks[0], hooks.to_string());
+
+        mock.app.borrow_mut().sudo(SudoMsg::Wasm(WasmSudo {
+            contract_addr: suite.market.address()?,
+            message: to_json_binary(&btsg_account::market::SudoMsg::RemoveSaleHook {
+                hook: hooks.to_string(),
+            })?,
+        }))?;
+        assert_eq!(suite.market.sale_hooks()?.hooks.len(), 0);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_add_bid_hook() -> anyhow::Result<()> {
+        // new mock Bech32 chain environment
+        let mock = MockBech32::new("mock");
+        // simulate deploying the test suite to the mock chain env.
+        let suite = BtsgAccountSuite::deploy_on(mock.clone(), mock.sender.clone())?;
+        let hooks = mock.addr_make("askhooks");
+        mock.app.borrow_mut().sudo(SudoMsg::Wasm(WasmSudo {
+            contract_addr: suite.market.address()?,
+            message: to_json_binary(&btsg_account::market::SudoMsg::AddBidHook {
+                hook: hooks.to_string(),
+            })?,
+        }))?;
+        assert_eq!(suite.market.bid_hooks()?.hooks[0], hooks.to_string());
+
+        mock.app.borrow_mut().sudo(SudoMsg::Wasm(WasmSudo {
+            contract_addr: suite.market.address()?,
+            message: to_json_binary(&btsg_account::market::SudoMsg::RemoveBidHook {
+                hook: hooks.to_string(),
+            })?,
+        }))?;
+        assert_eq!(suite.market.bid_hooks()?.hooks.len(), 0);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_add_ask_hook() -> anyhow::Result<()> {
+        // new mock Bech32 chain environment
+        let mock = MockBech32::new("mock");
+        // simulate deploying the test suite to the mock chain env.
+        let suite = BtsgAccountSuite::deploy_on(mock.clone(), mock.sender.clone())?;
+        let hooks = mock.addr_make("askhooks");
+        mock.app.borrow_mut().sudo(SudoMsg::Wasm(WasmSudo {
+            contract_addr: suite.market.address()?,
+            message: to_json_binary(&btsg_account::market::SudoMsg::AddAskHook {
+                hook: hooks.to_string(),
+            })?,
+        }))?;
+        assert_eq!(suite.market.ask_hooks()?.hooks[0], hooks.to_string());
+
+        mock.app.borrow_mut().sudo(SudoMsg::Wasm(WasmSudo {
+            contract_addr: suite.market.address()?,
+            message: to_json_binary(&btsg_account::market::SudoMsg::RemoveAskHook {
+                hook: hooks.to_string(),
+            })?,
+        }))?;
+        assert_eq!(suite.market.ask_hooks()?.hooks.len(), 0);
+
+        Ok(())
+    }
+}
 mod execute {
-
-    use std::error::Error;
-
-    use bs721_account_marketplace::ContractError as MarketContractError;
-    use bs721_account_minter::ContractError;
-    use btsg_account::market::{Ask, ExecuteMsg, PendingBid, QueryMsgFns};
-    use btsg_account::DEPLOYMENT_DAO;
-    use cosmwasm_std::{coin, Attribute, Binary, Event};
 
     use super::*;
 
@@ -174,6 +265,55 @@ mod execute {
             Uint128::zero()
         );
 
+        assert_eq!(
+            suite
+                .market
+                .update_ask(bidder.to_string(), token_id.to_string(),)
+                .unwrap_err()
+                .root()
+                .to_string(),
+            MarketContractError::Unauthorized {}.to_string(),
+        );
+        assert_eq!(
+            suite.market.bids(token_id.to_string(), None, None)?,
+            vec![Bid {
+                token_id: token_id.to_string(),
+                bidder: bidder.clone(),
+                amount: BID_AMOUNT.into(),
+                created_time: mock.block_info()?.time.clone(),
+            }],
+        );
+        assert_eq!(
+            suite.market.bids_sorted_by_price(None, None)?,
+            vec![Bid {
+                token_id: token_id.to_string(),
+                bidder: bidder.clone(),
+                amount: BID_AMOUNT.into(),
+                created_time: mock.block_info()?.time.clone(),
+            }],
+        );
+
+        assert_eq!(
+            suite.market.reverse_bids_sorted_by_price(None, None)?,
+            vec![Bid {
+                token_id: token_id.to_string(),
+                bidder: bidder.clone(),
+                amount: BID_AMOUNT.into(),
+                created_time: mock.block_info()?.time.clone(),
+            }],
+        );
+
+        assert_eq!(
+            suite
+                .market
+                .call_as(&bidder)
+                .accept_bid(bidder.clone(), token_id.into())
+                .unwrap_err()
+                .source()
+                .unwrap()
+                .to_string(),
+            "UnauthorizedOwner".to_string()
+        );
         suite.market.accept_bid(bidder.clone(), token_id.into())?;
 
         mock.wait_seconds(60)?;
@@ -405,6 +545,25 @@ mod execute {
             })?,
         }))?;
 
+        assert_eq!(
+            mock.app
+                .borrow_mut()
+                .sudo(SudoMsg::Wasm(WasmSudo {
+                    contract_addr: suite.market.address()?,
+                    message: to_json_binary(&btsg_account::market::SudoMsg::UpdateParams {
+                        trading_fee_bps: Some(MAX_FEE_BPS * 2u64),
+                        min_price: Some(Uint128::from(1000u128)),
+                        ask_interval: Some(1000),
+                        cooldown_duration: Some(69),
+                        cooldown_cancel_fee: Some(coin(69u128, "jerets")),
+                    })?,
+                }))
+                .unwrap_err()
+                .root_cause()
+                .to_string(),
+            MarketContractError::InvalidTradingFeeBps(MAX_FEE_BPS * 2u64).to_string()
+        );
+
         // confirm updated params
         let res = suite.market.params()?;
         assert_eq!(res.trading_fee_percent, Decimal::percent(10));
@@ -413,6 +572,22 @@ mod execute {
         assert_eq!(res.cooldown_duration, 69);
         assert_eq!(res.cooldown_fee, coin(69u128, "jerets"));
 
+        let new = mock.addr_make("new-jawn");
+        let newnew = mock.addr_make("newer-jawn");
+        mock.app.borrow_mut().sudo(SudoMsg::Wasm(WasmSudo {
+            contract_addr: suite.market.address()?,
+            message: to_json_binary(&btsg_account::market::SudoMsg::UpdateAccountFactory {
+                factory: new.to_string(),
+            })?,
+        }))?;
+        assert_eq!(suite.market.config()?.minter, new);
+        mock.app.borrow_mut().sudo(SudoMsg::Wasm(WasmSudo {
+            contract_addr: suite.market.address()?,
+            message: to_json_binary(&btsg_account::market::SudoMsg::UpdateAccountCollection {
+                collection: newnew.to_string(),
+            })?,
+        }))?;
+        assert_eq!(suite.market.config()?.collection, newnew);
         Ok(())
     }
 
@@ -563,6 +738,21 @@ mod execute {
                 .to_string(),
             MarketContractError::AskNotFound {}.to_string()
         );
+        // token id doesnt exists
+        assert_eq!(
+            suite
+                .market
+                .execute(
+                    &ExecuteMsg::FinalizeBid {
+                        token_id: "babber".to_string(),
+                    },
+                    &vec![coin(500_000_000, "ubtsg")],
+                )
+                .unwrap_err()
+                .root()
+                .to_string(),
+            MarketContractError::AskNotFound {}.to_string()
+        );
 
         suite
             .market
@@ -620,7 +810,7 @@ mod execute {
                 .unwrap_err()
                 .root()
                 .to_string(),
-            ContractError::Unauthorized {}.to_string()
+            MinterContractError::Unauthorized {}.to_string()
         );
         assert_eq!(
             suite
@@ -648,7 +838,7 @@ mod execute {
                 .unwrap_err()
                 .root()
                 .to_string(),
-            ContractError::IncorrectPayment {
+            MinterContractError::IncorrectPayment {
                 got: 499_000_000u128,
                 expected: 500_000_000u128
             }
@@ -738,7 +928,7 @@ mod execute {
                 .source()
                 .unwrap()
                 .to_string(),
-            ContractError::IncorrectDelegation {
+            MinterContractError::IncorrectDelegation {
                 got: 10000440u128,
                 expected: base_delegation.u128()
             }

@@ -1,14 +1,14 @@
-use crate::commands::{query_asks_by_seller, query_bids_by_bidder};
+use crate::commands::{payout, query_asks_by_seller, query_bids_by_bidder};
 use crate::contract::{execute, instantiate};
 #[cfg(test)]
 use crate::state::*;
-use btsg_account::market::{Ask, Bid};
+use btsg_account::market::{Ask, Bid, SudoParams};
 use btsg_account::{
     market::{ExecuteMsg, MarketplaceInstantiateMsg},
     NATIVE_DENOM,
 };
 use cosmwasm_std::testing::{message_info, mock_dependencies, mock_env};
-use cosmwasm_std::{coin, coins, Addr, DepsMut, Timestamp, Uint128};
+use cosmwasm_std::{coin, coins, Addr, Decimal, DepsMut, Response, Timestamp, Uint128};
 
 const CREATOR: &str = "creator";
 const TOKEN_ID: &str = "account";
@@ -130,6 +130,34 @@ fn bad_fees_initialization() {
     let info = message_info(&Addr::unchecked("creator"), &coins(1000, NATIVE_DENOM));
     let res = instantiate(deps.as_mut(), mock_env(), info, msg);
     assert!(res.is_err());
+}
+
+#[test]
+fn test_payout() {
+    let mut deps = mock_dependencies();
+    setup_contract(deps.as_mut());
+
+    let mut sudo = SUDO_PARAMS.load(&deps.storage).unwrap();
+
+    // will never happen
+    sudo.trading_fee_percent = Decimal::percent(150);
+
+    // Set up contract with custom sudo params where fee > 100%
+    SUDO_PARAMS.save(deps.as_mut().storage, &sudo).unwrap();
+
+    let payment = Uint128::from(100u128);
+
+    let mut response = Response::default();
+
+    let err = payout(
+        deps.as_ref(),
+        payment,
+        Addr::unchecked("recipient"),
+        &mut response,
+    )
+    .unwrap_err();
+
+    assert_eq!(err.to_string(), "Generic error: Fees exceed payment");
 }
 
 #[test]
