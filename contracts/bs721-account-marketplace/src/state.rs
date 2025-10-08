@@ -10,8 +10,6 @@ pub const MAX_FEE_BPS: u64 = 10000;
 
 pub const SUDO_PARAMS: Item<SudoParams> = Item::new("sp");
 
-pub const COOLDOWN: Item<String> = Item::new("cd");
-
 pub const ASK_HOOKS: Hooks = Hooks::new("ah");
 pub const BID_HOOKS: Hooks = Hooks::new("bh");
 pub const SALE_HOOKS: Hooks = Hooks::new("sh");

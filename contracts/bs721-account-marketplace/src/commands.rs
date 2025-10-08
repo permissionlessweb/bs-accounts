@@ -260,6 +260,42 @@ pub fn execute_cancel_cooldown(
     }
 }
 /// Removes a bid made by the bidder. Bidders can only remove their own bids
+pub fn execute_remove_bids(
+    deps: DepsMut,
+    _env: Env,
+    info: MessageInfo,
+    token_id: &str,
+) -> Result<Response, ContractError> {
+    if info.sender != ACCOUNT_COLLECTION.load(deps.storage)? {
+        return Err(ContractError::Unauthorized {});
+    };
+
+    let bids_to_remove: Result<Vec<_>, _> = bids()
+        .idx
+        .price
+        .sub_prefix(token_id.to_string()) // This matches (token_id, _)
+        .keys(deps.storage, None, None, cosmwasm_std::Order::Ascending)
+        .collect();
+
+    let keys = bids_to_remove?;
+    let mut msgs = Vec::with_capacity(keys.len());
+    let mut submsgs = Vec::new();
+    for key in keys {
+        let bid_key = bid_key(&key.0, &key.1);
+        let bid = bids().load(deps.storage, bid_key.clone())?;
+        submsgs.extend(prepare_bid_hook(deps.as_ref(), &bid, HookAction::Delete)?);
+        bids().remove(deps.storage, bid_key)?;
+        msgs.push(BankMsg::Send {
+            to_address: bid.bidder.to_string(),
+            amount: vec![coin(bid.amount.u128(), NATIVE_DENOM)],
+        });
+    }
+
+    Ok(Response::default()
+        .add_messages(msgs)
+        .add_submessages(submsgs))
+}
+
 pub fn execute_remove_bid(
     deps: DepsMut,
     _env: Env,
@@ -801,4 +837,3 @@ pub fn sudo_remove_bid_hook(deps: DepsMut, hook: Addr) -> Result<Response, Contr
     let event = Event::new("remove-bid-hook").add_attribute("hook", hook);
     Ok(Response::new().add_event(event))
 }
- 

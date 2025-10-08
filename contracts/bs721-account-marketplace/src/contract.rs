@@ -68,6 +68,7 @@ pub fn execute(
         ExecuteMsg::CancelCooldown { token_id } => {
             execute_cancel_cooldown(deps, env, info, &token_id)
         }
+        ExecuteMsg::RemoveBids { token_id } => execute_remove_bids(deps, env, info, &token_id),
     }
 }
 

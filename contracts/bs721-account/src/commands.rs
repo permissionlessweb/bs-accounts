@@ -39,6 +39,9 @@ pub mod manifest {
         address: Option<String>,
     ) -> Result<Response, ContractError> {
         only_owner(deps.as_ref(), &info.sender, &account)?;
+        // prevent any changes if account is in cooldown
+        let market = &ACCOUNT_MARKETPLACE.load(deps.storage)?;
+        ensure_not_in_cooldown(deps.as_ref(), &market, &account)?;
         let mut ownership: Ownership<String> = Ownership {
             owner: ownership::GovernanceDetails::Renounced {},
             pending_owner: None,
@@ -163,14 +166,24 @@ pub mod manifest {
         token_uri.map(|addr| REVERSE_MAP.save(deps.storage, &Addr::unchecked(addr), &account));
 
         let mut event = Event::new("associate-address")
-            .add_attribute("account", account)
+            .add_attribute("account", &account)
             .add_attribute("owner", info.sender);
 
         if let Some(address) = address {
             event = event.add_attribute("address", address);
         }
 
-        Ok(Response::new().add_event(event))
+        // remove bids since changes were made and may create differences between what is being bid on
+
+        Ok(Response::new()
+            .add_event(event)
+            .add_message(WasmMsg::Execute {
+                contract_addr: market.to_string(),
+                msg: to_json_binary(&btsg_account::market::ExecuteMsg::RemoveBids {
+                    token_id: account,
+                })?,
+                funds: vec![],
+            }))
     }
 
     pub fn execute_approve_all_via_market(
@@ -285,7 +298,14 @@ pub mod manifest {
             .tokens
             .save(deps.storage, account, &token)?;
 
-        Ok(Response::new())
+        // refund all bids as they the condition of the bids may differ from when they were created
+        Ok(Response::new().add_message(WasmMsg::Execute {
+            contract_addr: ACCOUNT_MARKETPLACE.load(deps.storage)?.to_string(),
+            msg: to_json_binary(&btsg_account::market::ExecuteMsg::RemoveBids {
+                token_id: account.to_string(),
+            })?,
+            funds: vec![],
+        }))
     }
 
     /// updates the (usually) non `bitsong1...` addresses mapped to a `bitsong1...` account.

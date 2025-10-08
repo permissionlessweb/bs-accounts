@@ -104,6 +104,9 @@ pub enum ExecuteMsg {
     RemoveBid {
         token_id: TokenId,
     },
+    RemoveBids {
+        token_id: TokenId,
+    },
     /// Accept a bid on an existing ask
     AcceptBid {
         token_id: TokenId,
