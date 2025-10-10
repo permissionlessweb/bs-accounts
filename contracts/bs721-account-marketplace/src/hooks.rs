@@ -1,11 +1,8 @@
-use btsg_account::market::{Ask, Bid};
+use btsg_account::market::{Ask, AskHookMsg, Bid, BidHookMsg, HookAction, SaleHookMsg};
+
 use cosmwasm_std::{Addr, DepsMut, Env, Reply, Response, StdResult, Storage, SubMsg, WasmMsg};
 
-use crate::{
-    msgs::{AskHookMsg, BidHookMsg, HookAction, SaleHookMsg},
-    state::*,
-    ContractError,
-};
+use crate::{state::*, ContractError};
 
 enum HookReply {
     Ask = 1,
@@ -70,6 +67,7 @@ pub fn prepare_sale_hook(storage: &dyn Storage, ask: &Ask, buyer: Addr) -> StdRe
     let submsgs = SALE_HOOKS.prepare_hooks(storage, |h| {
         let msg = SaleHookMsg {
             token_id: ask.token_id.to_string(),
+            ask_id: ask.id,
             seller: ask.seller.to_string(),
             buyer: buyer.to_string(),
         };

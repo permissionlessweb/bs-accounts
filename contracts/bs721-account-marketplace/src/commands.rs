@@ -1,24 +1,20 @@
-use crate::hooks::{prepare_ask_hook, prepare_bid_hook, prepare_sale_hook};
-use crate::msgs::HookAction;
 use crate::{
     error::ContractError,
-    // hooks::{prepare_ask_hook, prepare_bid_hook, prepare_sale_hook},
+    hooks::{prepare_ask_hook, prepare_bid_hook, prepare_sale_hook},
     state::*,
 };
-use bs721_account::msg::ExecuteMsg as Bs721AccountExecuteMsg;
+
+use bs721::{NftInfoResponse, OwnerOfResponse};
+use bs721_account::{helpers::Bs721Account, msg::ExecuteMsg as Bs721AccountExecuteMsg};
 use btsg_account::{
-    charge_fees, validate_aa_ownership, Metadata, DEFAULT_QUERY_LIMIT, DEPLOYMENT_DAO,
-    MAX_QUERY_LIMIT, NATIVE_DENOM,
+    charge_fees, market::HookAction, market::*, validate_aa_ownership, Metadata, TokenId,
+    DEFAULT_QUERY_LIMIT, DEPLOYMENT_DAO, MAX_QUERY_LIMIT, NATIVE_DENOM,
 };
-use btsg_account::{market::*, TokenId};
 
 use cosmwasm_std::{
     coin, to_json_binary, Addr, BankMsg, Decimal, Deps, DepsMut, Env, Event, Fraction, MessageInfo,
     Order, Response, StdError, StdResult, Storage, SubMsg, Uint128, WasmMsg,
 };
-
-use bs721::{NftInfoResponse, OwnerOfResponse};
-use bs721_account::helpers::Bs721Account;
 use cw_storage_plus::Bound;
 use cw_utils::{must_pay, nonpayable};
 
@@ -387,7 +383,7 @@ pub fn execute_finalize_bid(
             let token: NftInfoResponse<Metadata> =
                 Bs721Account(collection.clone()).nft_info(&deps.querier, token_id)?;
 
-            // get the associated abstarct account we expect to exist
+            // get the associated abstract account we expect to exist
             if token.extension.account_ownership
                 && validate_aa_ownership(
                     deps.as_ref(),
@@ -645,7 +641,7 @@ pub fn query_asks(deps: Deps, start_after: Option<Id>, limit: Option<u32>) -> St
         .collect::<StdResult<Vec<_>>>()
 }
 
-pub fn query_ask_count(deps: Deps) -> StdResult<u64> {
+pub fn query_ask_count(deps: Deps) -> StdResult<u32> {
     ASK_COUNT.load(deps.storage)
 }
 

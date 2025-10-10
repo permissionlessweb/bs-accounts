@@ -1,8 +1,6 @@
-use std::path::PathBuf;
-
 // use abstract_interface::Abstract;
 use crate::BtsgAccountMarketExecuteFns;
-use anyhow::anyhow;
+use account_registry_middleware::interface::AccountRegistryMiddleware;
 use bs721_account::interface::BtsgAccountCollection;
 use bs721_account_marketplace::interface::BtsgAccountMarket;
 use bs721_account_minter::interface::BtsgAccountMinter;
@@ -15,10 +13,12 @@ pub struct BtsgAccountSuite<Chain>
 where
     Chain: cw_orch::prelude::CwEnv,
 {
+    // pub abs: Abstract<Chain>,
     pub account: BtsgAccountCollection<Chain, Metadata>,
+    pub middleware: AccountRegistryMiddleware<Chain>,
     pub minter: BtsgAccountMinter<Chain>,
     pub market: BtsgAccountMarket<Chain>,
-    pub(crate) test_owner: TestingOwnershipVerifier<Chain>, // pub abs: Abstract<Chain>,
+    pub(crate) test_owner: TestingOwnershipVerifier<Chain>,
 }
 
 pub const BLS_PUBKEY: &str = "";
@@ -26,10 +26,12 @@ pub const BLS_PUBKEY: &str = "";
 impl<Chain: CwEnv> BtsgAccountSuite<Chain> {
     pub fn new(chain: Chain) -> BtsgAccountSuite<Chain> {
         BtsgAccountSuite::<Chain> {
+            middleware: AccountRegistryMiddleware::new("registry_middleware", chain.clone()),
             account: BtsgAccountCollection::new("bs721_account", chain.clone()),
             minter: BtsgAccountMinter::new("bs721_account_minter", chain.clone()),
             market: BtsgAccountMarket::new("bs721_account_marketplace", chain.clone()),
             test_owner: TestingOwnershipVerifier::new("ownership_verifier", chain.clone()),
+            // abs: Abstract::new("abstract", chain.clone()),
         }
     }
 
@@ -37,10 +39,12 @@ impl<Chain: CwEnv> BtsgAccountSuite<Chain> {
         let acc_code_id = self.account.upload()?.uploaded_code_id()?;
         let minter_code_id = self.minter.upload()?.uploaded_code_id()?;
         let market_code_id = self.market.upload()?.uploaded_code_id()?;
+        let middleware_code_id = self.middleware.upload()?.uploaded_code_id()?;
 
         println!("Account code ID: {}", acc_code_id);
         println!("Minter code ID: {}", minter_code_id);
         println!("Market code ID: {}", market_code_id);
+        println!("Middleware code ID: {}", middleware_code_id);
 
         Ok(())
     }
@@ -119,6 +123,16 @@ impl<Chain: CwEnv> cw_orch::contract::Deploy<Chain> for BtsgAccountSuite<Chain> 
             .market
             .setup(suite.account.address()?, suite.minter.address()?)?;
 
+        suite.middleware.instantiate(
+            &account_registry_middleware::InstantiateMsg {
+                market: suite.market.addr_str()?,
+                registry: todo!(),
+                collection: suite.minter.addr_str()?,
+            },
+            Some(&Addr::unchecked(data.clone())),
+            &[],
+        )?;
+        
         Ok(suite)
     }
 }

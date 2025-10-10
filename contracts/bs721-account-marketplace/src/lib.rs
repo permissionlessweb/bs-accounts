@@ -2,7 +2,6 @@ pub mod commands;
 pub mod contract;
 pub mod error;
 pub mod hooks;
-pub mod msgs;
 pub mod state;
 
 #[cfg(not(target_arch = "wasm32"))]

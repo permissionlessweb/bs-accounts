@@ -24,6 +24,7 @@ cosmrs                      = { version = "0.22.0" }
 # NFT & Account Contracts
 bs721-base                  = { workspace = true }
 btsg-nft-scripts            = { workspace = true }
+account-registry-middleware = { workspace = true }
 btsg-account                = { path = "../packages/btsg-account" }
 btsg-auth                   = { workspace = true }
 bs721-account               = { workspace = true, features = ["library"] }
@@ -32,6 +33,7 @@ bs721-account-marketplace   = { workspace = true, features = ["library"] }
 
 # Abstract & CW-Orchestrator
 abstract-std                = { workspace = true }
+abstract-interface          = "0.26.1"
 cw-orch                     = { workspace = true, features = ["daemon"] }
 
 # CLI & Utilities

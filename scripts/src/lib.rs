@@ -22,6 +22,12 @@ pub use btsg_account::market::{
     QueryMsg as BtsgAccountMarketQueryMsgTypes, QueryMsgFns as BtsgAccountMarketQueryFns,
 };
 
+pub use account_registry_middleware::{
+    AsyncQueryMsgFns as AccountRegistryAsyncQueryMsgFns,
+    ExecuteMsg as AccountRegistryExecuteMsgTypes, ExecuteMsgFns as AccountRegistryExecuteFns,
+    QueryMsg as AccountRegistryQueryMsgTypes, QueryMsgFns as AccountRegistryQueryFns,
+};
+
 pub use ownership_verifier::{
     ExecuteMsg as TestOwnershipExecuteMsg, ExecuteMsgFns as TestOwnershipExecuteMsgFns,
     InstantiateMsg as TestOwnershipInitMsg, QueryMsg as TestOwnershipQueryMsg,

@@ -8,6 +8,7 @@ This implementation is a compatible instance of [sg-names](https://github.com/pu
 | [Account Marketplace](./contracts/bs721-account-marketplace/README.md) | The secondary marketplace for accounts. Accounts are automatically listed here once they are minted. |
 | [Account Minter](./contracts/bs721-account-minter/README.md) | Account minter is responsible for minting, validating, and updating accounts and their metadata. |
 | [Bs721-Account](./contracts/bs721-account/README.md) | A cw721 contract with on-chain metadata for an account. |
+| [Account Registry Middleware](./contracts/account-registry-middleware/README.md) | Recieves hooks and functions as admin middleware for abstract-account framework on-chain registry |
 <!-- 
 ## Smart Accounts
 

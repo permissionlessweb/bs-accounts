@@ -397,6 +397,38 @@
         "additionalProperties": false
       },
       {
+        "description": "Marketplace makes use to manually approve transfers. Used if account owner has removed approval for marketplace as operator during cooldown period",
+        "type": "object",
+        "required": [
+          "approve_all_via_market"
+        ],
+        "properties": {
+          "approve_all_via_market": {
+            "type": "object",
+            "required": [
+              "owner"
+            ],
+            "properties": {
+              "expires": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/Expiration"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "owner": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
         "description": "Allows operator to transfer / send any token from the owner's account. If expiration is set, then this allowance has a time/height limit",
         "type": "object",
         "required": [
@@ -429,7 +461,7 @@
         "additionalProperties": false
       },
       {
-        "description": "Allows user to define if token is being associated to an Abstract Account",
+        "description": "Allows user to define if token is being associated to an Abstract Account.",
         "type": "object",
         "required": [
           "update_abs_acc_support"
@@ -526,7 +558,7 @@
                 "type": "string"
               },
               "token_uri": {
-                "description": "Universal resource identifier for this NFT Should point to a JSON file that conforms to the ERC721 Metadata JSON Schema",
+                "description": "This will be a smart contract address that is an EOA using this token as ownership authentication",
                 "type": [
                   "string",
                   "null"
@@ -791,7 +823,7 @@
         "additionalProperties": false
       },
       {
-        "description": "query an address to return the account owned by this address",
+        "description": "Query an address to return the account owned by this address",
         "type": "object",
         "required": [
           "account"
@@ -813,7 +845,7 @@
         "additionalProperties": false
       },
       {
-        "description": "query an account address to return the associated address. This will be the abstract account contract addr if nft used as ownership token",
+        "description": "Query an account name to return the associated address. If being used as ownership token for EOA, will return the EOA contract, otherwise returns the owner of the token",
         "type": "object",
         "required": [
           "associated_address"

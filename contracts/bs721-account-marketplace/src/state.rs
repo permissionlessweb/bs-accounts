@@ -24,20 +24,20 @@ pub const ACCOUNT_MINTER: Item<Addr> = Item::new("am");
 pub const ACCOUNT_COLLECTION: Item<Addr> = Item::new("ac");
 pub const VERSION_CONTROL: Item<Addr> = Item::new("vc");
 
-pub const ASK_COUNT: Item<u64> = Item::new("ask-count");
+pub const ASK_COUNT: Item<u32> = Item::new("ask-count");
 pub const IS_SETUP: Item<bool> = Item::new("is");
 
-pub fn ask_count(storage: &dyn Storage) -> StdResult<u64> {
+pub fn ask_count(storage: &dyn Storage) -> StdResult<u32> {
     Ok(ASK_COUNT.may_load(storage)?.unwrap_or_default())
 }
 
-pub fn increment_asks(storage: &mut dyn Storage) -> StdResult<u64> {
+pub fn increment_asks(storage: &mut dyn Storage) -> StdResult<u32> {
     let val = ask_count(storage)? + 1;
     ASK_COUNT.save(storage, &val)?;
     Ok(val)
 }
 
-pub fn decrement_asks(storage: &mut dyn Storage) -> StdResult<u64> {
+pub fn decrement_asks(storage: &mut dyn Storage) -> StdResult<u32> {
     let val = ask_count(storage)? - 1;
     ASK_COUNT.save(storage, &val)?;
     Ok(val)
@@ -53,7 +53,7 @@ pub fn ask_key(token_id: &str) -> AskKey {
 pub struct AskIndicies<'a> {
     /// Unique incrementing id for each ask
     /// This allows pagination when `token_id`s are strings
-    pub id: UniqueIndex<'a, u64, Ask, AskKey>,
+    pub id: UniqueIndex<'a, u32, Ask, AskKey>,
     /// Index by seller
     pub seller: MultiIndex<'a, Addr, Ask, AskKey>,
 }
