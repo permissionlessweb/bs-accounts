@@ -104,7 +104,12 @@ pub enum ExecuteMsg {
     RemoveBid {
         token_id: TokenId,
     },
+    //
     RemoveBids {
+        token_id: TokenId,
+    },
+    // Flush any pending bids to be removed from a token-id. Anyone can call this
+    CheckedRemoveBids {
         token_id: TokenId,
     },
     /// Accept a bid on an existing ask
@@ -117,6 +122,7 @@ pub enum ExecuteMsg {
     FinalizeBid {
         token_id: TokenId,
     },
+    /// Cancel a bid that has been accepted an is in the cooldown period.
     CancelCooldown {
         token_id: TokenId,
     },

@@ -36,6 +36,9 @@ pub enum ContractError {
     #[error("AddressIsStillMappedToEOA")]
     AddressIsStillMappedToEOA {},
 
+    #[error("AccountIsInCooldownStage")]
+    AccountIsInCooldownStage {},
+
     #[error("InvalidAddress")]
     InvalidAddress {},
 

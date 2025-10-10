@@ -64,11 +64,14 @@ pub fn execute(
         ExecuteMsg::AcceptBid { token_id, bidder } => {
             execute_accept_bid(deps, env, info, &token_id, api.addr_validate(&bidder)?)
         }
-        ExecuteMsg::FinalizeBid { token_id } => execute_finalize_bid(deps, env, info, &token_id),
+        ExecuteMsg::FinalizeBid { token_id } => execute_finalize_bid(deps, env, &token_id),
         ExecuteMsg::CancelCooldown { token_id } => {
             execute_cancel_cooldown(deps, env, info, &token_id)
         }
         ExecuteMsg::RemoveBids { token_id } => execute_remove_bids(deps, env, info, &token_id),
+        ExecuteMsg::CheckedRemoveBids { token_id } => {
+            execute_removed_overflow_bids(deps, &token_id)
+        }
     }
 }
 
@@ -138,7 +141,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::SaleHooks {} => to_json_binary(&SALE_HOOKS.query_hooks(deps)?),
         QueryMsg::Config {} => to_json_binary(&query_config(deps)?),
         QueryMsg::Cooldown { token_id } => {
-            to_json_binary(&cooldown_bids().may_load(deps.storage, &ask_key(&token_id))?)
+            to_json_binary(&COOLDOWN_BID.may_load(deps.storage, &ask_key(&token_id))?)
         }
     }
 }

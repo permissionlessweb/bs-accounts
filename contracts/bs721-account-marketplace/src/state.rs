@@ -1,12 +1,18 @@
 use bs_controllers::Hooks;
 
 use btsg_account::market::{Ask, AskKey, Bid, BidKey, PendingBid, SudoParams};
+use btsg_account::TokenId;
 use cosmwasm_std::{Addr, StdResult, Storage};
 use cw_storage_macro::index_list;
-use cw_storage_plus::{IndexedMap, Item, MultiIndex, UniqueIndex};
+use cw_storage_plus::{IndexedMap, Item, Map, MultiIndex, UniqueIndex};
 
 // bps fee can not exceed 100%
 pub const MAX_FEE_BPS: u64 = 10000;
+
+pub const MAX_REMOVE_BID_LIMIT: u64 = 30;
+pub const COOLDOWN_BID: Map<&TokenId, PendingBid> = Map::new("cdb");
+pub const OVERFLOW_BIDS_REMOVE: Map<TokenId, Vec<BidKey>> = Map::new("obr");
+
 
 pub const SUDO_PARAMS: Item<SudoParams> = Item::new("sp");
 
@@ -92,32 +98,4 @@ pub fn bids<'a>() -> IndexedMap<BidKey, Bid, BidIndicies<'a>> {
         ),
     };
     IndexedMap::new("b2", indexes)
-}
-
-#[index_list(PendingBid)]
-pub struct PendingBidIndicies<'a> {
-    pub owner: MultiIndex<'a, Addr, PendingBid, String>,
-    pub new_owner: MultiIndex<'a, Addr, PendingBid, String>,
-    pub unlock_time: MultiIndex<'a, (String, u64), PendingBid, String>,
-}
-
-pub fn cooldown_bids<'a>() -> IndexedMap<&'a str, PendingBid, PendingBidIndicies<'a>> {
-    let indexes = PendingBidIndicies {
-        owner: MultiIndex::new(
-            |_pk: &[u8], d: &PendingBid| d.ask.seller.clone(),
-            "pending_bids",
-            "pending_bids__owner",
-        ),
-        new_owner: MultiIndex::new(
-            |_pk: &[u8], d: &PendingBid| d.new_owner.clone(),
-            "pending_bids",
-            "pending_bids__new_owner",
-        ),
-        unlock_time: MultiIndex::new(
-            |_pk: &[u8], d: &PendingBid| (d.ask.token_id.clone(), d.unlock_time.seconds()),
-            "pending_bids",
-            "pending_bids__unlock_time",
-        ),
-    };
-    IndexedMap::new("pending_bids", indexes)
 }

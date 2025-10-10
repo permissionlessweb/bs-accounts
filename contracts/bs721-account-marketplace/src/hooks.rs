@@ -1,5 +1,5 @@
 use btsg_account::market::{Ask, Bid};
-use cosmwasm_std::{Addr, Deps, DepsMut, Env, Reply, Response, StdResult, SubMsg, WasmMsg};
+use cosmwasm_std::{Addr, DepsMut, Env, Reply, Response, StdResult, Storage, SubMsg, WasmMsg};
 
 use crate::{
     msgs::{AskHookMsg, BidHookMsg, HookAction, SaleHookMsg},
@@ -23,7 +23,6 @@ impl From<u64> for HookReply {
         }
     }
 }
-
 
 #[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
 pub fn reply(_deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
@@ -49,8 +48,12 @@ pub fn reply(_deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, Contract
     }
 }
 
-pub fn prepare_ask_hook(deps: Deps, ask: &Ask, action: HookAction) -> StdResult<Vec<SubMsg>> {
-    let submsgs = ASK_HOOKS.prepare_hooks(deps.storage, |h| {
+pub fn prepare_ask_hook(
+    storage: &dyn Storage,
+    ask: &Ask,
+    action: HookAction,
+) -> StdResult<Vec<SubMsg>> {
+    let submsgs = ASK_HOOKS.prepare_hooks(storage, |h| {
         let msg = AskHookMsg { ask: ask.clone() };
         let execute = WasmMsg::Execute {
             contract_addr: h.to_string(),
@@ -63,8 +66,8 @@ pub fn prepare_ask_hook(deps: Deps, ask: &Ask, action: HookAction) -> StdResult<
     Ok(submsgs)
 }
 
-pub fn prepare_sale_hook(deps: Deps, ask: &Ask, buyer: Addr) -> StdResult<Vec<SubMsg>> {
-    let submsgs = SALE_HOOKS.prepare_hooks(deps.storage, |h| {
+pub fn prepare_sale_hook(storage: &dyn Storage, ask: &Ask, buyer: Addr) -> StdResult<Vec<SubMsg>> {
+    let submsgs = SALE_HOOKS.prepare_hooks(storage, |h| {
         let msg = SaleHookMsg {
             token_id: ask.token_id.to_string(),
             seller: ask.seller.to_string(),
@@ -81,8 +84,12 @@ pub fn prepare_sale_hook(deps: Deps, ask: &Ask, buyer: Addr) -> StdResult<Vec<Su
     Ok(submsgs)
 }
 
-pub fn prepare_bid_hook(deps: Deps, bid: &Bid, action: HookAction) -> StdResult<Vec<SubMsg>> {
-    let submsgs = BID_HOOKS.prepare_hooks(deps.storage, |h| {
+pub fn prepare_bid_hook(
+    storage: &dyn Storage,
+    bid: &Bid,
+    action: HookAction,
+) -> StdResult<Vec<SubMsg>> {
+    let submsgs = BID_HOOKS.prepare_hooks(storage, |h| {
         let msg = BidHookMsg { bid: bid.clone() };
         let execute = WasmMsg::Execute {
             contract_addr: h.to_string(),

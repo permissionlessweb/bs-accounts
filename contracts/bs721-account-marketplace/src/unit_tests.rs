@@ -2,7 +2,7 @@ use crate::commands::{payout, query_asks_by_seller, query_bids_by_bidder};
 use crate::contract::{execute, instantiate};
 #[cfg(test)]
 use crate::state::*;
-use btsg_account::market::{Ask, Bid, SudoParams};
+use btsg_account::market::{Ask, Bid};
 use btsg_account::{
     market::{ExecuteMsg, MarketplaceInstantiateMsg},
     NATIVE_DENOM,

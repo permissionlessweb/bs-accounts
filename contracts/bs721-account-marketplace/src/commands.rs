@@ -13,11 +13,9 @@ use btsg_account::{
 use btsg_account::{market::*, TokenId};
 
 use cosmwasm_std::{
-    coin, to_json_binary, Addr, BankMsg, Decimal, Deps, DepsMut, Empty, Env, Event, Fraction,
-    MessageInfo, Order, Response, StdError, StdResult, Storage, SubMsg, SubMsgResult, Uint128,
-    WasmMsg,
+    coin, to_json_binary, Addr, BankMsg, Decimal, Deps, DepsMut, Env, Event, Fraction, MessageInfo,
+    Order, Response, StdError, StdResult, Storage, SubMsg, Uint128, WasmMsg,
 };
-use std::marker::PhantomData;
 
 use bs721::{NftInfoResponse, OwnerOfResponse};
 use bs721_account::helpers::Bs721Account;
@@ -82,7 +80,7 @@ pub fn execute_set_ask(
     };
     store_ask(deps.storage, &ask)?;
 
-    let hook = prepare_ask_hook(deps.as_ref(), &ask, HookAction::Create)?;
+    let hook = prepare_ask_hook(deps.storage, &ask, HookAction::Create)?;
 
     let event = Event::new("set-ask")
         .add_attribute("token_id", token_id)
@@ -120,15 +118,14 @@ pub fn execute_remove_ask(
     let ask = asks().load(deps.storage, key.clone())?;
     asks().remove(deps.storage, key)?;
 
-    let hook = prepare_ask_hook(deps.as_ref(), &ask, HookAction::Delete)?;
-
+    let hook = prepare_ask_hook(deps.storage, &ask, HookAction::Delete)?;
     let event = Event::new("remove-ask").add_attribute("token_id", token_id);
 
     Ok(Response::new().add_event(event).add_submessages(hook))
 }
 
 /// When an NFT is transferred, the `ask` has to be updated with the new
-/// seller. Also any renewal funds should be refunded to the previous owner.
+/// seller. Also any existing bids must begin the checked bid removal process to refund bidders.
 pub fn execute_update_ask(
     deps: DepsMut,
     info: MessageInfo,
@@ -145,11 +142,22 @@ pub fn execute_update_ask(
     ask.seller = seller.clone();
     asks().save(deps.storage, ask_key(token_id), &ask)?;
 
-    let event = Event::new("update-ask")
-        .add_attribute("token_id", token_id)
-        .add_attribute("seller", seller);
+    let mut res = Response::new().add_event(
+        Event::new("update-ask")
+            .add_attribute("token_id", token_id)
+            .add_attribute("seller", seller),
+    );
 
-    Ok(Response::new().add_event(event))
+    // use remove bids and send any bid hooks
+    let bids_to_remove = bids()
+        .idx
+        .price
+        .sub_prefix(token_id.to_string()) // This matches (token_id, _)
+        .keys(deps.storage, None, None, cosmwasm_std::Order::Ascending)
+        .collect::<Result<Vec<BidKey>, _>>()?;
+    checked_bid_removal(deps.storage, bids_to_remove, token_id, &mut res)?;
+
+    Ok(res)
 }
 
 /// Places a bid on a account. The bid is escrowed in the contract.
@@ -185,7 +193,7 @@ pub fn execute_set_bid(
     let bid = Bid::new(token_id, bidder.clone(), bid_price, env.block.time);
     store_bid(deps.storage, &bid)?;
 
-    let hook = prepare_bid_hook(deps.as_ref(), &bid.clone(), HookAction::Create)?;
+    let hook = prepare_bid_hook(deps.storage, &bid.clone(), HookAction::Create)?;
 
     let event = Event::new("set-bid")
         .add_attribute("token_id", token_id)
@@ -204,7 +212,7 @@ pub fn execute_cancel_cooldown(
     token_id: &str,
 ) -> Result<Response, ContractError> {
     let cd_key = &ask_key(token_id);
-    match cooldown_bids().may_load(deps.storage, cd_key)? {
+    match COOLDOWN_BID.may_load(deps.storage, cd_key)? {
         Some(p) => {
             // sender must be current token owner
             if info.sender != p.ask.seller {
@@ -253,13 +261,17 @@ pub fn execute_cancel_cooldown(
                     SubMsg::new(dev_cut_msg),
                 ]);
             }
-            cooldown_bids().remove(deps.storage, cd_key)?;
+            COOLDOWN_BID.remove(deps.storage, cd_key);
             Ok(res)
         }
         None => return Err(ContractError::AskNotFound {}),
     }
 }
-/// Removes a bid made by the bidder. Bidders can only remove their own bids
+
+/// Removes bids from an account. Only the account nft contract can call this.
+///  Occurs either when:
+/// - ExecuteMsg::AssociateAddress - an account updates the address it has associated itself with
+/// - ExecuteMsg::UpdateAbsAccSupport - an account token updates their EOA (abstract-account) association parameters
 pub fn execute_remove_bids(
     deps: DepsMut,
     _env: Env,
@@ -270,30 +282,41 @@ pub fn execute_remove_bids(
         return Err(ContractError::Unauthorized {});
     };
 
-    let bids_to_remove: Result<Vec<_>, _> = bids()
+    let bids_to_remove = bids()
         .idx
         .price
         .sub_prefix(token_id.to_string()) // This matches (token_id, _)
         .keys(deps.storage, None, None, cosmwasm_std::Order::Ascending)
-        .collect();
+        .collect::<Result<Vec<BidKey>, _>>()?;
+    let mut res = Response::default();
+    checked_bid_removal(deps.storage, bids_to_remove, token_id, &mut res)?;
+    Ok(res)
+}
 
-    let keys = bids_to_remove?;
-    let mut msgs = Vec::with_capacity(keys.len());
-    let mut submsgs = Vec::new();
-    for key in keys {
-        let bid_key = bid_key(&key.0, &key.1);
-        let bid = bids().load(deps.storage, bid_key.clone())?;
-        submsgs.extend(prepare_bid_hook(deps.as_ref(), &bid, HookAction::Delete)?);
-        bids().remove(deps.storage, bid_key)?;
-        msgs.push(BankMsg::Send {
-            to_address: bid.bidder.to_string(),
-            amount: vec![coin(bid.amount.u128(), NATIVE_DENOM)],
-        });
-    }
+/// Processes any stale bids set in the overflow buffer.
+pub fn execute_removed_overflow_bids(
+    deps: DepsMut,
+    token_id: &str,
+) -> Result<Response, ContractError> {
+    // add any bids we will not compute into overflow store
+    let mut bids_to_remove = Vec::new();
+    let limit = MAX_REMOVE_BID_LIMIT as usize;
+    OVERFLOW_BIDS_REMOVE.update(deps.storage, token_id.to_string(), |a| -> StdResult<_> {
+        let mut list: Vec<(String, Addr)> = a.unwrap_or_default();
+        if list.len() <= limit {
+            // Return all, leave empty
+            bids_to_remove = list;
+            Ok(Vec::new())
+        } else {
+            // Split: take first `limit`, keep the rest
+            bids_to_remove = list.drain(..limit).collect();
+            Ok(list) // remaining
+        }
+    })?;
 
-    Ok(Response::default()
-        .add_messages(msgs)
-        .add_submessages(submsgs))
+    let mut res = Response::default();
+    checked_bid_removal(deps.storage, bids_to_remove, token_id, &mut res)?;
+    Ok(res)
 }
 
 pub fn execute_remove_bid(
@@ -314,7 +337,7 @@ pub fn execute_remove_bid(
         amount: vec![coin(bid.amount.u128(), NATIVE_DENOM)],
     };
 
-    let hook = prepare_bid_hook(deps.as_ref(), &bid, HookAction::Delete)?;
+    let hook = prepare_bid_hook(deps.storage, &bid, HookAction::Delete)?;
 
     let event = Event::new("remove-bid")
         .add_attribute("token_id", token_id)
@@ -331,12 +354,11 @@ pub fn execute_remove_bid(
 pub fn execute_finalize_bid(
     deps: DepsMut,
     env: Env,
-    info: MessageInfo,
     token_id: &str,
 ) -> Result<Response, ContractError> {
     let collection = ACCOUNT_COLLECTION.load(deps.storage)?;
     let cd_key = &ask_key(token_id);
-    let pending = cooldown_bids().may_load(deps.storage, cd_key)?;
+    let pending = COOLDOWN_BID.may_load(deps.storage, cd_key)?;
     let mut res = Response::default();
     match pending {
         Some(mut p) => {
@@ -392,7 +414,16 @@ pub fn execute_finalize_bid(
                 p.new_owner.clone(),
                 &mut res,
             )?;
-            cooldown_bids().remove(deps.storage, cd_key)?;
+            COOLDOWN_BID.remove(deps.storage, cd_key);
+
+            let bid_to_remove = bids()
+                .idx
+                .price
+                .sub_prefix(token_id.to_string()) // This matches (token_id, _)
+                .keys(deps.storage, None, None, cosmwasm_std::Order::Ascending)
+                .collect::<Result<Vec<BidKey>, _>>()?;
+
+            checked_bid_removal(deps.storage, bid_to_remove, token_id, &mut res)?;
             store_ask(
                 deps.storage,
                 &Ask {
@@ -430,17 +461,29 @@ pub fn execute_accept_bid(
     let bid = bids().load(deps.storage, bid_key.clone())?;
 
     // Check if token is approved for transfer
-    Bs721Account(collection).approval(&deps.querier, token_id, info.sender.as_ref(), None)?;
-
+    Bs721Account(collection.clone()).approval(
+        &deps.querier,
+        token_id,
+        info.sender.as_ref(),
+        None,
+    )?;
+    let mut res = Response::default();
     // Remove accepted bid
     bids().remove(deps.storage, bid_key)?;
+    let bid_to_remove = bids()
+        .idx
+        .price
+        .sub_prefix(token_id.to_string()) // This matches (token_id, _)
+        .keys(deps.storage, None, None, cosmwasm_std::Order::Ascending)
+        .collect::<Result<Vec<BidKey>, _>>()?;
+    checked_bid_removal(deps.storage, bid_to_remove, token_id, &mut res)?;
 
     // begin cooldown period
     let unlock_time = env.block.time.plus_seconds(cooldown);
     let pending = PendingBid::new(ask.clone(), bidder.clone(), bid.amount, unlock_time);
-    cooldown_bids().save(deps.storage, &ask_key, &pending)?;
+    COOLDOWN_BID.save(deps.storage, &ask_key, &pending)?;
 
-    Ok(Response::default().add_event(
+    Ok(res.add_event(
         Event::new("accept-bid")
             .add_attribute("token_id", token_id)
             .add_attribute("bidder", bidder)
@@ -475,7 +518,7 @@ fn finalize_sale(
     res.messages.push(SubMsg::new(exec_cw721_transfer));
 
     res.messages
-        .append(&mut prepare_sale_hook(deps, &ask, buyer.clone())?);
+        .append(&mut prepare_sale_hook(deps.storage, &ask, buyer.clone())?);
 
     let event = Event::new("finalize-sale")
         .add_attribute("token_id", ask.token_id.to_string())
@@ -483,6 +526,46 @@ fn finalize_sale(
         .add_attribute("buyer", buyer.to_string())
         .add_attribute("price", price.to_string());
     res.events.push(event);
+
+    Ok(())
+}
+
+// only process up to MAX_REMOVE_BID_LIMIT in initial bid remove.
+// Any 'overflow bids' stored into map, and upon either:
+//     - new bids being set
+//     - ask updated/removed
+// we pop MAX_REMOVE_BID_LIMIT again, and logic repeats until no old bids are removed.
+pub fn checked_bid_removal(
+    storage: &mut dyn Storage,
+    bids_to_remove: Vec<BidKey>,
+    token_id: &str,
+    res: &mut Response,
+) -> StdResult<()> {
+    let (process, remaining) = bids_to_remove.split_at(std::cmp::min(
+        MAX_REMOVE_BID_LIMIT as usize,
+        bids_to_remove.len(),
+    ));
+
+    // add any bids we will not compute back into overflow store
+    OVERFLOW_BIDS_REMOVE.update(storage, token_id.to_string(), |a| {
+        let mut overflow = a.unwrap_or_default();
+        overflow.extend(remaining.to_vec());
+        return Ok::<Vec<BidKey>, StdError>(overflow);
+    })?;
+
+    // refund bidders, call bid hooks
+    let mut submsgs = Vec::new();
+    for key in process {
+        let bid = bids().load(storage, key.clone())?;
+        submsgs.extend(prepare_bid_hook(storage, &bid, HookAction::Delete)?);
+        bids().remove(storage, key.clone())?;
+        submsgs.push(SubMsg::new(BankMsg::Send {
+            to_address: bid.bidder.to_string(),
+            amount: vec![coin(bid.amount.u128(), NATIVE_DENOM)],
+        }));
+    }
+
+    res.messages.extend(submsgs);
 
     Ok(())
 }

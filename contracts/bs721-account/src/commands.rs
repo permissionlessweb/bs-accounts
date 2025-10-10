@@ -1,10 +1,11 @@
-use crate::error::ContractError;
+use bs721_base::msg::ExecuteMsg as Bs721ExecuteMsg;
 
-use crate::msg::Bs721AccountsQueryMsg;
-use crate::state::{
-    SudoParams, ACCOUNT_MARKETPLACE, REVERSE_MAP, REVERSE_MAP_KEY, SUDO_PARAMS, VERIFIER,
+use crate::{
+    error::ContractError,
+    msg::Bs721AccountsQueryMsg,
+    state::{SudoParams, ACCOUNT_MARKETPLACE, REVERSE_MAP, REVERSE_MAP_KEY, SUDO_PARAMS, VERIFIER},
+    Bs721AccountContract,
 };
-use crate::Bs721AccountContract;
 use cosmwasm_std::{
     ensure, Addr, Binary, CanonicalAddr, ContractInfoResponse, Deps, DepsMut, Env, Event,
     MessageInfo, Response, StdError, StdResult,
@@ -12,7 +13,6 @@ use cosmwasm_std::{
 use cw_ownable::Ownership;
 use cw_utils::nonpayable;
 
-use bs721_base::msg::ExecuteMsg as Bs721ExecuteMsg;
 use btsg_account::{TextRecord, MAX_TEXT_LENGTH, NFT};
 
 pub mod manifest {
@@ -23,9 +23,12 @@ pub mod manifest {
     use bs721::Expiration;
     use bs721_base::state::TokenInfo;
     use btsg_account::{
-        market::PendingBid, validate_aa_ownership, verify_generic::CosmosArbitrary, Metadata,
+        market::{PendingBid, QueryMsg},
+        validate_aa_ownership,
+        verify_generic::CosmosArbitrary,
+        Metadata,
     };
-    use cosmwasm_std::{to_json_binary, Attribute, CosmosMsg, WasmMsg};
+    use cosmwasm_std::{to_json_binary, Attribute, CosmosMsg, SubMsg, WasmMsg};
 
     use crate::state::{REVERSE_MAP_KEY, REVMAP_LIMIT};
 
@@ -130,20 +133,19 @@ pub mod manifest {
         old_account.map(|token_id| {
             Bs721AccountContract::default()
                 .tokens
-                .update(deps.storage, &token_id, |token| match token {
-                    Some(mut token_info) => {
-                        token_info.token_uri = None;
-                        Ok(token_info)
+                .update(deps.storage, &token_id, |t| match t {
+                    Some(mut ti) => {
+                        ti.token_uri = None;
+                        Ok(ti)
                     }
                     None => Err(ContractError::AccountNotFound {}),
                 })
         });
 
         // println!("// 5. associate new token_uri / address with new account / token_id");
-        Bs721AccountContract::default().tokens.update(
-            deps.storage,
-            &account,
-            |token| match token {
+        Bs721AccountContract::default()
+            .tokens
+            .update(deps.storage, &account, |t| match t {
                 Some(mut token_info) => {
                     token_info.token_uri = token_uri.clone().map(|addr| addr.to_string());
                     // save ownership metadata if set
@@ -157,8 +159,7 @@ pub mod manifest {
                     Ok(token_info)
                 }
                 None => Err(ContractError::AccountNotFound {}),
-            },
-        )?;
+            })?;
 
         // println!("// 6. update new manager in token metadata");
         let canonv = deps.api.addr_canonicalize(info.sender.as_str())?;
@@ -174,7 +175,6 @@ pub mod manifest {
         }
 
         // remove bids since changes were made and may create differences between what is being bid on
-
         Ok(Response::new()
             .add_event(event)
             .add_message(WasmMsg::Execute {
@@ -228,14 +228,24 @@ pub mod manifest {
         abs_account: Option<String>,
     ) -> Result<Response, ContractError> {
         only_owner(deps.as_ref(), &info.sender, account)?;
-
+        let mut remove_bids_trigger = Vec::with_capacity(1);
         let mut token = Bs721AccountContract::default()
             .tokens
             .load(deps.storage, account)?;
 
+        if let Some(_cooldown) = deps.querier.query_wasm_smart::<Option<PendingBid>>(
+            ACCOUNT_MARKETPLACE.load(deps.storage)?.to_string(),
+            &QueryMsg::Cooldown {
+                token_id: account.to_string(),
+            },
+        )? {
+            return Err(ContractError::AccountIsInCooldownStage {});
+        }
+
         match (token.extension.account_ownership, abs_account) {
             // Already enabled: updating
             (true, Some(new_aa)) => {
+                remove_bids_trigger.push(());
                 // New AA must point to this token
                 validate_aa_ownership(
                     deps.as_ref(),
@@ -263,6 +273,7 @@ pub mod manifest {
 
             (true, None) => {
                 // Disable: ensure current AA isn't still using this token
+                remove_bids_trigger.push(());
                 if let Some(old_aa) = &token.token_uri {
                     validate_aa_ownership(
                         deps.as_ref(),
@@ -278,6 +289,7 @@ pub mod manifest {
 
             // Enable abstract-ownership
             (false, Some(new_aa)) => {
+                // no need to remove bids, owner can discern bids to accept
                 validate_aa_ownership(
                     deps.as_ref(),
                     &new_aa,
@@ -298,14 +310,19 @@ pub mod manifest {
             .tokens
             .save(deps.storage, account, &token)?;
 
-        // refund all bids as they the condition of the bids may differ from when they were created
-        Ok(Response::new().add_message(WasmMsg::Execute {
-            contract_addr: ACCOUNT_MARKETPLACE.load(deps.storage)?.to_string(),
-            msg: to_json_binary(&btsg_account::market::ExecuteMsg::RemoveBids {
-                token_id: account.to_string(),
-            })?,
-            funds: vec![],
-        }))
+        let mut res = Response::default();
+        // refund all bids as they the condition of the bids may now differ from when they were created
+        if !remove_bids_trigger.is_empty() {
+            res.messages.push(SubMsg::new(WasmMsg::Execute {
+                contract_addr: ACCOUNT_MARKETPLACE.load(deps.storage)?.to_string(),
+                msg: to_json_binary(&btsg_account::market::ExecuteMsg::RemoveBids {
+                    token_id: account.to_string(),
+                })?,
+                funds: vec![],
+            }));
+        }
+
+        Ok(res)
     }
 
     /// updates the (usually) non `bitsong1...` addresses mapped to a `bitsong1...` account.
@@ -963,11 +980,10 @@ pub mod queries {
     }
 
     pub fn query_associated_address(deps: Deps, account: &str) -> StdResult<String> {
-        Bs721AccountContract::default()
+        let token = Bs721AccountContract::default()
             .tokens
-            .load(deps.storage, account)?
-            .token_uri
-            .ok_or_else(|| StdError::generic_err("No associated address"))
+            .load(deps.storage, account)?;
+        Ok(token.token_uri.unwrap_or(token.owner.to_string()))
     }
 
     pub fn query_image_nft(deps: Deps, account: &str) -> StdResult<Option<NFT>> {
@@ -1020,9 +1036,7 @@ fn validate_address(deps: Deps, sender: &Addr, addr: Addr) -> Result<Addr, Contr
     }
 
     let contract_details = cw2::query_contract_info(&deps.querier, addr.to_string())?;
-    if contract_details.contract.contains("bs721-base")
-        || contract_details.contract.contains("sg721-updatable")
-    {
+    if contract_details.contract.contains("bs721-base") {
         let collection_info: Ownership<Addr> = deps
             .querier
             .query_wasm_smart(&addr, &Bs721AccountsQueryMsg::Minter {})?;
