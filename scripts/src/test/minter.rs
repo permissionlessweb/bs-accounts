@@ -4,10 +4,10 @@ use cw_orch::{anyhow, mock::MockBech32, prelude::*};
 use crate::BtsgAccountSuite;
 use crate::{
     Bs721AccountMarketExecuteMsgTypes, Bs721AccountsQueryMsgFns, BtsgAccountExecuteFns,
-    BtsgAccountMarketExecuteFns, BtsgAccountMarketQueryFns, TestOwnershipExecuteMsgFns,
-    TestOwnershipInitMsg,
+    BtsgAccountMarketExecuteFns, BtsgAccountMarketQueryFns, BtsgAccountMinterExecuteFns,
+    BtsgAccountMinterQueryMsgFns, TestOwnershipExecuteMsgFns, TestOwnershipInitMsg,
 };
-use bs721_account_minter::msg::{ExecuteMsgFns as _, QueryMsgFns as _};
+
 use cosmwasm_std::Uint128;
 use cosmwasm_std::{coins, to_json_binary, Decimal};
 use cw_orch::mock::cw_multi_test::{SudoMsg, WasmSudo};
@@ -17,7 +17,7 @@ use std::error::Error;
 use bs721_account_marketplace::state::MAX_FEE_BPS;
 use bs721_account_marketplace::ContractError as MarketContractError;
 use bs721_account_minter::ContractError as MinterContractError;
-use btsg_account::market::{Ask, Bid, ExecuteMsg, PendingBid, QueryMsgFns};
+use btsg_account::market::{Ask, Bid, ExecuteMsg, PendingBid};
 use btsg_account::DEPLOYMENT_DAO;
 use cosmwasm_std::{coin, Attribute, Binary, Event};
 
@@ -121,7 +121,6 @@ mod hooks {
         // assert hook logic is performed
         Ok(())
     }
-    
 }
 mod execute {
 
@@ -1640,7 +1639,7 @@ mod associate_address {
         let bidder_bal = mock.query_balance(&bidder, "ubtsg")?;
         suite.bid_w_funds(mock.clone(), token_id, bidder.clone(), BID_AMOUNT)?;
         assert_eq!(bidder_bal, Uint128::zero());
-        let res = suite.market.accept_bid(bidder.clone(), token_id.into())?;
+        let _res = suite.market.accept_bid(bidder.clone(), token_id.into())?;
         // assert funds go back to bidder, along with tokens if owner changes ownership prior to finalizing bid
         mock.wait_seconds(60)?;
         let res = suite.market.finalize_bid(token_id.into())?;
@@ -1660,6 +1659,7 @@ mod associate_address {
 
         Ok(())
     }
+
     #[test]
     fn test_transfer_to_eoa() -> anyhow::Result<()> {
         let mock = MockBech32::new("bitsong");

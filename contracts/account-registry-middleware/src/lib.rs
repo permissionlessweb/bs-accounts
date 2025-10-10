@@ -55,7 +55,10 @@ pub struct MigrateMsg {}
 #[cw_serde]
 #[derive(cw_orch::ExecuteFns)]
 pub enum ExecuteMsg {
-    WithdrawPayments {},
+    WithdrawPayments {
+        assets: Vec<String>,
+    },
+    RegistryAction(abstract_std::registry::ExecuteMsg),
     UpdateConfig {
         market: Option<String>,
         registry: Option<String>,
@@ -109,7 +112,9 @@ pub fn execute(
 ) -> Result<Response, ContractError> {
     let c: Config = CONFIG.load(deps.storage)?;
     match msg {
-        ExecuteMsg::WithdrawPayments {} => withdraw_payments(deps, info, c),
+        ExecuteMsg::WithdrawPayments { assets } => {
+            withdraw_payments(deps, info, c.current_admin, assets)
+        }
         ExecuteMsg::UpdateConfig {
             market,
             registry,
@@ -123,6 +128,9 @@ pub fn execute(
         ExecuteMsg::BidUpdatedHook(b) => p_bid(deps, info, b, c, HookAction::Update),
         ExecuteMsg::BidDeletedHook(b) => p_bid(deps, info, b, c, HookAction::Delete),
         ExecuteMsg::SaleHook(s) => process_sale_hook(info, s, &c.market),
+        ExecuteMsg::RegistryAction(execute_msg) => {
+            route_registry_action(info, c.current_admin, c.registry.unwrap(), &execute_msg)
+        }
     }
 }
 
@@ -222,6 +230,22 @@ pub fn process_sale_hook(
     Ok(res)
 }
 
+pub fn route_registry_action(
+    info: MessageInfo,
+    admin: String,
+    registry: String,
+    execute_msg: &abstract_std::registry::ExecuteMsg,
+) -> Result<Response, ContractError> {
+    if info.sender.to_string() != admin {
+        return Err(ContractError::Unauthorized {});
+    }
+    Ok(Response::default().add_message(WasmMsg::Execute {
+        contract_addr: registry,
+        msg: to_json_binary(execute_msg)?,
+        funds: vec![],
+    }))
+}
+
 fn claim_namespace(
     res: &mut Response,
     seq: u32,
@@ -253,27 +277,25 @@ fn forgoe_namespace(res: &mut Response, token_id: &String, market: &String) -> S
 fn withdraw_payments(
     deps: DepsMut,
     info: MessageInfo,
-    config: Config,
+    to_address: String,
+    assets: Vec<String>,
 ) -> Result<Response, ContractError> {
     // Only allow current admin to withdraw
-    if &info.sender.to_string() != &config.current_admin {
+    if &info.sender.to_string() != &to_address {
         return Err(ContractError::Unauthorized {});
     }
 
-    // Query the contract's balance
-    let balance = deps.querier.query_balance(&info.sender, "ubtsg")?;
+    let mut amount = Vec::with_capacity(assets.len());
+    for ass in assets {
+        amount.push(deps.querier.query_balance(&info.sender, ass)?);
+    }
 
     // If there are funds, send them to the admin
-    let bank_msg = BankMsg::Send {
-        to_address: config.current_admin.to_string(),
-        amount: vec![balance.clone()],
-    };
+    let bank_msg = BankMsg::Send { to_address, amount };
 
     Ok(Response::new()
         .add_message(bank_msg)
-        .add_attribute("action", "withdraw_payments")
-        .add_attribute("to", config.current_admin)
-        .add_attribute("amount", format!("{:?}", balance)))
+        .add_attribute("action", "withdraw_payments"))
 }
 
 fn update_config(
