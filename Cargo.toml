@@ -32,7 +32,7 @@ cw2                   = { version = "2.0.0" }
 cw-ownable            = { version = "2.1.0" }
 cw-storage-plus       = { version = "2.0.0" }
 cw-utils              = { version = "2.0.0" }
-abstract-std          = { version = "0.26.0" }
+abstract-std          = { git = "https://github.com/permissionlessweb/abstract", branch = "feat/wasm-path" }
 # cw-orch             = { version = "0.28.0" }
 cw-orch               = { git = "https://github.com/permissionlessweb/cw-orchestrator", branch = "feat/wasm-path" }
 bs721                 = { git = "https://github.com/permissionlessweb/bs-nfts", branch = "feat/cw@v2", package = "bs721" }

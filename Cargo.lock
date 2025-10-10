@@ -15,8 +15,7 @@ dependencies = [
 [[package]]
 name = "abstract-account"
 version = "0.26.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9c6e0768551dc22a628a86d3be3f2e6d31d0760ced38f0cb60dea8c8a2e9cb8f"
+source = "git+https://github.com/permissionlessweb/abstract?branch=feat%2Fwasm-path#3a77c82d37fdf321f91b4491f00d6b074482ecaa"
 dependencies = [
  "abstract-ica",
  "abstract-macros",
@@ -35,8 +34,7 @@ dependencies = [
 [[package]]
 name = "abstract-ans-host"
 version = "0.26.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7ad4daec6e343ed77afa2cb9c7b0aaaec2abc8405c6027a026c34cddea75c995"
+source = "git+https://github.com/permissionlessweb/abstract?branch=feat%2Fwasm-path#3a77c82d37fdf321f91b4491f00d6b074482ecaa"
 dependencies = [
  "abstract-macros",
  "abstract-sdk",
@@ -97,8 +95,7 @@ dependencies = [
 [[package]]
 name = "abstract-ibc-client"
 version = "0.26.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f46e2b0db78d0107cd46ae154e5206dafea2c760267e432334e310692f64f182"
+source = "git+https://github.com/permissionlessweb/abstract?branch=feat%2Fwasm-path#3a77c82d37fdf321f91b4491f00d6b074482ecaa"
 dependencies = [
  "abstract-macros",
  "abstract-sdk",
@@ -118,15 +115,14 @@ dependencies = [
 [[package]]
 name = "abstract-ibc-host"
 version = "0.26.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8f06961e7a1fa28ceffe6ec5471d701bab8eaffdbb323a6a367cb835ac006567"
+source = "git+https://github.com/permissionlessweb/abstract?branch=feat%2Fwasm-path#3a77c82d37fdf321f91b4491f00d6b074482ecaa"
 dependencies = [
  "abstract-macros",
  "abstract-sdk",
  "abstract-std",
  "cosmwasm-schema",
  "cosmwasm-std",
- "cw-orch 0.27.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cw-orch 0.27.0 (git+https://github.com/permissionlessweb/cw-orchestrator?branch=feat%2Fwasm-path)",
  "cw-ownable",
  "cw-paginate",
  "cw-storage-plus",
@@ -140,13 +136,12 @@ dependencies = [
 [[package]]
 name = "abstract-ica"
 version = "0.26.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ef3d3be91746ec5603e6baaa457c6eb3d816ee5c5a63f331b733f120932bc53f"
+source = "git+https://github.com/permissionlessweb/abstract?branch=feat%2Fwasm-path#3a77c82d37fdf321f91b4491f00d6b074482ecaa"
 dependencies = [
  "abstract-sdk",
  "cosmwasm-schema",
  "cosmwasm-std",
- "cw-orch 0.27.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cw-orch 0.27.0 (git+https://github.com/permissionlessweb/cw-orchestrator?branch=feat%2Fwasm-path)",
  "cw-ownable",
  "map-macro",
  "polytone-evm",
@@ -156,8 +151,7 @@ dependencies = [
 [[package]]
 name = "abstract-interface"
 version = "0.26.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e07abe870544f48a1fdb22eebca32ca0862afb5364909a50eb52d2958ec37af4"
+source = "git+https://github.com/permissionlessweb/abstract?branch=feat%2Fwasm-path#3a77c82d37fdf321f91b4491f00d6b074482ecaa"
 dependencies = [
  "abstract-account",
  "abstract-ans-host",
@@ -174,7 +168,7 @@ dependencies = [
  "cw-asset",
  "cw-blob",
  "cw-controllers",
- "cw-orch 0.27.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cw-orch 0.27.0 (git+https://github.com/permissionlessweb/cw-orchestrator?branch=feat%2Fwasm-path)",
  "cw-storage-plus",
  "cw2",
  "cw20",
@@ -191,8 +185,7 @@ dependencies = [
 [[package]]
 name = "abstract-macros"
 version = "0.26.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "93cc901cf3c7d46b9feef0002687de9e4660d6ffb7764ddee6614ec768254977"
+source = "git+https://github.com/permissionlessweb/abstract?branch=feat%2Fwasm-path#3a77c82d37fdf321f91b4491f00d6b074482ecaa"
 dependencies = [
  "proc-macro2 1.0.95",
  "quote",
@@ -202,8 +195,7 @@ dependencies = [
 [[package]]
 name = "abstract-module-factory"
 version = "0.26.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1f46a6bb791ad80018c1be3cab5851bb94337bfcb731047d96dc576d657c5123"
+source = "git+https://github.com/permissionlessweb/abstract?branch=feat%2Fwasm-path#3a77c82d37fdf321f91b4491f00d6b074482ecaa"
 dependencies = [
  "abstract-macros",
  "abstract-sdk",
@@ -283,8 +275,7 @@ dependencies = [
 [[package]]
 name = "abstract-registry"
 version = "0.26.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "003514ffe1cbdb754638d6a86fe85061a6b4f2f7cb7b52e3b95e3d6616dc079a"
+source = "git+https://github.com/permissionlessweb/abstract?branch=feat%2Fwasm-path#3a77c82d37fdf321f91b4491f00d6b074482ecaa"
 dependencies = [
  "abstract-macros",
  "abstract-sdk",
@@ -302,8 +293,7 @@ dependencies = [
 [[package]]
 name = "abstract-sdk"
 version = "0.26.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "acc5443b9a09eabe97dd94cb81d3dea1099bc442446475095775c4e3bcd94e39"
+source = "git+https://github.com/permissionlessweb/abstract?branch=feat%2Fwasm-path#3a77c82d37fdf321f91b4491f00d6b074482ecaa"
 dependencies = [
  "abstract-macros",
  "abstract-std",
@@ -323,8 +313,7 @@ dependencies = [
 [[package]]
 name = "abstract-std"
 version = "0.26.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f2318c1da0c75cad328d3cd477b3ded95695f62578cec2837f6578e5983937d8"
+source = "git+https://github.com/permissionlessweb/abstract?branch=feat%2Fwasm-path#3a77c82d37fdf321f91b4491f00d6b074482ecaa"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -333,7 +322,7 @@ dependencies = [
  "cw-blob",
  "cw-clearable",
  "cw-controllers",
- "cw-orch 0.27.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cw-orch 0.27.0 (git+https://github.com/permissionlessweb/cw-orchestrator?branch=feat%2Fwasm-path)",
  "cw-ownable",
  "cw-storage-plus",
  "cw-utils",
@@ -1957,6 +1946,7 @@ dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "csv",
+ "cw-blob",
  "cw-orch 0.27.0 (git+https://github.com/permissionlessweb/cw-orchestrator?branch=feat%2Fwasm-path)",
  "cw-ownable",
  "dirs",
@@ -3046,12 +3036,11 @@ dependencies = [
 [[package]]
 name = "cw-blob"
 version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6550afe025219bc513215cd7f022f3200239db57ed41bd7d94701ce029e71d0b"
+source = "git+https://github.com/permissionlessweb/cw-packages?branch=feat%2Fwasm-path#062c8a50ac25992d58be53db4f94a6ae9e175f27"
 dependencies = [
  "cosmrs 0.20.0",
  "cosmwasm-std",
- "cw-orch 0.25.1",
+ "cw-orch 0.27.0 (git+https://github.com/permissionlessweb/cw-orchestrator?branch=feat%2Fwasm-path)",
 ]
 
 [[package]]
@@ -3101,27 +3090,6 @@ dependencies = [
 
 [[package]]
 name = "cw-orch"
-version = "0.25.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b7353edbba484283e3162fba408bc450de43b8cc20124f89299af6ba70ad8727"
-dependencies = [
- "anyhow",
- "cosmwasm-std",
- "cw-orch-contract-derive 0.21.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "cw-orch-core 2.1.4 (registry+https://github.com/rust-lang/crates.io-index)",
- "cw-orch-fns-derive 0.23.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "cw-orch-mock 0.24.4 (registry+https://github.com/rust-lang/crates.io-index)",
- "cw-orch-traits 0.24.1",
- "cw-utils",
- "hex",
- "log",
- "schemars 0.8.22",
- "serde",
- "thiserror 1.0.69",
-]
-
-[[package]]
-name = "cw-orch"
 version = "0.26.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3302a05c496bac5e909513851106be432f9349fe6ac50acf6efc6c56a3bc9ee4"
@@ -3163,7 +3131,9 @@ dependencies = [
  "cw-orch-traits 0.25.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "cw-utils",
  "hex",
+ "insta",
  "log",
+ "sanitize-filename",
  "schemars 0.8.22",
  "serde",
  "thiserror 1.0.69",
@@ -3895,6 +3865,23 @@ dependencies = [
  "cw-utils",
  "schemars 0.8.22",
  "serde",
+]
+
+[[package]]
+name = "cw20-base"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d6de8c32e100f1fca306972d86b617234a5e6b00594ea2b48716fd6804d4d95d"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus",
+ "cw2",
+ "cw20",
+ "schemars 0.8.22",
+ "semver",
+ "serde",
+ "thiserror 1.0.69",
 ]
 
 [[package]]
@@ -5680,12 +5667,6 @@ checksum = "9229cfe53dfd69f0609a49f65461bd93001ea1ef889cd5529dd176593f5338a1"
 dependencies = [
  "allocator-api2",
 ]
-
-[[package]]
-name = "hashbrown"
-version = "0.16.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5419bdc4f6a9207fbeba6d11b604d481addf78ecd10c11ad51e76c2f6482748d"
 
 [[package]]
 name = "hashers"
@@ -7485,7 +7466,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4b0f83760fb341a774ed326568e19f5a863af4a952def8c39f9ab92fd95b88e5"
 dependencies = [
  "equivalent",
- "hashbrown 0.16.0",
+ "hashbrown 0.15.5",
  "serde",
  "serde_core",
 ]
@@ -7516,6 +7497,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "879f10e63c20629ecabbb64a8010319738c66a5cd0c29b02d63d272b03751d01"
 dependencies = [
  "generic-array",
+]
+
+[[package]]
+name = "insta"
+version = "1.43.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "46fdb647ebde000f43b5b53f773c30cf9b0cb4300453208713fa38b2c70935a0"
+dependencies = [
+ "console",
+ "once_cell",
+ "serde",
+ "similar",
 ]
 
 [[package]]
@@ -7967,6 +7960,9 @@ name = "lazy_static"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe"
+dependencies = [
+ "spin 0.9.8",
+]
 
 [[package]]
 name = "lazycell"
@@ -9491,6 +9487,7 @@ dependencies = [
  "ecdsa",
  "elliptic-curve",
  "primeorder",
+ "serdect",
  "sha2 0.10.9",
 ]
 
@@ -11031,6 +11028,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "353e1ca18966c16d9deb1c69278edbc5f194139612772bd9537af60ac231e1e6"
 dependencies = [
  "elliptic-curve",
+ "serdect",
 ]
 
 [[package]]
@@ -11199,7 +11197,7 @@ version = "0.13.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "be769465445e8c1474e9c5dac2018218498557af32d9ed057325ec9a41ae81bf"
 dependencies = [
- "heck 0.5.0",
+ "heck 0.4.1",
  "itertools 0.14.0",
  "log",
  "multimap",
@@ -12108,6 +12106,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "sanitize-filename"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2ed72fbaf78e6f2d41744923916966c4fbe3d7c74e3037a8ee482f1115572603"
+dependencies = [
+ "lazy_static",
+ "regex",
+]
+
+[[package]]
 name = "scale-info"
 version = "2.11.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -12678,6 +12686,12 @@ name = "simdutf8"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e3a9fe34e3e7a50316060351f37187a3f546bce95496156754b601a5fa71b76e"
+
+[[package]]
+name = "similar"
+version = "2.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bbbb5d9659141646ae647b42fe094daf6c6192d1620870b449d9557f748b2daa"
 
 [[package]]
 name = "simple_asn1"
@@ -14920,8 +14934,103 @@ checksum = "f17a85883d4e6d00e8a97c586de764dabcc06133f7f1d55dce5cdc070ad7fe59"
 [[package]]
 name = "workspace-hack"
 version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "beffa227304dbaea3ad6a06ac674f9bc83a3dec3b7f63eeb442de37e7cb6bb01"
+source = "git+https://github.com/permissionlessweb/abstract?branch=feat%2Fwasm-path#3a77c82d37fdf321f91b4491f00d6b074482ecaa"
+dependencies = [
+ "ahash 0.8.12",
+ "aho-corasick",
+ "anstream",
+ "anyhow",
+ "base16ct",
+ "bip32",
+ "bitcoin-internals 0.2.0",
+ "bitcoin_hashes 0.13.0",
+ "bitflags 2.9.1",
+ "bs58",
+ "byteorder",
+ "bytes",
+ "chrono",
+ "console",
+ "cosmos-sdk-proto 0.24.0",
+ "cosmrs 0.19.0",
+ "cosmwasm-std",
+ "crossbeam-epoch",
+ "crunchy",
+ "cw-orch 0.27.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cw-orch-interchain 0.8.1",
+ "cw1-whitelist",
+ "cw20-base",
+ "der",
+ "deranged",
+ "digest 0.10.7",
+ "ecdsa",
+ "ed25519",
+ "ed25519-dalek",
+ "either",
+ "elliptic-curve",
+ "ff",
+ "flex-error",
+ "futures",
+ "futures-channel",
+ "futures-core",
+ "futures-executor",
+ "futures-io",
+ "futures-sink",
+ "futures-task",
+ "futures-util",
+ "generic-array",
+ "getrandom 0.2.16",
+ "group",
+ "hex-conservative 0.1.2",
+ "hyper 0.14.32",
+ "ics23",
+ "informalsystems-pbjson",
+ "k256",
+ "lazy_static",
+ "libc",
+ "log",
+ "memchr",
+ "num-bigint",
+ "num-integer",
+ "num-iter",
+ "num-traits",
+ "once_cell",
+ "p256",
+ "parking_lot",
+ "ppv-lite86",
+ "primeorder",
+ "prost 0.13.5",
+ "rand 0.8.5",
+ "rand_chacha 0.3.1",
+ "rand_core 0.6.4",
+ "regex",
+ "regex-automata",
+ "regex-syntax",
+ "reqwest 0.11.27",
+ "reqwest 0.12.23",
+ "ripemd",
+ "sec1",
+ "semver",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "signature",
+ "smallvec",
+ "spki",
+ "subtle-encoding",
+ "syn 1.0.109",
+ "syn 2.0.101",
+ "tendermint-proto 0.39.1",
+ "time",
+ "tokio-stream",
+ "tokio-util 0.7.16",
+ "tonic",
+ "tower 0.4.13",
+ "tracing",
+ "tracing-core",
+ "unicode-normalization",
+ "uuid 1.18.1",
+ "zeroize",
+]
 
 [[package]]
 name = "writeable"

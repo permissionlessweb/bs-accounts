@@ -39,14 +39,13 @@ pub enum ContractError {
 #[cw_serde]
 pub struct InstantiateMsg {
     pub market: String,
-    pub registry: String,
     pub collection: String,
 }
 
 #[cw_serde]
 pub struct Config {
     pub market: String,
-    pub registry: String,
+    pub registry: Option<String>,
     pub collection: String,
     pub current_admin: String,
 }
@@ -92,7 +91,7 @@ pub fn instantiate(
         deps.storage,
         &Config {
             market: msg.market,
-            registry: msg.registry,
+            registry: None,
             collection: msg.collection,
             current_admin: info.sender.to_string(),
         },
@@ -174,7 +173,7 @@ pub fn p_bid(
     match method {
         HookAction::Create => {
             let namespace = deps.querier.query_wasm_smart::<NamespaceResponse>(
-                config.registry,
+                config.registry.unwrap(),
                 &RegistryQueryMsg::Namespace {
                     namespace: Namespace::new(&hook.bid.token_id)?,
                 },
@@ -296,7 +295,7 @@ fn update_config(
         config.market = market;
     }
     if let Some(registry) = registry {
-        config.registry = registry;
+        config.registry = Some(registry);
     }
     if let Some(collection) = collection {
         config.collection = collection;
@@ -310,5 +309,5 @@ fn update_config(
     Ok(Response::new()
         .add_attribute("action", "update_config")
         .add_attribute("updated_market", config.market.clone())
-        .add_attribute("updated_registry", config.registry.clone()))
+        .add_attribute("updated_registry", config.registry.unwrap()))
 }

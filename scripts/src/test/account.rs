@@ -38,14 +38,14 @@ fn mint_and_update() -> anyhow::Result<()> {
     let minter = suite.minter.address()?;
 
     // retrieve max record count
-    let params = suite.account.params()?;
+    let params = suite.nft.params()?;
     let max_record_count = params.max_record_count;
 
     // mint token
     let token_id = "Enterprise";
 
     let err = suite
-        .account
+        .nft
         .call_as(&not_minter)
         .mint(
             btsg_account::Metadata::default(),
@@ -62,7 +62,7 @@ fn mint_and_update() -> anyhow::Result<()> {
         ContractError::UnauthorizedMinter {}.to_string()
     );
 
-    suite.account.call_as(&minter).mint(
+    suite.nft.call_as(&minter).mint(
         btsg_account::Metadata::default(),
         mock.sender,
         token_id,
@@ -72,7 +72,7 @@ fn mint_and_update() -> anyhow::Result<()> {
     )?;
 
     // check token contains correct metadata
-    let res = suite.account.nft_info(token_id)?;
+    let res = suite.nft.nft_info(token_id)?;
 
     assert_eq!(res.token_uri, None);
     assert_eq!(res.extension, btsg_account::Metadata::default());
@@ -83,7 +83,7 @@ fn mint_and_update() -> anyhow::Result<()> {
         token_id: "token_id".to_string(),
     };
     let nft_value = suite
-        .account
+        .nft
         .update_image_nft(token_id, Some(new_nft.clone()))?
         .event_attr_value("wasm-update_image_nft", "image_nft")?
         .into_bytes();
@@ -97,19 +97,19 @@ fn mint_and_update() -> anyhow::Result<()> {
         verified: None,
     };
     let record_value = suite
-        .account
+        .nft
         .update_text_record(token_id.to_string(), new_record.clone())?
         .event_attr_value("wasm-update-text-record", "record")?
         .into_bytes();
 
     let record: btsg_account::TextRecord = from_json(record_value)?;
     assert_eq!(record, new_record);
-    let records = suite.account.text_records(token_id)?;
+    let records = suite.nft.text_records(token_id)?;
     assert_eq!(records.len(), 1);
     assert_eq!(records[0].account, "test");
     assert_eq!(records[0].value, "test");
 
-    assert!(!suite.account.is_twitter_verified(token_id)?);
+    assert!(!suite.nft.is_twitter_verified(token_id)?);
 
     // trigger too many records error
     for i in 1..=(max_record_count) {
@@ -119,7 +119,7 @@ fn mint_and_update() -> anyhow::Result<()> {
             verified: None,
         };
         if i == max_record_count {
-            let res = suite.account.update_text_record(token_id, new_record);
+            let res = suite.nft.update_text_record(token_id, new_record);
             assert_eq!(
                 res.unwrap_err().root().to_string(),
                 ContractError::TooManyRecords {
@@ -129,24 +129,24 @@ fn mint_and_update() -> anyhow::Result<()> {
             );
             break;
         } else {
-            suite.account.update_text_record(token_id, new_record)?;
+            suite.nft.update_text_record(token_id, new_record)?;
         }
     }
 
     // rm text records
-    suite.account.remove_text_record(token_id, "test")?;
+    suite.nft.remove_text_record(token_id, "test")?;
 
     for i in 1..=(max_record_count) {
         let record_account = format!("key{:?}", i);
-        suite.account.remove_text_record(token_id, record_account)?;
+        suite.nft.remove_text_record(token_id, record_account)?;
     }
     // txt record count should be 0
-    let res = suite.account.nft_info(token_id)?;
+    let res = suite.nft.nft_info(token_id)?;
     assert_eq!(res.extension.records.len(), 0);
 
     // unauthorized add txt record
     let err = suite
-        .account
+        .nft
         .call_as(&not_minter)
         .add_text_record(token_id, new_record.clone())
         .unwrap_err();
@@ -158,8 +158,8 @@ fn mint_and_update() -> anyhow::Result<()> {
         .to_string()
     );
     // passes
-    suite.account.add_text_record(token_id, new_record)?;
-    assert_eq!(suite.account.nft_info(token_id)?.extension.records.len(), 1);
+    suite.nft.add_text_record(token_id, new_record)?;
+    assert_eq!(suite.nft.nft_info(token_id)?.extension.records.len(), 1);
 
     // add another txt record
     let record = btsg_account::TextRecord {
@@ -167,8 +167,8 @@ fn mint_and_update() -> anyhow::Result<()> {
         value: "jackdorsey".to_string(),
         verified: None,
     };
-    suite.account.add_text_record(token_id, record)?;
-    assert_eq!(suite.account.nft_info(token_id)?.extension.records.len(), 2);
+    suite.nft.add_text_record(token_id, record)?;
+    assert_eq!(suite.nft.nft_info(token_id)?.extension.records.len(), 2);
 
     // add duplicate record RecordAccountAlreadyExists
     let record = btsg_account::TextRecord {
@@ -177,8 +177,7 @@ fn mint_and_update() -> anyhow::Result<()> {
         verified: None,
     };
     assert_eq!(
-        suite
-            .account
+        suite.nft
             .add_text_record(token_id, record.clone())
             .unwrap_err()
             .root()
@@ -186,13 +185,13 @@ fn mint_and_update() -> anyhow::Result<()> {
         ContractError::RecordAccountAlreadyExists {}.to_string()
     );
     // update txt record
-    suite.account.update_text_record(token_id, record.clone())?;
-    let res = suite.account.nft_info(token_id)?;
+    suite.nft.update_text_record(token_id, record.clone())?;
+    let res = suite.nft.nft_info(token_id)?;
     assert_eq!(res.extension.records.len(), 2);
     assert_eq!(res.extension.records[1].value, record.value);
     // rm txt record
-    suite.account.remove_text_record(token_id, record.account)?;
-    let res = suite.account.nft_info(token_id)?;
+    suite.nft.remove_text_record(token_id, record.account)?;
+    let res = suite.nft.nft_info(token_id)?;
     assert_eq!(res.extension.records.len(), 1);
 
     Ok(())
@@ -207,8 +206,7 @@ fn test_query_accounts() -> anyhow::Result<()> {
     let addr = mock.addr_make("babber");
 
     assert_eq!(
-        suite
-            .account
+        suite.nft
             .account(addr.clone().to_string())
             .unwrap_err()
             .to_string(),
@@ -234,14 +232,14 @@ fn test_burn_function() -> anyhow::Result<()> {
     suite.mint_and_list(mock.clone(), token_id, &mock.sender.clone())?;
 
     // cannot burn token you dont own
-    let err = suite.account.call_as(&addr).burn(token_id).unwrap_err();
+    let err = suite.nft.call_as(&addr).burn(token_id).unwrap_err();
     assert_eq!(err.root().to_string(), "Unauthorized".to_string());
 
     // token acutally gets burnt
-    suite.account.burn(token_id)?;
-    let res = suite.account.associated_address(token_id);
+    suite.nft.burn(token_id)?;
+    let res = suite.nft.associated_address(token_id);
     assert!(res.is_err());
-    let res = suite.account.account(mock.sender.to_string());
+    let res = suite.nft.account(mock.sender.to_string());
     assert!(res.is_err());
 
     Ok(())
@@ -303,7 +301,7 @@ fn test_reverse_map_key_limit() -> anyhow::Result<()> {
 
     // mint tokens for mock.sender.clone()
     let token_id = "Enterprise";
-    suite.account.call_as(&minter).mint(
+    suite.nft.call_as(&minter).mint(
         btsg_account::Metadata::default(),
         mock.sender.clone(),
         token_id,
@@ -314,7 +312,7 @@ fn test_reverse_map_key_limit() -> anyhow::Result<()> {
 
     // try to set more than limit of associated addresses in one go
     let err = suite
-        .account
+        .nft
         .call_as(&mock.sender.clone())
         .update_my_reverse_map_key(carbs.iter().map(|c| c.carb.clone()).collect(), vec![])
         .unwrap_err();
@@ -326,8 +324,7 @@ fn test_reverse_map_key_limit() -> anyhow::Result<()> {
 
     // not owner tries to update reverse map
     for i in 0..11 {
-        let err = suite
-            .account
+        let err = suite.nft
             .call_as(&minter)
             .update_my_reverse_map_key(vec![carbs[i as usize].clone().carb], vec![])
             .unwrap_err();
@@ -338,8 +335,7 @@ fn test_reverse_map_key_limit() -> anyhow::Result<()> {
     }
     // owner tries to set more than limit of associated addresses in recursion
     for i in 0..10 {
-        let res = suite
-            .account
+        let res = suite.nft
             .update_my_reverse_map_key(vec![carbs[i as usize].clone().carb], vec![]);
         if i == 10 {
             assert!(res.is_err());
@@ -354,15 +350,15 @@ fn test_reverse_map_key_limit() -> anyhow::Result<()> {
         }
     }
 
-    // let nfts = suite.account.owner_of(token_id, None)?;
+    // let nfts = suite.nft.owner_of(token_id, None)?;
 
     // associate address with token owner
     suite
-        .account
+        .nft
         .associate_address(token_id, Some(mock.sender.to_string()))?;
     // confirm we can query the non cosmos addr token_id associated to it
     let res = suite
-        .account
+        .nft
         .reverse_map_account(&pubkey_to_address(
             &fifth_carb.carb.pubkey,
             fifth_carb.carb.hrp.as_ref().expect("hrp must be set"),
@@ -373,8 +369,7 @@ fn test_reverse_map_key_limit() -> anyhow::Result<()> {
     // confirm we have maps set
     for _ in 0..10 {
         // query the bitsong address for a given external address
-        let res = suite
-            .account
+        let res = suite.nft
             .reverse_map_address(
                 btsg_account::verify_generic::pubkey_to_address(
                     &fifth_carb.carb.pubkey,
@@ -388,7 +383,7 @@ fn test_reverse_map_key_limit() -> anyhow::Result<()> {
 
     //try to remove more than existing at once
     let err = suite
-        .account
+        .nft
         .update_my_reverse_map_key(
             vec![],
             carbs.iter().map(|c| c.carb.pubkey.to_string()).collect(),
@@ -404,7 +399,7 @@ fn test_reverse_map_key_limit() -> anyhow::Result<()> {
 
     // confirm only owner of token can remove tokens from map
     let err = suite
-        .account
+        .nft
         .call_as(&notminter)
         .update_my_reverse_map_key(vec![], vec![fifth_carb.carb.pubkey.to_string()])
         .unwrap_err();
@@ -415,8 +410,7 @@ fn test_reverse_map_key_limit() -> anyhow::Result<()> {
 
     // owner tries to set more than limit of associated addresses in recursion
     for i in 0..10 {
-        let res = suite
-            .account
+        let res = suite.nft
             .update_my_reverse_map_key(vec![], vec![carbs[i as usize].carb.pubkey.to_string()]);
         if i == 10 {
             assert!(res.is_err());

@@ -33,8 +33,10 @@ bs721-account-marketplace   = { workspace = true, features = ["library"] }
 
 # Abstract & CW-Orchestrator
 abstract-std                = { workspace = true }
-abstract-interface          = "0.26.1"
+abstract-interface          = { git = "https://github.com/permissionlessweb/abstract", branch = "feat/wasm-path" }
 cw-orch                     = { workspace = true, features = ["daemon"] }
+cw-blob = {  git = "https://github.com/permissionlessweb/cw-packages", branch = "feat/wasm-path", features = ["library"] }
+
 
 # CLI & Utilities
 clap                        = { version = "4.0.32", features = ["derive"] }

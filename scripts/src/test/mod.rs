@@ -68,7 +68,7 @@ impl BtsgAccountSuite<MockBech32> {
                 &AccountMinterInitMsg {
                     admin: admin.clone().map(|a| a.to_string()),
                     verifier: Some(mock.addr_make("verifier").to_string()),
-                    collection_code_id: self.account.code_id()?,
+                    collection_code_id: self.nft.code_id()?,
                     marketplace_addr: self.market.addr_str()?,
                     min_account_length: 3u32,
                     max_account_length: 128u32,
@@ -81,12 +81,12 @@ impl BtsgAccountSuite<MockBech32> {
             )?
             .event_attr_value("wasm", "bs721_account_address")?;
 
-        self.account
+        self.nft
             .set_default_address(&Addr::unchecked(bs721_account));
 
         // Provide marketplace with collection and minter contracts.
         self.market
-            .setup(self.account.address()?, self.minter.address()?)?;
+            .setup(self.nft.address()?, self.minter.address()?)?;
 
         let block_info = mock.block_info()?;
 
@@ -117,7 +117,7 @@ impl BtsgAccountSuite<MockBech32> {
         // mock.wait_blocks(1)?;
         self.delegate_to_val(mock.clone(), mock.sender.clone(), 10500000000)?;
 
-        // println!("TOKEN:   {:#?}", self.account.addr_str()?);
+        // println!("TOKEN:   {:#?}", self.nft.addr_str()?);
         // println!("MARKET:  {:#?}", self.market.addr_str()?);
         // println!("MINTER:  {:#?}", self.minter.addr_str()?);
         // println!("SENDER:  {:#?}", mock.sender_addr().to_string());
@@ -163,7 +163,7 @@ impl BtsgAccountSuite<MockBech32> {
         // set approval for user, for all tokens
         // approve_all is needed because we don't know the token_id before-hand
         let market = self.market.address()?;
-        self.account.call_as(user).approve_all(market, None)?;
+        self.nft.call_as(user).approve_all(market, None)?;
 
         let amount: Uint128 = (match account.to_string().as_str().len() {
             0..=2 => BASE_PRICE,
@@ -188,7 +188,7 @@ impl BtsgAccountSuite<MockBech32> {
     }
 
     pub fn owner_of(&self, id: String) -> anyhow::Result<String> {
-        let res = self.account.owner_of(id, None)?;
+        let res = self.nft.owner_of(id, None)?;
         Ok(res.owner)
     }
 

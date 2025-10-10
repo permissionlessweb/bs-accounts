@@ -15,7 +15,7 @@ crate-type = ["cdylib", "rlib"]
 library = []
 
 [dependencies]
-abstract-std          = { version = "0.26.0" }
+abstract-std.workspace = true
 cosmwasm-schema.workspace = true
 bs721.workspace = true
 btsg-account.workspace = true
