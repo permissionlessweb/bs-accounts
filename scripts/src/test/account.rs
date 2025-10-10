@@ -1,4 +1,4 @@
-use crate::{BtsgAccountExecuteFns, BtsgAccountMarketExecuteFns};
+use crate::BtsgAccountExecuteFns;
 use ::bs721_account::{commands::transcode, ContractError};
 use bs721_account::msg::Bs721AccountsQueryMsgFns;
 use bs721_account::state::REVERSE_MAP_KEY;
@@ -177,7 +177,8 @@ fn mint_and_update() -> anyhow::Result<()> {
         verified: None,
     };
     assert_eq!(
-        suite.nft
+        suite
+            .nft
             .add_text_record(token_id, record.clone())
             .unwrap_err()
             .root()
@@ -206,7 +207,8 @@ fn test_query_accounts() -> anyhow::Result<()> {
     let addr = mock.addr_make("babber");
 
     assert_eq!(
-        suite.nft
+        suite
+            .nft
             .account(addr.clone().to_string())
             .unwrap_err()
             .to_string(),
@@ -324,7 +326,8 @@ fn test_reverse_map_key_limit() -> anyhow::Result<()> {
 
     // not owner tries to update reverse map
     for i in 0..11 {
-        let err = suite.nft
+        let err = suite
+            .nft
             .call_as(&minter)
             .update_my_reverse_map_key(vec![carbs[i as usize].clone().carb], vec![])
             .unwrap_err();
@@ -335,7 +338,8 @@ fn test_reverse_map_key_limit() -> anyhow::Result<()> {
     }
     // owner tries to set more than limit of associated addresses in recursion
     for i in 0..10 {
-        let res = suite.nft
+        let res = suite
+            .nft
             .update_my_reverse_map_key(vec![carbs[i as usize].clone().carb], vec![]);
         if i == 10 {
             assert!(res.is_err());
@@ -369,7 +373,8 @@ fn test_reverse_map_key_limit() -> anyhow::Result<()> {
     // confirm we have maps set
     for _ in 0..10 {
         // query the bitsong address for a given external address
-        let res = suite.nft
+        let res = suite
+            .nft
             .reverse_map_address(
                 btsg_account::verify_generic::pubkey_to_address(
                     &fifth_carb.carb.pubkey,
@@ -410,7 +415,8 @@ fn test_reverse_map_key_limit() -> anyhow::Result<()> {
 
     // owner tries to set more than limit of associated addresses in recursion
     for i in 0..10 {
-        let res = suite.nft
+        let res = suite
+            .nft
             .update_my_reverse_map_key(vec![], vec![carbs[i as usize].carb.pubkey.to_string()]);
         if i == 10 {
             assert!(res.is_err());

@@ -123,6 +123,7 @@ impl<Chain: CwEnv> cw_orch::contract::Deploy<Chain> for BtsgAccountSuite<Chain> 
                 valid_bid_query_limit: 30,
                 cooldown_timeframe: 60 * 60 * 24 * 14 as u64, // 14 days
                 cooldown_cancel_fee: coin(500_000_000u128, "ubtsg"),
+                hooks_admin: None,
             },
             Some(&Addr::unchecked(data.to_string())),
             &[],

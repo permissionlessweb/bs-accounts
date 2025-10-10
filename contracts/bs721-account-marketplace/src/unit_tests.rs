@@ -89,6 +89,7 @@ fn setup_contract(deps: DepsMut) {
         valid_bid_query_limit: 100,
         cooldown_timeframe: 0u64,
         cooldown_cancel_fee: coin(1u128, "ubtsg"),
+        hooks_admin: None,
     };
     let info = message_info(&Addr::unchecked(CREATOR), &[]);
     let res = instantiate(deps, mock_env(), info, msg).unwrap();
@@ -106,6 +107,7 @@ fn proper_initialization() {
         cooldown_timeframe: 0u64,
         cooldown_cancel_fee: coin(1u128, "ubtsg"),
         valid_bid_query_limit: 100,
+        hooks_admin: None,
     };
     let info = message_info(&Addr::unchecked("creator"), &coins(1000, NATIVE_DENOM));
 
@@ -126,6 +128,7 @@ fn bad_fees_initialization() {
         valid_bid_query_limit: 100,
         cooldown_timeframe: 0u64,
         cooldown_cancel_fee: coin(1u128, "ubtsg"),
+        hooks_admin: None,
     };
     let info = message_info(&Addr::unchecked("creator"), &coins(1000, NATIVE_DENOM));
     let res = instantiate(deps.as_mut(), mock_env(), info, msg);

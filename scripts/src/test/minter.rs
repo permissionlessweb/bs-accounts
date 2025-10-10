@@ -1,11 +1,11 @@
-use btsg_account::market::ConfigResponse;
+use btsg_account::market::{ConfigResponse, ManageHooksAction};
 use cw_orch::{anyhow, mock::MockBech32, prelude::*};
 
 use crate::BtsgAccountSuite;
 use crate::{
     Bs721AccountMarketExecuteMsgTypes, Bs721AccountsQueryMsgFns, BtsgAccountExecuteFns,
     BtsgAccountMarketExecuteFns, BtsgAccountMarketQueryFns, TestOwnershipExecuteMsgFns,
-    TestOwnershipInitMsg, TestOwnershipQueryMsgFns,
+    TestOwnershipInitMsg,
 };
 use bs721_account_minter::msg::{ExecuteMsgFns as _, QueryMsgFns as _};
 use cosmwasm_std::Uint128;
@@ -49,79 +49,67 @@ mod hooks {
     use super::*;
 
     #[test]
-    fn test_add_sale_hook() -> anyhow::Result<()> {
-        // new mock Bech32 chain environment
+    fn test_sale_hook() -> anyhow::Result<()> {
         let mock = MockBech32::new("mock");
-        // simulate deploying the test suite to the mock chain env.
         let suite = BtsgAccountSuite::deploy_on(mock.clone(), mock.sender.clone())?;
-        let hooks = mock.addr_make("askhooks");
-        mock.app.borrow_mut().sudo(SudoMsg::Wasm(WasmSudo {
-            contract_addr: suite.market.address()?,
-            message: to_json_binary(&btsg_account::market::SudoMsg::AddSaleHook {
-                hook: hooks.to_string(),
-            })?,
-        }))?;
-        assert_eq!(suite.market.sale_hooks()?.hooks[0], hooks.to_string());
+        let hook_addr = mock.addr_make("salehook");
 
-        mock.app.borrow_mut().sudo(SudoMsg::Wasm(WasmSudo {
-            contract_addr: suite.market.address()?,
-            message: to_json_binary(&btsg_account::market::SudoMsg::RemoveSaleHook {
-                hook: hooks.to_string(),
-            })?,
-        }))?;
-        assert_eq!(suite.market.sale_hooks()?.hooks.len(), 0);
+        suite
+            .market
+            .manage_hooks(ManageHooksAction::AddSaleHook(hook_addr.to_string()))?;
+        let hooks = suite.market.sale_hooks()?;
+        assert_eq!(hooks.hooks.len(), 1);
+        assert_eq!(hooks.hooks[0], hook_addr.to_string());
+
+        suite
+            .market
+            .manage_hooks(ManageHooksAction::RemoveSaleHook(hook_addr.to_string()))?;
+        let hooks = suite.market.sale_hooks()?;
+        assert_eq!(hooks.hooks.len(), 0);
 
         Ok(())
     }
 
     #[test]
-    fn test_add_bid_hook() -> anyhow::Result<()> {
-        // new mock Bech32 chain environment
+    fn test__bid_hook() -> anyhow::Result<()> {
         let mock = MockBech32::new("mock");
-        // simulate deploying the test suite to the mock chain env.
         let suite = BtsgAccountSuite::deploy_on(mock.clone(), mock.sender.clone())?;
-        let hooks = mock.addr_make("askhooks");
-        mock.app.borrow_mut().sudo(SudoMsg::Wasm(WasmSudo {
-            contract_addr: suite.market.address()?,
-            message: to_json_binary(&btsg_account::market::SudoMsg::AddBidHook {
-                hook: hooks.to_string(),
-            })?,
-        }))?;
-        assert_eq!(suite.market.bid_hooks()?.hooks[0], hooks.to_string());
+        let hook_addr = mock.addr_make("bidhook");
 
-        mock.app.borrow_mut().sudo(SudoMsg::Wasm(WasmSudo {
-            contract_addr: suite.market.address()?,
-            message: to_json_binary(&btsg_account::market::SudoMsg::RemoveBidHook {
-                hook: hooks.to_string(),
-            })?,
-        }))?;
-        assert_eq!(suite.market.bid_hooks()?.hooks.len(), 0);
+        suite
+            .market
+            .manage_hooks(ManageHooksAction::AddBidHook(hook_addr.to_string()))?;
+        let hooks = suite.market.bid_hooks()?;
+        assert_eq!(hooks.hooks.len(), 1);
+        assert_eq!(hooks.hooks[0], hook_addr.to_string());
+
+        suite
+            .market
+            .manage_hooks(ManageHooksAction::RemoveBidHook(hook_addr.to_string()))?;
+        let hooks = suite.market.bid_hooks()?;
+        assert_eq!(hooks.hooks.len(), 0);
 
         Ok(())
     }
 
     #[test]
     fn test_add_ask_hook() -> anyhow::Result<()> {
-        // new mock Bech32 chain environment
         let mock = MockBech32::new("mock");
-        // simulate deploying the test suite to the mock chain env.
         let suite = BtsgAccountSuite::deploy_on(mock.clone(), mock.sender.clone())?;
-        let hooks = mock.addr_make("askhooks");
-        mock.app.borrow_mut().sudo(SudoMsg::Wasm(WasmSudo {
-            contract_addr: suite.market.address()?,
-            message: to_json_binary(&btsg_account::market::SudoMsg::AddAskHook {
-                hook: hooks.to_string(),
-            })?,
-        }))?;
-        assert_eq!(suite.market.ask_hooks()?.hooks[0], hooks.to_string());
+        let hook_addr = mock.addr_make("askhook");
 
-        mock.app.borrow_mut().sudo(SudoMsg::Wasm(WasmSudo {
-            contract_addr: suite.market.address()?,
-            message: to_json_binary(&btsg_account::market::SudoMsg::RemoveAskHook {
-                hook: hooks.to_string(),
-            })?,
-        }))?;
-        assert_eq!(suite.market.ask_hooks()?.hooks.len(), 0);
+        suite
+            .market
+            .manage_hooks(ManageHooksAction::AddAskHook(hook_addr.to_string()))?;
+        let hooks = suite.market.ask_hooks()?;
+        assert_eq!(hooks.hooks.len(), 1);
+        assert_eq!(hooks.hooks[0], hook_addr.to_string());
+
+        suite
+            .market
+            .manage_hooks(ManageHooksAction::RemoveAskHook(hook_addr.to_string()))?;
+        let hooks = suite.market.ask_hooks()?;
+        assert_eq!(hooks.hooks.len(), 0);
 
         Ok(())
     }
@@ -1605,7 +1593,6 @@ mod associate_address {
         suite.default_setup(mock.clone(), None, Some(mock.sender.clone()))?;
 
         let admin_user = mock.sender.clone();
-        let cw721_id = suite.nft.code_id()?;
         let token_id = "bandura";
         let bidder = mock.addr_make("bidder");
 

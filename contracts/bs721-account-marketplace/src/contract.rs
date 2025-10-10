@@ -15,7 +15,7 @@ pub const ACCOUNT_MARKETPLACE: &str = "crates.io:bs721-account-marketplace";
 pub fn instantiate(
     deps: DepsMut,
     _env: Env,
-    _info: MessageInfo,
+    info: MessageInfo,
     msg: MarketplaceInstantiateMsg,
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, ACCOUNT_MARKETPLACE, CONTRACT_VERSION)?;
@@ -30,6 +30,7 @@ pub fn instantiate(
         valid_bid_query_limit: msg.valid_bid_query_limit,
         cooldown_duration: msg.cooldown_timeframe,
         cooldown_fee: msg.cooldown_cancel_fee,
+        hooks_admin: msg.hooks_admin.unwrap_or(info.sender.to_string()),
     };
 
     SUDO_PARAMS.save(deps.storage, &params)?;
@@ -72,6 +73,7 @@ pub fn execute(
         ExecuteMsg::CheckedRemoveBids { token_id } => {
             execute_removed_overflow_bids(deps, &token_id)
         }
+        ExecuteMsg::ManageHooks(action) => manage_hooks(deps, info.sender, action),
     }
 }
 
@@ -168,12 +170,7 @@ pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> Result<Response, ContractE
                 cooldown_cancel_fee,
             },
         ),
-        SudoMsg::AddSaleHook { hook } => sudo_add_sale_hook(deps, api.addr_validate(&hook)?),
-        SudoMsg::AddAskHook { hook } => sudo_add_ask_hook(deps, env, api.addr_validate(&hook)?),
-        SudoMsg::AddBidHook { hook } => sudo_add_bid_hook(deps, env, api.addr_validate(&hook)?),
-        SudoMsg::RemoveSaleHook { hook } => sudo_remove_sale_hook(deps, api.addr_validate(&hook)?),
-        SudoMsg::RemoveAskHook { hook } => sudo_remove_ask_hook(deps, api.addr_validate(&hook)?),
-        SudoMsg::RemoveBidHook { hook } => sudo_remove_bid_hook(deps, api.addr_validate(&hook)?),
+
         SudoMsg::UpdateAccountCollection { collection } => {
             sudo_update_account_collection(deps, api.addr_validate(&collection)?)
         }

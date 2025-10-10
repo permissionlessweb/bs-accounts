@@ -54,6 +54,7 @@ impl BtsgAccountSuite<MockBech32> {
                 valid_bid_query_limit: 100u32,
                 cooldown_timeframe: 60u64,
                 cooldown_cancel_fee: coin(500_000_000, "ubtsg"),
+                hooks_admin: None,
             },
             None,
             &[],

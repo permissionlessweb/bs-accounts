@@ -73,6 +73,8 @@ pub struct MarketplaceInstantiateMsg {
     pub cooldown_timeframe: u64,
     /// Fee required by token owner to cancel a bid they have accepted. Split betweeen Bitsong developers & biddee.
     pub cooldown_cancel_fee: Coin,
+    /// Admin
+    pub hooks_admin: Option<String>,
 }
 
 #[cosmwasm_schema::cw_serde]
@@ -130,6 +132,18 @@ pub enum ExecuteMsg {
         minter: String,
         collection: String,
     },
+    /// Add a new hook to be informed of all asks
+    ManageHooks(ManageHooksAction),
+}
+
+#[cosmwasm_schema::cw_serde]
+pub enum ManageHooksAction {
+    RemoveAskHook(String),
+    AddAskHook(String),
+    AddBidHook(String),
+    RemoveBidHook(String),
+    AddSaleHook(String),
+    RemoveSaleHook(String),
 }
 
 #[cosmwasm_schema::cw_serde]
@@ -227,18 +241,6 @@ pub enum SudoMsg {
     UpdateAccountFactory { factory: String },
     /// Update the contract address of the name collection
     UpdateAccountCollection { collection: String },
-    /// Add a new hook to be informed of all asks
-    AddAskHook { hook: String },
-    /// Remove a ask hook
-    RemoveAskHook { hook: String },
-    /// Add a new hook to be informed of all bids
-    AddBidHook { hook: String },
-    /// Remove a bid hook
-    RemoveBidHook { hook: String },
-    /// Add a new hook to be informed of all trades
-    AddSaleHook { hook: String },
-    /// Remove a trade hook
-    RemoveSaleHook { hook: String },
 }
 
 #[cosmwasm_schema::cw_serde]
@@ -284,6 +286,7 @@ pub struct SudoParams {
     pub valid_bid_query_limit: u32,
     pub cooldown_duration: u64,
     pub cooldown_fee: Coin,
+    pub hooks_admin: String,
 }
 
 pub struct ParamInfo {

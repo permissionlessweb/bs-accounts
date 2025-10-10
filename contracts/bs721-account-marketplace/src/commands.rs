@@ -874,45 +874,47 @@ pub fn sudo_update_account_collection(
     let event = Event::new("update-account-collection").add_attribute("collection", collection);
     Ok(Response::new().add_event(event))
 }
-
-pub fn sudo_add_sale_hook(deps: DepsMut, hook: Addr) -> Result<Response, ContractError> {
-    SALE_HOOKS.add_hook(deps.storage, hook.clone())?;
-
-    let event = Event::new("add-sale-hook").add_attribute("hook", hook);
-    Ok(Response::new().add_event(event))
-}
-
-pub fn sudo_add_ask_hook(deps: DepsMut, _env: Env, hook: Addr) -> Result<Response, ContractError> {
-    ASK_HOOKS.add_hook(deps.storage, hook.clone())?;
-
-    let event = Event::new("add-ask-hook").add_attribute("hook", hook);
-    Ok(Response::new().add_event(event))
-}
-
-pub fn sudo_add_bid_hook(deps: DepsMut, _env: Env, hook: Addr) -> Result<Response, ContractError> {
-    BID_HOOKS.add_hook(deps.storage, hook.clone())?;
-
-    let event = Event::new("add-bid-hook").add_attribute("hook", hook);
-    Ok(Response::new().add_event(event))
-}
-
-pub fn sudo_remove_sale_hook(deps: DepsMut, hook: Addr) -> Result<Response, ContractError> {
-    SALE_HOOKS.remove_hook(deps.storage, hook.clone())?;
-
-    let event = Event::new("remove-sale-hook").add_attribute("hook", hook);
-    Ok(Response::new().add_event(event))
-}
-
-pub fn sudo_remove_ask_hook(deps: DepsMut, hook: Addr) -> Result<Response, ContractError> {
-    ASK_HOOKS.remove_hook(deps.storage, hook.clone())?;
-
-    let event = Event::new("remove-ask-hook").add_attribute("hook", hook);
-    Ok(Response::new().add_event(event))
-}
-
-pub fn sudo_remove_bid_hook(deps: DepsMut, hook: Addr) -> Result<Response, ContractError> {
-    BID_HOOKS.remove_hook(deps.storage, hook.clone())?;
-
-    let event = Event::new("remove-bid-hook").add_attribute("hook", hook);
-    Ok(Response::new().add_event(event))
+pub fn manage_hooks(
+    deps: DepsMut,
+    sender: Addr,
+    action: ManageHooksAction,
+) -> Result<Response, ContractError> {
+    // only hooks admin may invoke
+    if sender.to_string() != SUDO_PARAMS.load(deps.storage)?.hooks_admin {
+        return Err(ContractError::UnauthorizedMinter {});
+    }
+    let mut res = Response::default();
+    match action {
+        ManageHooksAction::AddSaleHook(hook) => {
+            SALE_HOOKS.add_hook(deps.storage, deps.api.addr_validate(&hook)?)?;
+            res.events
+                .push(Event::new("add-sale-hook").add_attribute("hook", hook));
+        }
+        ManageHooksAction::RemoveSaleHook(hook) => {
+            SALE_HOOKS.remove_hook(deps.storage, deps.api.addr_validate(&hook)?)?;
+            res.events
+                .push(Event::new("remove-sale-hook").add_attribute("hook", hook));
+        }
+        ManageHooksAction::AddAskHook(hook) => {
+            ASK_HOOKS.add_hook(deps.storage, deps.api.addr_validate(&hook)?)?;
+            res.events
+                .push(Event::new("add-ask-hook").add_attribute("hook", hook));
+        }
+        ManageHooksAction::RemoveAskHook(hook) => {
+            ASK_HOOKS.remove_hook(deps.storage, deps.api.addr_validate(&hook)?)?;
+            res.events
+                .push(Event::new("remove-ask-hook").add_attribute("hook", hook));
+        }
+        ManageHooksAction::AddBidHook(hook) => {
+            BID_HOOKS.add_hook(deps.storage, deps.api.addr_validate(&hook)?)?;
+            res.events
+                .push(Event::new("add-bid-hook").add_attribute("hook", hook));
+        }
+        ManageHooksAction::RemoveBidHook(hook) => {
+            BID_HOOKS.remove_hook(deps.storage, deps.api.addr_validate(&hook)?)?;
+            res.events
+                .push(Event::new("remove-bid-hook").add_attribute("hook", hook));
+        }
+    }
+    Ok(res)
 }
