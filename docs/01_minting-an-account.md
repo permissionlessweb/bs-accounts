@@ -6,9 +6,9 @@ The cost to mint is dependent on two requirements:
 
 | Requirement | Character Length | Minimum Delegation
 | --- | --- | --- |
-| 5+ chars (Base Price) | 100 BTSG | 1,000 BTSG  |
-| 4 chars  | 1,000 BTSG | 3,000 BTSG |
-| 3 chars  | 10,000 BTSG | 5,000 BTSG |
+| 5+ chars (Base Price) | 710 BTSG | 1,000 BTSG  |
+| 4 chars (10x)  | 7,100 BTSG (10x) | 3,000 BTSG |
+| 3 chars  | 71,000 BTSG (100x) | 5,000 BTSG |
 
  
 

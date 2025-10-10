@@ -147,6 +147,7 @@ pub fn sudo(deps: DepsMut, _env: Env, msg: SudoMsg) -> Result<Response, Contract
 
 #[cfg(test)]
 mod tests {
+    use btsg_account::CURRENT_BASE_PRICE;
     use cosmwasm_std::{coin, Addr, MessageInfo};
 
     use crate::commands::{validate_account, validate_payment};
@@ -185,7 +186,7 @@ mod tests {
 
     #[test]
     fn check_validate_payment() {
-        let base_price = 100_000_000;
+        let base_price = CURRENT_BASE_PRICE as u128;
 
         let info = MessageInfo {
             sender: Addr::unchecked("sender"),

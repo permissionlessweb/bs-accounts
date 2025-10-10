@@ -76,7 +76,7 @@ impl<Chain: CwEnv> cw_orch::contract::Deploy<Chain> for BtsgAccountSuite<Chain> 
         suite.market.instantiate(
             &btsg_account::market::MarketplaceInstantiateMsg {
                 trading_fee_bps: 200,
-                min_price: Uint128::from(55_500_000u64),
+                min_price: Uint128::from(2_400_000_000u128),
                 ask_interval: 60,
                 valid_bid_query_limit: 30,
                 cooldown_timeframe: 60 * 60 * 24 * 14 as u64, // 14 days
