@@ -24,7 +24,7 @@ cw-storage-macro = "2.1.0"
 cw-utils         = { workspace = true }
 cw-orch          = { workspace = true }
 bs-controllers   = { workspace = true }
-btsg-account     = { workspace = true }
+btsg-account     = { workspace = true , features = ["market-hooks"]}
 thiserror        = { workspace = true }
 
 [dev-dependencies]

@@ -185,7 +185,7 @@ impl<Chain: CwEnv> cw_orch::contract::Deploy<Chain> for BtsgAccountSuite<Chain> 
         suite.registry.deterministic_instantiate(
             &abstract_std::registry::MigrateMsg::Instantiate(
                 abstract_std::registry::InstantiateMsg {
-                    admin: admin.to_string(),
+                    admin: suite.middleware.addr_str()?,
                     security_enabled: Some(true),
                     namespace_registration_fee: None,
                 },

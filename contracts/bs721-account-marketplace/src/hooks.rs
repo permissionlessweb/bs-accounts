@@ -1,4 +1,7 @@
-use btsg_account::market::{Ask, AskHookMsg, Bid, BidHookMsg, HookAction, SaleHookMsg};
+use btsg_account::market::{
+    hooks::{AskHookMsg, BidHookMsg, HookAction, SaleHookMsg},
+    Ask, Bid,
+};
 
 use cosmwasm_std::{Addr, DepsMut, Env, Reply, Response, StdResult, Storage, SubMsg, WasmMsg};
 

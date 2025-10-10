@@ -7,7 +7,7 @@ use crate::{
 use bs721::{NftInfoResponse, OwnerOfResponse};
 use bs721_account::{helpers::Bs721Account, msg::ExecuteMsg as Bs721AccountExecuteMsg};
 use btsg_account::{
-    charge_fees, market::HookAction, market::*, validate_aa_ownership, Metadata, TokenId,
+    charge_fees, market::hooks::HookAction, market::*, validate_aa_ownership, Metadata, TokenId,
     DEFAULT_QUERY_LIMIT, DEPLOYMENT_DAO, MAX_QUERY_LIMIT, NATIVE_DENOM,
 };
 

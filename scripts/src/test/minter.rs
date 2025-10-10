@@ -49,7 +49,7 @@ mod hooks {
     use super::*;
 
     #[test]
-    fn test_sale_hook() -> anyhow::Result<()> {
+    fn test_manage_sale_hook() -> anyhow::Result<()> {
         let mock = MockBech32::new("mock");
         let suite = BtsgAccountSuite::deploy_on(mock.clone(), mock.sender.clone())?;
         let hook_addr = mock.addr_make("salehook");
@@ -71,7 +71,7 @@ mod hooks {
     }
 
     #[test]
-    fn test__bid_hook() -> anyhow::Result<()> {
+    fn test_manage_bid_hook() -> anyhow::Result<()> {
         let mock = MockBech32::new("mock");
         let suite = BtsgAccountSuite::deploy_on(mock.clone(), mock.sender.clone())?;
         let hook_addr = mock.addr_make("bidhook");
@@ -93,7 +93,7 @@ mod hooks {
     }
 
     #[test]
-    fn test_add_ask_hook() -> anyhow::Result<()> {
+    fn test_manage_ask_hook() -> anyhow::Result<()> {
         let mock = MockBech32::new("mock");
         let suite = BtsgAccountSuite::deploy_on(mock.clone(), mock.sender.clone())?;
         let hook_addr = mock.addr_make("askhook");
@@ -113,6 +113,15 @@ mod hooks {
 
         Ok(())
     }
+
+    #[test]
+    fn test_all_hooks_workflow() -> anyhow::Result<()> {
+        // register hooks to middleware
+        // perform actions for hooks
+        // assert hook logic is performed
+        Ok(())
+    }
+    
 }
 mod execute {
 

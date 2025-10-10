@@ -17,7 +17,7 @@ interface = ["dep:cw-orch"]
 abstract-std        = { workspace = true }
 bs721               = { workspace = true }
 bs721-base          = { workspace = true, features = ["library"] }
-btsg-account        = { workspace = true }
+btsg-account        = { workspace = true, default-features = false }
 cosmwasm-schema     = { workspace = true }
 cosmwasm-std        = { workspace = true }
 cw2                 = { workspace = true }

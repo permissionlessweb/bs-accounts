@@ -3,7 +3,7 @@ use abstract_std::objects::AccountId;
 use abstract_std::registry::{NamespaceResponse, QueryMsg as RegistryQueryMsg};
 use abstract_std::AbstractError;
 use bs721::NftInfoResponse;
-use btsg_account::market::{AskHookMsg, BidHookMsg, HookAction, SaleHookMsg};
+use btsg_account::market::hooks::{AskHookMsg, BidHookMsg, HookAction, SaleHookMsg};
 use btsg_account::Metadata;
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{
@@ -134,7 +134,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn migrate(_deps: Deps, _env: Env, _msg: MigrateMsg) -> Result<Response, ContractError> {
+pub fn migrate(_deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, ContractError> {
     Ok(Response::default())
 }
 
