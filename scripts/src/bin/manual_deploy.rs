@@ -24,6 +24,7 @@ fn main() {
     let args = Args::parse();
     // logs any errors
     env_logger::init();
+    dotenv::dotenv().ok();
 
     println!("Deploying Bitsong Accounts Framework...");
 

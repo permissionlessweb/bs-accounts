@@ -23,12 +23,8 @@ cw-storage-plus  = { workspace = true }
 cw-storage-macro = "2.1.0"
 cw-utils         = { workspace = true }
 cw-orch          = { workspace = true }
-cw-ownable       = { workspace = true }
-schemars         = { workspace = true }
-semver           = "1.0"
 bs-controllers   = { workspace = true }
-serde            = { workspace = true }
-btsg-account     = { workspace = true }
+btsg-account     = { workspace = true , features = ["market-hooks"]}
 thiserror        = { workspace = true }
 
 [dev-dependencies]

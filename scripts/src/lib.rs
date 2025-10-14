@@ -2,7 +2,7 @@ pub mod suite;
 pub use suite::BtsgAccountSuite;
 pub mod networks;
 
-// re-export contract cw-orch functions
+// re-export contract cw-orch functions & entrypoint types
 pub use bs721_account::msg::{
     AsyncBs721AccountsQueryMsgFns, Bs721AccountsQueryMsg, Bs721AccountsQueryMsgFns,
     ExecuteMsg as Bs721AccountExecuteMsgTypes, ExecuteMsgFns as BtsgAccountExecuteFns,
@@ -20,6 +20,12 @@ pub use btsg_account::market::{
     AsyncQueryMsgFns as BtsgAccountMarketAsyncQueryMsgFns,
     ExecuteMsg as Bs721AccountMarketExecuteMsgTypes, ExecuteMsgFns as BtsgAccountMarketExecuteFns,
     QueryMsg as BtsgAccountMarketQueryMsgTypes, QueryMsgFns as BtsgAccountMarketQueryFns,
+};
+
+pub use account_registry_middleware::{
+    AsyncQueryMsgFns as AccountRegistryAsyncQueryMsgFns,
+    ExecuteMsg as AccountRegistryExecuteMsgTypes, ExecuteMsgFns as AccountRegistryExecuteFns,
+    QueryMsg as AccountRegistryQueryMsgTypes, QueryMsgFns as AccountRegistryQueryFns,
 };
 
 pub use ownership_verifier::{

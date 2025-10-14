@@ -1,5 +1,6 @@
+use btsg_account::market::MigrateMsg;
 use cosmwasm_std::{
-    to_json_binary, Binary, Decimal, Deps, DepsMut, Env, MessageInfo, Response, StdResult, Uint128,
+    to_json_binary, Binary, Decimal, Deps, DepsMut, Env, MessageInfo, Response, StdError, StdResult, Uint128
 };
 use cw2::set_contract_version;
 
@@ -15,7 +16,7 @@ pub const ACCOUNT_MARKETPLACE: &str = "crates.io:bs721-account-marketplace";
 pub fn instantiate(
     deps: DepsMut,
     _env: Env,
-    _info: MessageInfo,
+    info: MessageInfo,
     msg: MarketplaceInstantiateMsg,
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, ACCOUNT_MARKETPLACE, CONTRACT_VERSION)?;
@@ -30,6 +31,7 @@ pub fn instantiate(
         valid_bid_query_limit: msg.valid_bid_query_limit,
         cooldown_duration: msg.cooldown_timeframe,
         cooldown_fee: msg.cooldown_cancel_fee,
+        hooks_admin: msg.hooks_admin.unwrap_or(info.sender.to_string()),
     };
 
     SUDO_PARAMS.save(deps.storage, &params)?;
@@ -64,10 +66,15 @@ pub fn execute(
         ExecuteMsg::AcceptBid { token_id, bidder } => {
             execute_accept_bid(deps, env, info, &token_id, api.addr_validate(&bidder)?)
         }
-        ExecuteMsg::FinalizeBid { token_id } => execute_finalize_bid(deps, env, info, &token_id),
+        ExecuteMsg::FinalizeBid { token_id } => execute_finalize_bid(deps, env, &token_id),
         ExecuteMsg::CancelCooldown { token_id } => {
             execute_cancel_cooldown(deps, env, info, &token_id)
         }
+        ExecuteMsg::RemoveBids { token_id } => execute_remove_bids(deps, env, info, &token_id),
+        ExecuteMsg::CheckedRemoveBids { token_id } => {
+            execute_removed_overflow_bids(deps, &token_id)
+        }
+        ExecuteMsg::ManageHooks(action) => manage_hooks(deps, info.sender, action),
     }
 }
 
@@ -137,7 +144,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::SaleHooks {} => to_json_binary(&SALE_HOOKS.query_hooks(deps)?),
         QueryMsg::Config {} => to_json_binary(&query_config(deps)?),
         QueryMsg::Cooldown { token_id } => {
-            to_json_binary(&cooldown_bids().may_load(deps.storage, &ask_key(&token_id))?)
+            to_json_binary(&COOLDOWN_BID.may_load(deps.storage, &ask_key(&token_id))?)
         }
     }
 }
@@ -164,12 +171,7 @@ pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> Result<Response, ContractE
                 cooldown_cancel_fee,
             },
         ),
-        SudoMsg::AddSaleHook { hook } => sudo_add_sale_hook(deps, api.addr_validate(&hook)?),
-        SudoMsg::AddAskHook { hook } => sudo_add_ask_hook(deps, env, api.addr_validate(&hook)?),
-        SudoMsg::AddBidHook { hook } => sudo_add_bid_hook(deps, env, api.addr_validate(&hook)?),
-        SudoMsg::RemoveSaleHook { hook } => sudo_remove_sale_hook(deps, api.addr_validate(&hook)?),
-        SudoMsg::RemoveAskHook { hook } => sudo_remove_ask_hook(deps, api.addr_validate(&hook)?),
-        SudoMsg::RemoveBidHook { hook } => sudo_remove_bid_hook(deps, api.addr_validate(&hook)?),
+
         SudoMsg::UpdateAccountCollection { collection } => {
             sudo_update_account_collection(deps, api.addr_validate(&collection)?)
         }
@@ -177,4 +179,16 @@ pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> Result<Response, ContractE
             sudo_update_account_minter(deps, api.addr_validate(&factory)?)
         } // SudoMsg::EndBlock {  } => todo!(),
     }
+}
+
+#[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
+pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, ContractError> {
+    let then = cw2::get_contract_version(deps.storage)?;
+    if then.version >= CONTRACT_VERSION.to_owned() || then.contract != ACCOUNT_MARKETPLACE.to_owned() {
+        return Err(ContractError::Std(StdError::generic_err(
+            "unable to migrate contract.",
+        )));
+    }
+    cw2::set_contract_version(deps.storage, ACCOUNT_MARKETPLACE, CONTRACT_VERSION)?;
+    Ok(Response::default())
 }

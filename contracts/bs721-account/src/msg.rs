@@ -69,6 +69,8 @@ pub enum ExecuteMsg<T> {
     },
     /// Remove previously granted Approval
     Revoke { spender: String, token_id: String },
+    /// Marketplace makes use to manually approve transfers.
+    /// Used if account owner has removed approval for marketplace as operator during cooldown period
     ApproveAllViaMarket {
         owner: String,
         expires: Option<Expiration>,
@@ -79,7 +81,7 @@ pub enum ExecuteMsg<T> {
         operator: String,
         expires: Option<Expiration>,
     },
-    /// Allows user to define if token is being associated to an Abstract Account
+    /// Allows user to define if token is being associated to an Abstract Account.
     UpdateAbsAccSupport {
         token_id: String,
         r#abstract: Option<String>,
@@ -92,9 +94,7 @@ pub enum ExecuteMsg<T> {
         token_id: String,
         /// The owner of the newly minted NFT
         owner: String,
-        /// Universal resource identifier for this NFT
-        /// Should point to a JSON file that conforms to the ERC721
-        /// Metadata JSON Schema
+        /// This will be a smart contract address that is an EOA using this token as ownership authentication
         token_uri: Option<String>,
         /// Seller fee basis points, 0-10000
         /// 0 means no fee, 100 means 1%, 10000 means 100%
@@ -184,10 +184,11 @@ pub enum Bs721AccountsQueryMsg {
     /// Returns sudo params
     #[returns(SudoParams)]
     Params {},
-    /// query an address to return the account owned by this address
+    /// Query an address to return the account owned by this address
     #[returns(String)]
     Account { address: String },
-    /// query an account address to return the associated address. This will be the abstract account contract addr if nft used as ownership token
+    /// Query an account name to return the associated address.
+    /// If being used as ownership token for EOA, will return the EOA contract, otherwise returns the owner of the token
     #[returns(Addr)]
     AssociatedAddress { account: String },
     /// Returns the marketplace contract address

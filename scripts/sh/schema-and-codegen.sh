@@ -29,7 +29,7 @@ move_schema() {
 # ------------------------------------------------------------------
 # 1️⃣ Specific contracts listed explicitly
 # ------------------------------------------------------------------
-for contract in bs721-account bs721-account-marketplace bs721-account-minter; do
+for contract in bs721-account bs721-account-marketplace bs721-account-minter account-registry-middleware; do
     echo "=== contracts/$contract ==="
     (
         cd "contracts/$contract" || exit 1

@@ -12,8 +12,6 @@ use cosmwasm_std::{
 
 use crate::msg::ExecuteMsg;
 
-/// CwTemplateContract is a wrapper around Addr that provides a lot of helpers
-/// for working with this.
 #[cw_serde]
 pub struct Bs721Account(pub Addr);
 

@@ -1,7 +1,7 @@
 use crate::TokenId;
 use bs_controllers::HooksResponse;
 use cosmwasm_schema::QueryResponses;
-use cosmwasm_std::{Addr, Coin, Decimal, Timestamp, Uint128};
+use cosmwasm_std::{to_json_binary, Addr, Binary, Coin, Decimal, StdResult, Timestamp, Uint128};
 
 pub type Collection = String;
 pub type Bidder = String;
@@ -9,13 +9,13 @@ pub type Seller = String;
 pub type AskKey = TokenId;
 /// Primary key for bids: (token_id, bidder)
 pub type BidKey = (TokenId, Addr);
-pub type Id = u64;
+pub type Id = u32;
 
 /// Represents an ask on the marketplace
 #[cosmwasm_schema::cw_serde]
 pub struct Ask {
     pub token_id: TokenId,
-    pub id: u64,
+    pub id: u32,
     pub seller: Addr,
 }
 
@@ -73,6 +73,8 @@ pub struct MarketplaceInstantiateMsg {
     pub cooldown_timeframe: u64,
     /// Fee required by token owner to cancel a bid they have accepted. Split betweeen Bitsong developers & biddee.
     pub cooldown_cancel_fee: Coin,
+    /// Admin
+    pub hooks_admin: Option<String>,
 }
 
 #[cosmwasm_schema::cw_serde]
@@ -104,6 +106,14 @@ pub enum ExecuteMsg {
     RemoveBid {
         token_id: TokenId,
     },
+    //
+    RemoveBids {
+        token_id: TokenId,
+    },
+    // Flush any pending bids to be removed from a token-id. Anyone can call this
+    CheckedRemoveBids {
+        token_id: TokenId,
+    },
     /// Accept a bid on an existing ask
     AcceptBid {
         token_id: TokenId,
@@ -114,6 +124,7 @@ pub enum ExecuteMsg {
     FinalizeBid {
         token_id: TokenId,
     },
+    /// Cancel a bid that has been accepted an is in the cooldown period.
     CancelCooldown {
         token_id: TokenId,
     },
@@ -121,6 +132,18 @@ pub enum ExecuteMsg {
         minter: String,
         collection: String,
     },
+    /// Add a new hook to be informed of all asks
+    ManageHooks(ManageHooksAction),
+}
+
+#[cosmwasm_schema::cw_serde]
+pub enum ManageHooksAction {
+    RemoveAskHook(String),
+    AddAskHook(String),
+    AddBidHook(String),
+    RemoveBidHook(String),
+    AddSaleHook(String),
+    RemoveSaleHook(String),
 }
 
 #[cosmwasm_schema::cw_serde]
@@ -218,18 +241,6 @@ pub enum SudoMsg {
     UpdateAccountFactory { factory: String },
     /// Update the contract address of the name collection
     UpdateAccountCollection { collection: String },
-    /// Add a new hook to be informed of all asks
-    AddAskHook { hook: String },
-    /// Remove a ask hook
-    RemoveAskHook { hook: String },
-    /// Add a new hook to be informed of all bids
-    AddBidHook { hook: String },
-    /// Remove a bid hook
-    RemoveBidHook { hook: String },
-    /// Add a new hook to be informed of all trades
-    AddSaleHook { hook: String },
-    /// Remove a trade hook
-    RemoveSaleHook { hook: String },
 }
 
 #[cosmwasm_schema::cw_serde]
@@ -275,6 +286,7 @@ pub struct SudoParams {
     pub valid_bid_query_limit: u32,
     pub cooldown_duration: u64,
     pub cooldown_fee: Coin,
+    pub hooks_admin: String,
 }
 
 pub struct ParamInfo {
@@ -283,4 +295,127 @@ pub struct ParamInfo {
     pub ask_interval: Option<u64>,
     pub cooldown_duration: Option<u64>,
     pub cooldown_cancel_fee: Option<Coin>,
+}
+
+/// Offset for ask pagination
+#[cosmwasm_schema::cw_serde]
+pub struct AskOffset {
+    pub price: Uint128,
+    pub token_id: TokenId,
+}
+
+impl AskOffset {
+    pub fn new(price: Uint128, token_id: TokenId) -> Self {
+        AskOffset { price, token_id }
+    }
+}
+
+#[cosmwasm_schema::cw_serde]
+pub struct MigrateMsg {}
+
+#[cfg(feature = "market-hooks")]
+pub mod hooks {
+    use super::*;
+
+    #[cosmwasm_schema::cw_serde]
+    pub struct SaleHookMsg {
+        pub token_id: String,
+        pub ask_id: u32,
+        pub seller: String,
+        pub buyer: String,
+    }
+
+    impl SaleHookMsg {
+        pub fn new(token_id: &str, ask_id: u32, seller: String, buyer: String) -> Self {
+            SaleHookMsg {
+                token_id: token_id.to_string(),
+                ask_id,
+                seller,
+                buyer,
+            }
+        }
+
+        /// serializes the message
+        pub fn into_json_binary(self) -> StdResult<Binary> {
+            let msg = SaleExecuteMsg::SaleHook(self);
+            to_json_binary(&msg)
+        }
+    }
+
+    // This is just a helper to properly serialize the above message
+    #[cosmwasm_schema::cw_serde]
+    pub enum SaleExecuteMsg {
+        SaleHook(SaleHookMsg),
+    }
+
+    #[cosmwasm_schema::cw_serde]
+    pub enum HookAction {
+        Create,
+        Update,
+        Delete,
+    }
+
+    #[cosmwasm_schema::cw_serde]
+    pub struct AskHookMsg {
+        pub ask: Ask,
+    }
+
+    impl AskHookMsg {
+        pub fn new(ask: Ask) -> Self {
+            AskHookMsg { ask }
+        }
+
+        /// serializes the message
+        pub fn into_json_binary(self, action: HookAction) -> StdResult<Binary> {
+            let msg = match action {
+                HookAction::Create => AskHookExecuteMsg::AskCreatedHook(self),
+                HookAction::Update => AskHookExecuteMsg::AskUpdatedHook(self),
+                HookAction::Delete => AskHookExecuteMsg::AskDeletedHook(self),
+            };
+            to_json_binary(&msg)
+        }
+    }
+
+    // This is just a helper to properly serialize the above message
+    #[cosmwasm_schema::cw_serde]
+    pub enum AskHookExecuteMsg {
+        AskCreatedHook(AskHookMsg),
+        AskUpdatedHook(AskHookMsg),
+        AskDeletedHook(AskHookMsg),
+    }
+
+    #[cosmwasm_schema::cw_serde]
+    pub struct BidHookMsg {
+        pub bid: Bid,
+    }
+
+    #[cosmwasm_schema::cw_serde]
+    pub struct BidHookReply {
+        pub token_id: String,
+        pub account: String,
+    }
+
+    impl BidHookMsg {
+        pub fn new(bid: Bid) -> Self {
+            BidHookMsg { bid }
+        }
+
+        /// serializes the message
+        pub fn into_json_binary(self, action: HookAction) -> cosmwasm_std::StdResult<Binary> {
+            let msg = match action {
+                HookAction::Create => BidHookExecuteMsg::BidCreatedHook(self),
+                HookAction::Update => BidHookExecuteMsg::BidUpdatedHook(self),
+                HookAction::Delete => BidHookExecuteMsg::BidDeletedHook(self),
+            };
+            to_json_binary(&msg)
+        }
+    }
+
+    // This is just a helper to properly serialize the above message
+    #[cosmwasm_schema::cw_serde]
+    pub enum BidHookExecuteMsg {
+        BidCreatedHook(BidHookMsg),
+        BidUpdatedHook(BidHookMsg),
+        BidDeletedHook(BidHookMsg),
+    }
 }

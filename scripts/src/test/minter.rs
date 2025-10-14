@@ -1,15 +1,25 @@
+use btsg_account::market::{ConfigResponse, ManageHooksAction};
 use cw_orch::{anyhow, mock::MockBech32, prelude::*};
 
 use crate::BtsgAccountSuite;
 use crate::{
     Bs721AccountMarketExecuteMsgTypes, Bs721AccountsQueryMsgFns, BtsgAccountExecuteFns,
-    BtsgAccountMarketExecuteFns, BtsgAccountMarketQueryFns, TestOwnershipExecuteMsgFns,
-    TestOwnershipInitMsg, TestOwnershipQueryMsgFns,
+    BtsgAccountMarketExecuteFns, BtsgAccountMarketQueryFns, BtsgAccountMinterExecuteFns,
+    BtsgAccountMinterQueryMsgFns, TestOwnershipExecuteMsgFns, TestOwnershipInitMsg,
 };
-use bs721_account_minter::msg::{ExecuteMsgFns as _, QueryMsgFns as _};
+
 use cosmwasm_std::Uint128;
 use cosmwasm_std::{coins, to_json_binary, Decimal};
 use cw_orch::mock::cw_multi_test::{SudoMsg, WasmSudo};
+
+use std::error::Error;
+
+use bs721_account_marketplace::state::MAX_FEE_BPS;
+use bs721_account_marketplace::ContractError as MarketContractError;
+use bs721_account_minter::ContractError as MinterContractError;
+use btsg_account::market::{Ask, Bid, ExecuteMsg, PendingBid};
+use btsg_account::DEPLOYMENT_DAO;
+use cosmwasm_std::{coin, Attribute, Binary, Event};
 
 const BID_AMOUNT: u128 = 1_000_000_000;
 #[test]
@@ -21,21 +31,171 @@ pub fn init() -> anyhow::Result<()> {
 
     suite
         .market
-        .setup(suite.account.address()?, suite.minter.address()?)
+        .setup(suite.nft.address()?, suite.minter.address()?)
         .unwrap_err();
+
+    assert_eq!(
+        suite.market.config()?,
+        ConfigResponse {
+            minter: suite.minter.address()?,
+            collection: suite.nft.address()?
+        }
+    );
 
     Ok(())
 }
 
+// mod hooks {
+//     use abstract_interface::{AccountQueryFns, RegistryExecFns, RegistryQueryFns};
+//     use abstract_std::objects::namespace::Namespace;
+//     use abstract_std::objects::AccountId;
+//     use abstract_std::REGISTRY;
+
+//     use super::*;
+
+//     #[test]
+//     fn test_manage_sale_hook() -> anyhow::Result<()> {
+//         let mock = MockBech32::new("mock");
+//         let suite = BtsgAccountSuite::deploy_on(mock.clone(), mock.sender.clone())?;
+//         let hook_addr = mock.addr_make("salehook");
+
+//         suite
+//             .market
+//             .manage_hooks(ManageHooksAction::AddSaleHook(hook_addr.to_string()))?;
+//         let hooks = suite.market.sale_hooks()?;
+//         assert_eq!(hooks.hooks.len(), 1);
+//         assert_eq!(hooks.hooks[0], hook_addr.to_string());
+
+//         suite
+//             .market
+//             .manage_hooks(ManageHooksAction::RemoveSaleHook(hook_addr.to_string()))?;
+//         let hooks = suite.market.sale_hooks()?;
+//         assert_eq!(hooks.hooks.len(), 0);
+
+//         Ok(())
+//     }
+
+//     #[test]
+//     fn test_manage_bid_hook() -> anyhow::Result<()> {
+//         let mock = MockBech32::new("mock");
+//         let suite = BtsgAccountSuite::deploy_on(mock.clone(), mock.sender.clone())?;
+//         let hook_addr = mock.addr_make("bidhook");
+
+//         suite
+//             .market
+//             .manage_hooks(ManageHooksAction::AddBidHook(hook_addr.to_string()))?;
+//         let hooks = suite.market.bid_hooks()?;
+//         assert_eq!(hooks.hooks.len(), 1);
+//         assert_eq!(hooks.hooks[0], hook_addr.to_string());
+
+//         suite
+//             .market
+//             .manage_hooks(ManageHooksAction::RemoveBidHook(hook_addr.to_string()))?;
+//         let hooks = suite.market.bid_hooks()?;
+//         assert_eq!(hooks.hooks.len(), 0);
+
+//         Ok(())
+//     }
+
+//     #[test]
+//     fn test_manage_ask_hook() -> anyhow::Result<()> {
+//         let mock = MockBech32::new("mock");
+//         let suite = BtsgAccountSuite::deploy_on(mock.clone(), mock.sender.clone())?;
+//         let hook_addr = mock.addr_make("askhook");
+
+//         suite
+//             .market
+//             .manage_hooks(ManageHooksAction::AddAskHook(hook_addr.to_string()))?;
+//         let hooks = suite.market.ask_hooks()?;
+//         assert_eq!(hooks.hooks.len(), 1);
+//         assert_eq!(hooks.hooks[0], hook_addr.to_string());
+
+//         suite
+//             .market
+//             .manage_hooks(ManageHooksAction::RemoveAskHook(hook_addr.to_string()))?;
+//         let hooks = suite.market.ask_hooks()?;
+//         assert_eq!(hooks.hooks.len(), 0);
+
+//         Ok(())
+//     }
+
+//     #[test]
+//     fn test_all_hooks_workflow() -> anyhow::Result<()> {
+//         let mock = MockBech32::new("mock");
+//         let mut suite = BtsgAccountSuite::new(mock.clone());
+//         suite.default_setup(mock.clone(), None, None)?;
+//         mock.wait_seconds(200)?;
+//         let mw_addr = suite.middleware.addr_str()?;
+//         let account1 = "rick";
+
+//         // // register hooks to middleware
+//         // suite
+//         //     .market
+//         //     .manage_hooks(ManageHooksAction::AddAskHook(mw_addr.clone()))?;
+//         // suite
+//         //     .market
+//         //     .manage_hooks(ManageHooksAction::AddBidHook(mw_addr.clone()))?;
+//         // suite
+//         //     .market
+//         //     .manage_hooks(ManageHooksAction::AddSaleHook(mw_addr.clone()))?;
+
+//         // // perform actions for hooks
+//         // let res = suite.mint_and_list(mock.clone(), account1, &mock.sender_addr())?;
+//         // let res = suite.account.instantiate(
+//         //     &abstract_std::account::InstantiateMsg::<Empty> {
+//         //         code_id: suite.account.code_id()?,
+//         //         owner: Some(abstract_std::objects::gov_type::GovernanceDetails::NFT {
+//         //             collection_addr: suite.nft.addr_str()?,
+//         //             token_id: account1.to_string(),
+//         //         }),
+//         //         account_id: None,
+//         //         authenticator: None,
+//         //         namespace: Some(account1.to_string()),
+//         //         install_modules: vec![], // TODO: install USB
+//         //         name: Some(account1.to_string()),
+//         //         description: Some("Powered By Bitsong Account Framework".into()),
+//         //         link: None,
+//         //     },
+//         //     None,
+//         //     &[],
+//         // )?;
+
+//         // let res = suite.registry.namespace_list(None, None)?.namespaces;
+//         // println!("{:#?}", res);
+
+//         // let res = suite.account.info()?;
+//         // println!("{:#?}", res);
+//         // let res = suite.registry.namespace_list(None, None)?;
+//         // let res = suite
+//         //     .registry
+//         //     .namespace(Namespace::new(&account1.to_string())?)?;
+//         // println!("{:#?}", res);
+
+//         // res.assert_event(&Event::new("wasm-abstract").add_attributes(vec![
+//         //         Attribute {
+//         //             key: "_contract_address".into(),
+//         //             value: suite.middleware.addr_str()?,
+//         //         },
+//         //         Attribute::new("contract", REGISTRY),
+//         //         Attribute::new("action", "claim_namespace"),
+//         //         Attribute::new(
+//         //             "account_id",
+//         //             &suite
+//         //                 .registry
+//         //                 .namespace(Namespace::new(account1)?)?
+//         //                 .unwrap()
+//         //                 .account_id
+//         //                 .to_string(),
+//         //         ),
+//         //         Attribute::new("namespace", "rick"),
+//         //     ]));
+
+//         // assert hook logic is performed
+//         Ok(())
+//     }
+// }
+
 mod execute {
-
-    use std::error::Error;
-
-    use bs721_account_marketplace::ContractError as MarketContractError;
-    use bs721_account_minter::ContractError;
-    use btsg_account::market::{Ask, ExecuteMsg, PendingBid, QueryMsgFns};
-    use btsg_account::DEPLOYMENT_DAO;
-    use cosmwasm_std::{coin, Attribute, Binary, Event};
 
     use super::*;
 
@@ -53,7 +213,7 @@ mod execute {
         // check operators
         assert_eq!(
             suite
-                .account
+                .nft
                 .all_operators(owner, None, None, None)?
                 .operators
                 .len(),
@@ -86,7 +246,7 @@ mod execute {
         assert_eq!(res.token_id, token_id);
 
         // check if token minted
-        let res = suite.account.num_tokens()?;
+        let res = suite.nft.num_tokens()?;
         assert_eq!(res.count, 1);
 
         assert_eq!(suite.owner_of(token_id.into())?, owner.to_string());
@@ -159,7 +319,7 @@ mod execute {
         assert_eq!(
             suite
                 .market
-                .call_as(&suite.account.address()?)
+                .call_as(&suite.nft.address()?)
                 .remove_ask(token_id.to_string())
                 .unwrap_err()
                 .source()
@@ -174,6 +334,55 @@ mod execute {
             Uint128::zero()
         );
 
+        assert_eq!(
+            suite
+                .market
+                .update_ask(bidder.to_string(), token_id.to_string(),)
+                .unwrap_err()
+                .root()
+                .to_string(),
+            MarketContractError::Unauthorized {}.to_string(),
+        );
+        assert_eq!(
+            suite.market.bids(token_id.to_string(), None, None)?,
+            vec![Bid {
+                token_id: token_id.to_string(),
+                bidder: bidder.clone(),
+                amount: BID_AMOUNT.into(),
+                created_time: mock.block_info()?.time.clone(),
+            }],
+        );
+        assert_eq!(
+            suite.market.bids_sorted_by_price(None, None)?,
+            vec![Bid {
+                token_id: token_id.to_string(),
+                bidder: bidder.clone(),
+                amount: BID_AMOUNT.into(),
+                created_time: mock.block_info()?.time.clone(),
+            }],
+        );
+
+        assert_eq!(
+            suite.market.reverse_bids_sorted_by_price(None, None)?,
+            vec![Bid {
+                token_id: token_id.to_string(),
+                bidder: bidder.clone(),
+                amount: BID_AMOUNT.into(),
+                created_time: mock.block_info()?.time.clone(),
+            }],
+        );
+
+        assert_eq!(
+            suite
+                .market
+                .call_as(&bidder)
+                .accept_bid(bidder.clone(), token_id.into())
+                .unwrap_err()
+                .source()
+                .unwrap()
+                .to_string(),
+            "UnauthorizedOwner".to_string()
+        );
         suite.market.accept_bid(bidder.clone(), token_id.into())?;
 
         mock.wait_seconds(60)?;
@@ -200,12 +409,12 @@ mod execute {
         assert_eq!(res.token_id, token_id);
 
         // remove ask
-        let res = suite.account.call_as(&bidder).burn(token_id.to_string())?;
+        let res = suite.nft.call_as(&bidder).burn(token_id.to_string())?;
         println!("res: {:#?}", res);
         res.assert_event(&Event::new("wasm-burn-account").add_attributes(vec![
             Attribute {
                 key: "_contract_address".to_string(),
-                value: suite.account.addr_str()?,
+                value: suite.nft.addr_str()?,
             },
             Attribute::new("account", token_id.to_string()),
         ]));
@@ -242,10 +451,7 @@ mod execute {
             .call_as(&owner)
             .finalize_bid(token_id.to_string())?;
         suite.bid_w_funds(mock.clone(), token_id, bidder2.clone(), BID_AMOUNT)?;
-        suite
-            .account
-            .call_as(&bidder)
-            .approve(market, token_id, None)?;
+        suite.nft.call_as(&bidder).approve(market, token_id, None)?;
         suite
             .market
             .call_as(&bidder)
@@ -273,21 +479,20 @@ mod execute {
 
         suite.mint_and_list(mock.clone(), token_id, &admin2)?;
 
-        // when no associated address, query should throw error
-        suite
-            .account
-            .call_as(&admin2)
-            .associated_address(token_id)
-            .unwrap_err();
+        // when no associated address, query responds with token owner
+        assert_eq!(
+            suite.nft.call_as(&admin2).associated_address(token_id)?,
+            admin2.clone()
+        );
 
         // associate owner address with account account
         suite
-            .account
+            .nft
             .call_as(&admin2)
             .associate_address(token_id, Some(admin2.to_string()))?;
 
         // query associated address should return user
-        assert_eq!(suite.account.associated_address(token_id)?, admin2);
+        assert_eq!(suite.nft.associated_address(token_id)?, admin2);
 
         // added to get around rate limiting
         mock.wait_seconds(60)?;
@@ -296,11 +501,11 @@ mod execute {
         suite.mint_and_list(mock.clone(), account2, &admin2.clone())?;
 
         suite
-            .account
+            .nft
             .call_as(&admin2)
             .associate_address(account2, Some(admin2.to_string()))?;
 
-        assert_eq!(suite.account.account(admin2)?, account2.to_string());
+        assert_eq!(suite.nft.account(admin2)?, account2.to_string());
         Ok(())
     }
 
@@ -326,7 +531,7 @@ mod execute {
         suite.mint_and_list(mock.clone(), token_id, &not_admin)?;
 
         suite
-            .account
+            .nft
             .associate_address(token_id, Some(minter.to_string()))
             .unwrap_err();
         Ok(())
@@ -347,7 +552,7 @@ mod execute {
         suite.mint_and_list(mock.clone(), token_id, &admin2)?;
 
         suite
-            .account
+            .nft
             .associate_address(token_id, Some(admin2.to_string()))
             .unwrap_err();
         Ok(())
@@ -405,6 +610,25 @@ mod execute {
             })?,
         }))?;
 
+        assert_eq!(
+            mock.app
+                .borrow_mut()
+                .sudo(SudoMsg::Wasm(WasmSudo {
+                    contract_addr: suite.market.address()?,
+                    message: to_json_binary(&btsg_account::market::SudoMsg::UpdateParams {
+                        trading_fee_bps: Some(MAX_FEE_BPS * 2u64),
+                        min_price: Some(Uint128::from(1000u128)),
+                        ask_interval: Some(1000),
+                        cooldown_duration: Some(69),
+                        cooldown_cancel_fee: Some(coin(69u128, "jerets")),
+                    })?,
+                }))
+                .unwrap_err()
+                .root_cause()
+                .to_string(),
+            MarketContractError::InvalidTradingFeeBps(MAX_FEE_BPS * 2u64).to_string()
+        );
+
         // confirm updated params
         let res = suite.market.params()?;
         assert_eq!(res.trading_fee_percent, Decimal::percent(10));
@@ -413,6 +637,22 @@ mod execute {
         assert_eq!(res.cooldown_duration, 69);
         assert_eq!(res.cooldown_fee, coin(69u128, "jerets"));
 
+        let new = mock.addr_make("new-jawn");
+        let newnew = mock.addr_make("newer-jawn");
+        mock.app.borrow_mut().sudo(SudoMsg::Wasm(WasmSudo {
+            contract_addr: suite.market.address()?,
+            message: to_json_binary(&btsg_account::market::SudoMsg::UpdateAccountFactory {
+                factory: new.to_string(),
+            })?,
+        }))?;
+        assert_eq!(suite.market.config()?.minter, new);
+        mock.app.borrow_mut().sudo(SudoMsg::Wasm(WasmSudo {
+            contract_addr: suite.market.address()?,
+            message: to_json_binary(&btsg_account::market::SudoMsg::UpdateAccountCollection {
+                collection: newnew.to_string(),
+            })?,
+        }))?;
+        assert_eq!(suite.market.config()?.collection, newnew);
         Ok(())
     }
 
@@ -429,13 +669,13 @@ mod execute {
         suite.mint_and_list(mock.clone(), account, &owner)?;
         suite.bid_w_funds(mock.clone(), account, bidder.clone(), BID_AMOUNT)?;
         suite.market.accept_bid(bidder.clone(), account.into())?;
-        suite.account.revoke_all(suite.market.address()?)?;
+        suite.nft.revoke_all(suite.market.address()?)?;
         mock.wait_seconds(60)?;
         let res = suite.market.finalize_bid(account.to_string())?;
         res.assert_event(&Event::new("wasm").add_attributes(vec![
             Attribute {
                 key: "_contract_address".to_string(),
-                value: suite.account.addr_str()?,
+                value: suite.nft.addr_str()?,
             },
             Attribute::new("action", "approve_all".to_string()),
             Attribute::new("operator", suite.market.addr_str()?),
@@ -483,7 +723,7 @@ mod execute {
             })
         );
         assert_eq!(
-            suite.account.burn(account).unwrap_err().root().to_string(),
+            suite.nft.burn(account).unwrap_err().root().to_string(),
             bs721_account::ContractError::AccountCannotBeTransfered {
                 reason: "Account is in cooldown".to_string()
             }
@@ -491,7 +731,7 @@ mod execute {
         );
         assert_eq!(
             suite
-                .account
+                .nft
                 .transfer_nft(bidder.clone(), account)
                 .unwrap_err()
                 .root()
@@ -503,7 +743,7 @@ mod execute {
         );
         assert_eq!(
             suite
-                .account
+                .nft
                 .send_nft(suite.minter.address()?, Binary::default(), account)
                 .unwrap_err()
                 .root()
@@ -554,6 +794,21 @@ mod execute {
                 .market
                 .execute(
                     &ExecuteMsg::CancelCooldown {
+                        token_id: "babber".to_string(),
+                    },
+                    &vec![coin(500_000_000, "ubtsg")],
+                )
+                .unwrap_err()
+                .root()
+                .to_string(),
+            MarketContractError::AskNotFound {}.to_string()
+        );
+        // token id doesnt exists
+        assert_eq!(
+            suite
+                .market
+                .execute(
+                    &ExecuteMsg::FinalizeBid {
                         token_id: "babber".to_string(),
                     },
                     &vec![coin(500_000_000, "ubtsg")],
@@ -620,7 +875,7 @@ mod execute {
                 .unwrap_err()
                 .root()
                 .to_string(),
-            ContractError::Unauthorized {}.to_string()
+            MinterContractError::Unauthorized {}.to_string()
         );
         assert_eq!(
             suite
@@ -648,7 +903,7 @@ mod execute {
                 .unwrap_err()
                 .root()
                 .to_string(),
-            ContractError::IncorrectPayment {
+            MinterContractError::IncorrectPayment {
                 got: 499_000_000u128,
                 expected: 500_000_000u128
             }
@@ -738,7 +993,7 @@ mod execute {
                 .source()
                 .unwrap()
                 .to_string(),
-            ContractError::IncorrectDelegation {
+            MinterContractError::IncorrectDelegation {
                 got: 10000440u128,
                 expected: base_delegation.u128()
             }
@@ -1063,15 +1318,15 @@ mod query {
         suite.mint_and_list(mock.clone(), token_id, &admin)?;
 
         // fails with "user" string, has to be a bech32 address
-        suite.account.account(token_id).unwrap_err();
+        suite.nft.account(token_id).unwrap_err();
 
         suite.mint_and_list(mock.clone(), "yoyo", &admin)?;
 
         suite
-            .account
+            .nft
             .associate_address("yoyo", Some(admin.to_string()))?;
 
-        assert_eq!(suite.account.account(admin)?, "yoyo".to_string());
+        assert_eq!(suite.nft.account(admin)?, "yoyo".to_string());
 
         Ok(())
     }
@@ -1107,26 +1362,26 @@ mod collection {
         let value = "loaf0bred";
 
         suite
-            .account
+            .nft
             .add_text_record(token_id, TextRecord::new(account, value))?;
 
         // query text record to see if verified is not set
-        let res = suite.account.nft_info(token_id)?;
+        let res = suite.nft.nft_info(token_id)?;
         assert_eq!(res.extension.records[0].account, account.to_string());
         assert_eq!(res.extension.records[0].verified, None);
 
         suite
-            .account
+            .nft
             .verify_text_record(token_id, account, true)
             .unwrap_err();
 
         suite
-            .account
+            .nft
             .call_as(&verifier)
             .verify_text_record(token_id, account, true)?;
 
         // query text record to see if verified is set
-        let res = suite.account.nft_info(token_id)?;
+        let res = suite.nft.nft_info(token_id)?;
 
         assert_eq!(res.extension.records[0].account, account.to_string());
         assert_eq!(res.extension.records[0].verified, Some(true));
@@ -1151,16 +1406,16 @@ mod collection {
         let value = "loaf0bred";
 
         suite
-            .account
+            .nft
             .add_text_record(token_id, TextRecord::new(account, value))?;
 
         suite
-            .account
+            .nft
             .call_as(&verifier)
             .verify_text_record(token_id, account, false)?;
 
         // query text record to see if verified is not set
-        let res = suite.account.nft_info(token_id)?;
+        let res = suite.nft.nft_info(token_id)?;
 
         assert_eq!(res.extension.records[0].account, account.to_string());
         assert_eq!(res.extension.records[0].verified, Some(false));
@@ -1184,16 +1439,16 @@ mod collection {
         let value = "loaf0bred";
 
         suite
-            .account
+            .nft
             .add_text_record(token_id, TextRecord::new(account, value))?;
 
         // query text record to see if verified is not set
-        let res = suite.account.nft_info(token_id)?;
+        let res = suite.nft.nft_info(token_id)?;
         assert_eq!(res.extension.records[0].account, account.to_string());
         assert_eq!(res.extension.records[0].verified, None);
 
         // attempt update text record w verified value
-        suite.account.update_text_record(
+        suite.nft.update_text_record(
             token_id,
             TextRecord {
                 account: token_id.into(),
@@ -1203,13 +1458,13 @@ mod collection {
         )?;
 
         // query text record to see if verified is set
-        let res = suite.account.nft_info(token_id)?;
+        let res = suite.nft.nft_info(token_id)?;
 
         assert_eq!(res.extension.records[0].account, account.to_string());
         assert_eq!(res.extension.records[0].verified, None);
 
         // query image nft
-        assert_eq!(suite.account.image_nft(token_id)?, None);
+        assert_eq!(suite.nft.image_nft(token_id)?, None);
         Ok(())
     }
     #[test]
@@ -1225,7 +1480,7 @@ mod collection {
         suite.mint_and_list(mock.clone(), token_id, &admin_user)?;
 
         suite
-            .account
+            .nft
             .transfer_nft(mock.addr_make("new-addr"), token_id)?;
 
         Ok(())
@@ -1243,7 +1498,7 @@ mod collection {
         suite.mint_and_list(mock.clone(), token_id, &admin_user)?;
 
         suite
-            .account
+            .nft
             .send_nft(mock.addr_make("new-addr"), to_json_binary("ini")?, token_id)?;
         Ok(())
     }
@@ -1262,15 +1517,12 @@ mod collection {
         mock.wait_seconds(200)?;
         suite.mint_and_list(mock.clone(), token_id, &admin_user)?;
 
-        suite.account.transfer_nft(user1.clone(), token_id)?;
+        suite.nft.transfer_nft(user1.clone(), token_id)?;
 
         suite.bid_w_funds(mock.clone(), token_id, bidder1.clone(), BID_AMOUNT * 3)?;
 
         // user2 must approve the marketplace to transfer their account
-        suite
-            .account
-            .call_as(&user1)
-            .approve(market, token_id, None)?;
+        suite.nft.call_as(&user1).approve(market, token_id, None)?;
         // accept bid
         suite
             .market
@@ -1297,19 +1549,19 @@ mod collection {
         suite.mint_and_list(mock.clone(), token_id, &user)?;
 
         suite
-            .account
+            .nft
             .call_as(&user)
             .associate_address(token_id, Some(user.to_string()))?;
 
-        assert_eq!(suite.account.account(user.clone())?, token_id);
+        assert_eq!(suite.nft.account(user.clone())?, token_id);
 
         suite
-            .account
+            .nft
             .call_as(&user)
             .transfer_nft(user2.clone(), token_id)?;
 
-        suite.account.account(user).unwrap_err();
-        suite.account.account(user2).unwrap_err();
+        suite.nft.account(user).unwrap_err();
+        suite.nft.account(user2).unwrap_err();
 
         Ok(())
     }
@@ -1331,24 +1583,21 @@ mod collection {
         let mut suite = BtsgAccountSuite::new(mock.clone());
         suite.default_setup(mock.clone(), None, Some(mock.sender.clone()))?;
 
-        let max_record_count = suite.account.params()?.max_record_count;
-        let max_rev_key_count = suite.account.params()?.max_reverse_map_key_limit;
+        let max_record_count = suite.nft.params()?.max_record_count;
+        let max_rev_key_count = suite.nft.params()?.max_reverse_map_key_limit;
 
         // run sudo msg
         mock.app.borrow_mut().sudo(SudoMsg::Wasm(WasmSudo {
-            contract_addr: suite.account.address()?,
+            contract_addr: suite.nft.address()?,
             message: to_json_binary(&bs721_account::msg::SudoMsg::UpdateParams {
                 max_record_count: max_record_count + 1,
                 max_rev_map_count: max_rev_key_count + 4,
             })?,
         }))?;
 
+        assert_eq!(suite.nft.params()?.max_record_count, max_record_count + 1);
         assert_eq!(
-            suite.account.params()?.max_record_count,
-            max_record_count + 1
-        );
-        assert_eq!(
-            suite.account.params()?.max_reverse_map_key_limit,
+            suite.nft.params()?.max_reverse_map_key_limit,
             max_record_count + 4
         );
 
@@ -1425,7 +1674,6 @@ mod associate_address {
         suite.default_setup(mock.clone(), None, Some(mock.sender.clone()))?;
 
         let admin_user = mock.sender.clone();
-        let cw721_id = suite.account.code_id()?;
         let token_id = "bandura";
         let bidder = mock.addr_make("bidder");
 
@@ -1436,7 +1684,7 @@ mod associate_address {
         suite.test_owner.instantiate(
             &TestOwnershipInitMsg {
                 ownership: abstract_std::objects::gov_type::GovernanceDetails::NFT {
-                    collection_addr: suite.account.addr_str()?,
+                    collection_addr: suite.nft.addr_str()?,
                     token_id: token_id.to_string(),
                 },
             },
@@ -1446,12 +1694,12 @@ mod associate_address {
 
         // associate account to abstract account
         suite
-            .account
+            .nft
             .update_abs_acc_support(token_id, Some(suite.test_owner.addr_str()?))?;
 
         // query the associated address and ensure its the same as the abstract account
         assert_eq!(
-            suite.account.associated_address(token_id)?,
+            suite.nft.associated_address(token_id)?,
             suite.test_owner.address()?
         );
 
@@ -1464,7 +1712,7 @@ mod associate_address {
         let bidder_bal = mock.query_balance(&bidder, "ubtsg")?;
         suite.bid_w_funds(mock.clone(), token_id, bidder.clone(), BID_AMOUNT)?;
         assert_eq!(bidder_bal, Uint128::zero());
-        let res = suite.market.accept_bid(bidder.clone(), token_id.into())?;
+        let _res = suite.market.accept_bid(bidder.clone(), token_id.into())?;
         // assert funds go back to bidder, along with tokens if owner changes ownership prior to finalizing bid
         mock.wait_seconds(60)?;
         let res = suite.market.finalize_bid(token_id.into())?;
@@ -1473,7 +1721,7 @@ mod associate_address {
         assert_eq!(BID_AMOUNT, bidder_bal2.u128());
         assert_eq!(owner_bal, owner_bal2);
         assert_eq!(
-            suite.account.owner_of(token_id, None)?.owner,
+            suite.nft.owner_of(token_id, None)?.owner,
             bidder.to_string()
         );
         res.assert_event(&Event::new("transfer").add_attributes(vec![
@@ -1484,6 +1732,7 @@ mod associate_address {
 
         Ok(())
     }
+
     #[test]
     fn test_transfer_to_eoa() -> anyhow::Result<()> {
         let mock = MockBech32::new("bitsong");
@@ -1492,7 +1741,7 @@ mod associate_address {
 
         let admin_user = mock.sender.clone();
 
-        let cw721_id = suite.account.code_id()?;
+        let cw721_id = suite.nft.code_id()?;
         let token_id = "bandura";
 
         let nft_addr = mock
@@ -1517,9 +1766,9 @@ mod associate_address {
         mock.wait_seconds(200)?;
         // mint and transfer to collection
         suite.mint_and_list(mock.clone(), token_id, &admin_user)?;
-        suite.account.transfer_nft(nft_addr.clone(), token_id)?;
+        suite.nft.transfer_nft(nft_addr.clone(), token_id)?;
         assert_eq!(
-            suite.account.owner_of(token_id, None)?.owner,
+            suite.nft.owner_of(token_id, None)?.owner,
             nft_addr.to_string()
         );
 
@@ -1536,7 +1785,7 @@ mod associate_address {
 
         let admin_user = mock.sender.clone();
 
-        let cw721_id = suite.account.code_id()?;
+        let cw721_id = suite.nft.code_id()?;
 
         let token_id = "bandura";
         // Instantiating the creator contract with an admin (USER)
@@ -1586,7 +1835,7 @@ mod associate_address {
 
         // USER4 tries to associate the account with the collection contract that doesn't have an admin
         suite
-            .account
+            .nft
             .call_as(&admin_user)
             .associate_address(token_id, Some(collection_with_no_admin_addr.to_string()))?;
 
@@ -1609,7 +1858,7 @@ mod associate_address {
         mock.add_balance(&user4, vec![coin(10000000000u128, "ubtsg")])?;
         suite.delegate_to_val(mock.clone(), user4.clone(), 10000000000u128)?;
 
-        let cw721_id = suite.account.code_id()?;
+        let cw721_id = suite.nft.code_id()?;
 
         let token_id = "bandura";
         // Instantiating the creator contract with an admin (USER)
@@ -1659,7 +1908,7 @@ mod associate_address {
 
         // USER4 tries to associate the account with the collection contract that doesn't have an admin
         let err = suite
-            .account
+            .nft
             .call_as(&user4)
             .associate_address(token_id, Some(collection_with_no_admin_addr.to_string()))
             .unwrap_err();
@@ -1683,7 +1932,7 @@ mod associate_address {
         mock.add_balance(&user4, vec![coin(10000000000u128, "ubtsg")])?;
         suite.delegate_to_val(mock.clone(), user4.clone(), 10000000000u128)?;
 
-        let cw721_id = suite.account.code_id()?;
+        let cw721_id = suite.nft.code_id()?;
 
         let token_id = "bandura";
         // Instantiating the creator contract with an admin (USER)
@@ -1710,7 +1959,7 @@ mod associate_address {
         suite.mint_and_list(mock.clone(), token_id, &user4)?;
 
         let err = suite
-            .account
+            .nft
             .call_as(&user4)
             .associate_address(token_id, Some(contract.to_string()))
             .unwrap_err();

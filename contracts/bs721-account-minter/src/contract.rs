@@ -1,7 +1,8 @@
+use btsg_account::market::MigrateMsg;
 use btsg_account::minter::{Config, SudoParams};
 use cosmwasm_std::{
     instantiate2_address, to_json_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response,
-    StdResult, WasmMsg,
+    StdError, StdResult, WasmMsg,
 };
 use cw2::set_contract_version;
 
@@ -145,8 +146,21 @@ pub fn sudo(deps: DepsMut, _env: Env, msg: SudoMsg) -> Result<Response, Contract
     }
 }
 
+#[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
+pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, ContractError> {
+    let then = cw2::get_contract_version(deps.storage)?;
+    if then.version >= CONTRACT_VERSION.to_owned() || then.contract != ACCOUNT_MINTER.to_owned() {
+        return Err(ContractError::Std(StdError::generic_err(
+            "unable to migrate bs721-account minter.",
+        )));
+    }
+    cw2::set_contract_version(deps.storage, ACCOUNT_MINTER, CONTRACT_VERSION)?;
+    Ok(Response::default())
+}
+
 #[cfg(test)]
 mod tests {
+    use btsg_account::CURRENT_BASE_PRICE;
     use cosmwasm_std::{coin, Addr, MessageInfo};
 
     use crate::commands::{validate_account, validate_payment};
@@ -185,7 +199,7 @@ mod tests {
 
     #[test]
     fn check_validate_payment() {
-        let base_price = 100_000_000;
+        let base_price = CURRENT_BASE_PRICE as u128;
 
         let info = MessageInfo {
             sender: Addr::unchecked("sender"),

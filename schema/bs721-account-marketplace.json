@@ -203,6 +203,48 @@
         "additionalProperties": false
       },
       {
+        "type": "object",
+        "required": [
+          "remove_bids"
+        ],
+        "properties": {
+          "remove_bids": {
+            "type": "object",
+            "required": [
+              "token_id"
+            ],
+            "properties": {
+              "token_id": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "checked_remove_bids"
+        ],
+        "properties": {
+          "checked_remove_bids": {
+            "type": "object",
+            "required": [
+              "token_id"
+            ],
+            "properties": {
+              "token_id": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
         "description": "Accept a bid on an existing ask",
         "type": "object",
         "required": [
@@ -251,6 +293,7 @@
         "additionalProperties": false
       },
       {
+        "description": "Cancel a bid that has been accepted an is in the cooldown period.",
         "type": "object",
         "required": [
           "cancel_cooldown"
@@ -347,7 +390,7 @@
                   "integer",
                   "null"
                 ],
-                "format": "uint64",
+                "format": "uint32",
                 "minimum": 0.0
               }
             },
@@ -788,7 +831,7 @@
           "properties": {
             "id": {
               "type": "integer",
-              "format": "uint64",
+              "format": "uint32",
               "minimum": 0.0
             },
             "seller": {
@@ -849,7 +892,7 @@
           "properties": {
             "id": {
               "type": "integer",
-              "format": "uint64",
+              "format": "uint32",
               "minimum": 0.0
             },
             "seller": {
@@ -886,7 +929,7 @@
           "properties": {
             "id": {
               "type": "integer",
-              "format": "uint64",
+              "format": "uint32",
               "minimum": 0.0
             },
             "seller": {
@@ -1247,7 +1290,7 @@
           "properties": {
             "id": {
               "type": "integer",
-              "format": "uint64",
+              "format": "uint32",
               "minimum": 0.0
             },
             "seller": {

@@ -25,8 +25,11 @@ pub type ExecuteMsg = crate::msg::ExecuteMsg<Metadata>;
 pub type QueryMsg = Bs721AccountsQueryMsg;
 
 pub mod entry {
+    use crate::msg::MigrateMsg;
+
     use super::*;
     use commands::{manifest::*, queries::*, sudo_update_params, transcode};
+    use cosmwasm_std::StdError;
     use cw_utils::maybe_addr;
     use msg::{InstantiateMsg, SudoMsg};
     use state::{SudoParams, ACCOUNT_MARKETPLACE, SUDO_PARAMS, VERIFIER};
@@ -190,5 +193,18 @@ pub mod entry {
                 max_rev_map_count,
             } => sudo_update_params(deps, max_record_count, max_rev_map_count),
         }
+    }
+
+    #[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
+    pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, ContractError> {
+        let then = cw2::get_contract_version(deps.storage)?;
+        if then.version >= CONTRACT_VERSION.to_owned() || then.contract != ACCOUNT_CONTRACT.to_owned()
+        {
+            return Err(ContractError::Std(StdError::generic_err(
+                "unable to migrate bs721-account.",
+            )));
+        }
+        cw2::set_contract_version(deps.storage, ACCOUNT_CONTRACT, CONTRACT_VERSION)?;
+        Ok(Response::default())
     }
 }

@@ -10,7 +10,7 @@ If the code-id of the accounts used has a global contract admin, then the possib
 
 There is still a risk of any wallet address compromized that is also authorized to execute actions as the module, however there are none.
 
-> Currently, none of the contracts used in the accounts framework uses migration entrypoints. This makes our account framework immutable.
+> Currently, all of the contracts used in the accounts framework uses migration entrypoints. This exposes the attack surface are for undesired state changes during migration
 
 ### Undesired Operator Or Approval Authorization
 

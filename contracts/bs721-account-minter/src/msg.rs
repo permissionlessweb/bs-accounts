@@ -66,3 +66,6 @@ pub enum QueryMsg {
     #[returns(Config)]
     Config {},
 }
+
+#[cosmwasm_schema::cw_serde]
+pub struct MigrateMsg {}

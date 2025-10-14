@@ -1,16 +1,20 @@
 use bs_controllers::Hooks;
 
 use btsg_account::market::{Ask, AskKey, Bid, BidKey, PendingBid, SudoParams};
+use btsg_account::TokenId;
 use cosmwasm_std::{Addr, StdResult, Storage};
 use cw_storage_macro::index_list;
-use cw_storage_plus::{IndexedMap, Item, MultiIndex, UniqueIndex};
+use cw_storage_plus::{IndexedMap, Item, Map, MultiIndex, UniqueIndex};
 
 // bps fee can not exceed 100%
 pub const MAX_FEE_BPS: u64 = 10000;
 
-pub const SUDO_PARAMS: Item<SudoParams> = Item::new("sp");
+pub const MAX_REMOVE_BID_LIMIT: u64 = 30;
+pub const COOLDOWN_BID: Map<&TokenId, PendingBid> = Map::new("cdb");
+pub const OVERFLOW_BIDS_REMOVE: Map<TokenId, Vec<BidKey>> = Map::new("obr");
 
-pub const COOLDOWN: Item<String> = Item::new("cd");
+
+pub const SUDO_PARAMS: Item<SudoParams> = Item::new("sp");
 
 pub const ASK_HOOKS: Hooks = Hooks::new("ah");
 pub const BID_HOOKS: Hooks = Hooks::new("bh");
@@ -20,20 +24,20 @@ pub const ACCOUNT_MINTER: Item<Addr> = Item::new("am");
 pub const ACCOUNT_COLLECTION: Item<Addr> = Item::new("ac");
 pub const VERSION_CONTROL: Item<Addr> = Item::new("vc");
 
-pub const ASK_COUNT: Item<u64> = Item::new("ask-count");
+pub const ASK_COUNT: Item<u32> = Item::new("ask-count");
 pub const IS_SETUP: Item<bool> = Item::new("is");
 
-pub fn ask_count(storage: &dyn Storage) -> StdResult<u64> {
+pub fn ask_count(storage: &dyn Storage) -> StdResult<u32> {
     Ok(ASK_COUNT.may_load(storage)?.unwrap_or_default())
 }
 
-pub fn increment_asks(storage: &mut dyn Storage) -> StdResult<u64> {
+pub fn increment_asks(storage: &mut dyn Storage) -> StdResult<u32> {
     let val = ask_count(storage)? + 1;
     ASK_COUNT.save(storage, &val)?;
     Ok(val)
 }
 
-pub fn decrement_asks(storage: &mut dyn Storage) -> StdResult<u64> {
+pub fn decrement_asks(storage: &mut dyn Storage) -> StdResult<u32> {
     let val = ask_count(storage)? - 1;
     ASK_COUNT.save(storage, &val)?;
     Ok(val)
@@ -49,7 +53,7 @@ pub fn ask_key(token_id: &str) -> AskKey {
 pub struct AskIndicies<'a> {
     /// Unique incrementing id for each ask
     /// This allows pagination when `token_id`s are strings
-    pub id: UniqueIndex<'a, u64, Ask, AskKey>,
+    pub id: UniqueIndex<'a, u32, Ask, AskKey>,
     /// Index by seller
     pub seller: MultiIndex<'a, Addr, Ask, AskKey>,
 }
@@ -94,32 +98,4 @@ pub fn bids<'a>() -> IndexedMap<BidKey, Bid, BidIndicies<'a>> {
         ),
     };
     IndexedMap::new("b2", indexes)
-}
-
-#[index_list(PendingBid)]
-pub struct PendingBidIndicies<'a> {
-    pub owner: MultiIndex<'a, Addr, PendingBid, String>,
-    pub new_owner: MultiIndex<'a, Addr, PendingBid, String>,
-    pub unlock_time: MultiIndex<'a, (String, u64), PendingBid, String>,
-}
-
-pub fn cooldown_bids<'a>() -> IndexedMap<&'a str, PendingBid, PendingBidIndicies<'a>> {
-    let indexes = PendingBidIndicies {
-        owner: MultiIndex::new(
-            |_pk: &[u8], d: &PendingBid| d.ask.seller.clone(),
-            "pending_bids",
-            "pending_bids__owner",
-        ),
-        new_owner: MultiIndex::new(
-            |_pk: &[u8], d: &PendingBid| d.new_owner.clone(),
-            "pending_bids",
-            "pending_bids__new_owner",
-        ),
-        unlock_time: MultiIndex::new(
-            |_pk: &[u8], d: &PendingBid| (d.ask.token_id.clone(), d.unlock_time.seconds()),
-            "pending_bids",
-            "pending_bids__unlock_time",
-        ),
-    };
-    IndexedMap::new("pending_bids", indexes)
 }

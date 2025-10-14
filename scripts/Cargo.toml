@@ -9,7 +9,6 @@ version  = { workspace = true }
 [dependencies]
 # Cryptography & Signing
 sha2                        = { workspace = true }
-bech32                      = { workspace = true }
 ripemd                      = { version = "0.1.3",  default-features = false }
 k256                        = { version = "0.13.3", default-features = false, features = ["ecdsa"] }
 ecdsa                       = { version = "0.16.2" }
@@ -25,6 +24,7 @@ cosmrs                      = { version = "0.22.0" }
 # NFT & Account Contracts
 bs721-base                  = { workspace = true }
 btsg-nft-scripts            = { workspace = true }
+account-registry-middleware = { workspace = true }
 btsg-account                = { path = "../packages/btsg-account" }
 btsg-auth                   = { workspace = true }
 bs721-account               = { workspace = true, features = ["library"] }
@@ -33,7 +33,10 @@ bs721-account-marketplace   = { workspace = true, features = ["library"] }
 
 # Abstract & CW-Orchestrator
 abstract-std                = { workspace = true }
+abstract-interface          = { git = "https://github.com/permissionlessweb/abstract", branch = "feat/wasm-path" }
 cw-orch                     = { workspace = true, features = ["daemon"] }
+cw-blob = {  git = "https://github.com/permissionlessweb/cw-packages", branch = "feat/wasm-path", features = ["library"] }
+
 
 # CLI & Utilities
 clap                        = { version = "4.0.32", features = ["derive"] }
