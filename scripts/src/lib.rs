@@ -2,7 +2,7 @@ pub mod suite;
 pub use suite::BtsgAccountSuite;
 pub mod networks;
 
-// re-export contract cw-orch functions
+// re-export contract cw-orch functions & entrypoint types
 pub use bs721_account::msg::{
     AsyncBs721AccountsQueryMsgFns, Bs721AccountsQueryMsg, Bs721AccountsQueryMsgFns,
     ExecuteMsg as Bs721AccountExecuteMsgTypes, ExecuteMsgFns as BtsgAccountExecuteFns,

@@ -1,3 +1,5 @@
+
+use std::fmt::format;
 use abstract_std::objects::namespace::Namespace;
 use abstract_std::objects::AccountId;
 use abstract_std::registry::{NamespaceResponse, QueryMsg as RegistryQueryMsg};
@@ -7,8 +9,8 @@ use btsg_account::market::hooks::{AskHookMsg, BidHookMsg, HookAction, SaleHookMs
 use btsg_account::Metadata;
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{
-    entry_point, to_json_binary, BankMsg, Binary, Deps, DepsMut, Env, MessageInfo, Response,
-    StdError, StdResult, SubMsg, WasmMsg,
+    entry_point, to_json_binary, BankMsg, Binary, CosmosMsg, Deps, DepsMut, Empty, Env,
+    MessageInfo, Reply, Response, StdError, StdResult, SubMsg, WasmMsg,
 };
 use cw_storage_plus::Item;
 use thiserror::Error;
@@ -35,16 +37,21 @@ pub enum ContractError {
 
     #[error("Unauthorized")]
     Unauthorized {},
+
+    #[error("ReplyErr: {e}")]
+    ReplyErr { e: String },
 }
 #[cw_serde]
 pub struct InstantiateMsg {
     pub market: String,
     pub collection: String,
+    pub account_code_id: u64,
 }
 
 #[cw_serde]
 pub struct Config {
     pub market: String,
+    pub account_code_id: u64,
     pub registry: Option<String>,
     pub collection: String,
     pub current_admin: String,
@@ -96,6 +103,7 @@ pub fn instantiate(
             market: msg.market,
             registry: None,
             collection: msg.collection,
+            account_code_id: msg.account_code_id,
             current_admin: info.sender.to_string(),
         },
     )?;
@@ -121,9 +129,9 @@ pub fn execute(
             collection,
             owner,
         } => update_config(deps, info, market, registry, collection, owner),
-        ExecuteMsg::AskCreatedHook(a) => p_ask(info, a, &c.market, HookAction::Create),
-        ExecuteMsg::AskUpdatedHook(a) => p_ask(info, a, &c.market, HookAction::Update),
-        ExecuteMsg::AskDeletedHook(a) => p_ask(info, a, &c.market, HookAction::Delete),
+        ExecuteMsg::AskCreatedHook(a) => p_ask(info, a, &c, HookAction::Create),
+        ExecuteMsg::AskUpdatedHook(a) => p_ask(info, a, &c, HookAction::Update),
+        ExecuteMsg::AskDeletedHook(a) => p_ask(info, a, &c, HookAction::Delete),
         ExecuteMsg::BidCreatedHook(b) => p_bid(deps, info, b, c, HookAction::Create),
         ExecuteMsg::BidUpdatedHook(b) => p_bid(deps, info, b, c, HookAction::Update),
         ExecuteMsg::BidDeletedHook(b) => p_bid(deps, info, b, c, HookAction::Delete),
@@ -141,30 +149,55 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     }
 }
 
+#[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
+pub fn reply(_deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
+    println!("{:#?}", msg);
+    match msg.result {
+        cosmwasm_std::SubMsgResult::Ok(_) => Ok(Response::default()),
+        cosmwasm_std::SubMsgResult::Err(e) => return Err(ContractError::ReplyErr { e }),
+    }
+}
+
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn migrate(_deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, ContractError> {
+pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, ContractError> {
+    let then = cw2::get_contract_version(deps.storage)?;
+    if then.version >= CONTRACT_VERSION.to_owned() || then.contract != CONTRACT_NAME.to_owned() {
+        return Err(ContractError::Std(StdError::generic_err(
+            "unable to migrate contract.",
+        )));
+    }
+    cw2::set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
     Ok(Response::default())
 }
 
 pub fn p_ask(
     info: MessageInfo,
     hook: AskHookMsg,
-    market: &String,
+    c: &Config,
     method: HookAction,
 ) -> Result<Response, ContractError> {
-    if &info.sender.to_string() != market {
+    if &info.sender.to_string() != &c.market {
         return Err(ContractError::Unauthorized {});
     }
+    let r = c
+        .registry
+        .as_ref()
+        .expect("registry is yet to be registered");
+
     // set anmespace for newly minted token on framework.
     let mut res = Response::default();
-    match method {
-        HookAction::Create => claim_namespace(&mut res, hook.ask.id, &hook.ask.token_id, market)?,
-        // noop
-        HookAction::Update => {}
-        HookAction::Delete => forgoe_namespace(&mut res, &hook.ask.token_id, market)?,
-    }
+    let mut msgs = match method {
+        HookAction::Create => claim_namespace(&mut res, c, hook)?,
 
-    Ok(res)
+        HookAction::Update => {
+            // check that namespaces are still in sync with current account owners.
+            vec![]
+        }
+        // forgoe namespace if account token is burnt (burning is only way ask-hook invokes HookAction::Delete)
+        HookAction::Delete => forgoe_namespace(&hook.ask.token_id, r)?,
+    };
+
+    Ok(res.add_messages(msgs))
 }
 
 pub fn p_bid(
@@ -224,8 +257,8 @@ pub fn process_sale_hook(
     }
     let mut res = Response::default();
     if hook.buyer == hook.seller {
-        forgoe_namespace(&mut res, &hook.token_id, market)?;
-        claim_namespace(&mut res, hook.ask_id, &hook.token_id, market)?;
+        forgoe_namespace(&hook.token_id, market)?;
+        // claim_namespace(&mut res, hook.ask_id, &hook.token_id, market)?;
     }
     Ok(res)
 }
@@ -246,32 +279,53 @@ pub fn route_registry_action(
     }))
 }
 
-fn claim_namespace(
-    res: &mut Response,
-    seq: u32,
-    token_id: &String,
-    market: &String,
-) -> StdResult<()> {
-    res.messages.push(SubMsg::new(WasmMsg::Execute {
-        contract_addr: market.to_string(),
-        msg: to_json_binary(&abstract_std::registry::ExecuteMsg::ClaimNamespace {
-            account_id: AccountId::local(seq),
-            namespace: token_id.into(),
-        })?,
-        funds: vec![],
-    }));
-    Ok(())
+fn claim_namespace(res: &mut Response, c: &Config, hook: AskHookMsg) -> StdResult<Vec<CosmosMsg>> {
+    // let namespace = format!(
+    //     "{}:{}",
+    //     hook.ask.token_id.clone(),
+    //     hook.ask.seller.to_string()
+    // );
+
+    Ok(vec![
+        // cosmwasm_std::CosmosMsg::Wasm(WasmMsg::Instantiate {
+        //     admin: None,
+        //     code_id: c.account_code_id.clone(),
+        //     msg: to_json_binary(&abstract_std::account::InstantiateMsg::<Empty> {
+        //         code_id: c.account_code_id,
+        //         owner: Some(abstract_std::objects::gov_type::GovernanceDetails::NFT {
+        //             collection_addr: c.collection.clone(),
+        //             token_id: hook.ask.token_id.clone(),
+        //         }),
+        //         account_id: Some(AccountId::local(hook.ask.id)),
+        //         authenticator: None,
+        //         namespace: None,
+        //         install_modules: vec![], // TODO: install USB
+        //         name: Some(hook.ask.token_id.clone()),
+        //         description: Some("Powered By Bitsong Account Framework".into()),
+        //         link: None,
+        //     })?,
+        //     funds: vec![],
+        //     label: "Bitsong Abstract Account".into(),
+        // }),
+        // cosmwasm_std::CosmosMsg::Wasm(WasmMsg::Execute {
+        //     contract_addr: c.registry.to_owned().expect("registry was not set"),
+        //     msg: to_json_binary(&abstract_std::registry::ExecuteMsg::ClaimNamespace {
+        //         account_id: AccountId::local(hook.ask.id),
+        //         namespace: hook.ask.token_id.clone(),
+        //     })?,
+        //     funds: vec![],
+        // }),
+    ])
 }
 
-fn forgoe_namespace(res: &mut Response, token_id: &String, market: &String) -> StdResult<()> {
-    res.messages.push(SubMsg::new(WasmMsg::Execute {
+fn forgoe_namespace(token_id: &String, market: &String) -> StdResult<Vec<CosmosMsg>> {
+    Ok(vec![cosmwasm_std::CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: market.to_string(),
         msg: to_json_binary(&abstract_std::registry::ExecuteMsg::ForgoNamespace {
             namespaces: vec![token_id.into()],
         })?,
         funds: vec![],
-    }));
-    Ok(())
+    })])
 }
 
 fn withdraw_payments(

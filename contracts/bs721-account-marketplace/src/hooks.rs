@@ -3,7 +3,9 @@ use btsg_account::market::{
     Ask, Bid,
 };
 
-use cosmwasm_std::{Addr, DepsMut, Env, Reply, Response, StdResult, Storage, SubMsg, WasmMsg};
+use cosmwasm_std::{
+    Addr, DepsMut, Env, Reply, Response, StdError, StdResult, Storage, SubMsg, WasmMsg,
+};
 
 use crate::{state::*, ContractError};
 
@@ -28,22 +30,19 @@ impl From<u64> for HookReply {
 pub fn reply(_deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
     match HookReply::from(msg.id) {
         HookReply::Ask => {
-            let res = Response::new()
-                .add_attribute("action", "ask-hook-failed")
-                .add_attribute("error", msg.result.unwrap_err());
-            Ok(res)
+            return Err(ContractError::Std(StdError::generic_err(
+                msg.result.unwrap_err(),
+            )))
         }
         HookReply::Sale => {
-            let res = Response::new()
-                .add_attribute("action", "sale-hook-failed")
-                .add_attribute("error", msg.result.unwrap_err());
-            Ok(res)
+            return Err(ContractError::Std(StdError::generic_err(
+                msg.result.unwrap_err(),
+            )))
         }
         HookReply::Bid => {
-            let res = Response::new()
-                .add_attribute("action", "bid-hook-failed")
-                .add_attribute("error", msg.result.unwrap_err());
-            Ok(res)
+            return Err(ContractError::Std(StdError::generic_err(
+                msg.result.unwrap_err(),
+            )))
         }
     }
 }

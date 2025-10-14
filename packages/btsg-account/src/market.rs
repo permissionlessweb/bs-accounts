@@ -310,6 +310,9 @@ impl AskOffset {
     }
 }
 
+#[cosmwasm_schema::cw_serde]
+pub struct MigrateMsg {}
+
 #[cfg(feature = "market-hooks")]
 pub mod hooks {
     use super::*;
@@ -415,7 +418,4 @@ pub mod hooks {
         BidUpdatedHook(BidHookMsg),
         BidDeletedHook(BidHookMsg),
     }
-
-    #[cosmwasm_schema::cw_serde]
-    pub struct MigrateMsg {}
 }

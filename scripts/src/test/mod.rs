@@ -3,25 +3,34 @@ pub mod market;
 pub mod minter;
 pub mod smart_accounts;
 
+use abstract_interface::AccountI;
+use abstract_std::{native_addrs, objects::gov_type::GovernanceDetails};
+use anyhow::anyhow;
 use bs721_account_minter::msg::InstantiateMsg as AccountMinterInitMsg;
 use btsg_account::market::MarketplaceInstantiateMsg as AccountMarketInitMsg;
-use cosmwasm_std::{coin, coins, Decimal, StakingMsg, Uint128};
+use cosmwasm_std::{
+    coin, coins, instantiate2_address, Binary, CanonicalAddr, Decimal, Instantiate2AddressError,
+    StakingMsg, Uint128,
+};
+use cw_blob::interface::{CwBlob, DeterministicInstantiation};
 use cw_orch::{
     anyhow,
-    mock::cw_multi_test::{Module, StakingInfo},
+    mock::cw_multi_test::{AppResponse, Module, StakingInfo},
     prelude::*,
 };
+
 const BASE_PRICE: u128 = 100_000_000;
 const BASE_DELEGATION: u128 = 2100000000;
 const VALIDATOR_1: &str = "val-1";
 use crate::{
-    Bs721AccountsQueryMsgFns, BtsgAccountExecuteFns, BtsgAccountMarketExecuteFns,
-    BtsgAccountMarketQueryFns,
+    AccountRegistryExecuteFns, AccountRegistryQueryFns, Bs721AccountsQueryMsgFns,
+    BtsgAccountExecuteFns, BtsgAccountMarketExecuteFns, BtsgAccountMarketQueryFns,
 };
 use serde::{Deserialize, Serialize};
 
 use crate::{
     networks::{GAS_TO_DEPLOY, SUPPORTED_CHAINS},
+    suite::CW_BLOB,
     BtsgAccountSuite,
 };
 
@@ -40,11 +49,23 @@ impl BtsgAccountSuite<MockBech32> {
         creator: Option<Addr>,
         admin: Option<Addr>,
     ) -> anyhow::Result<()> {
-        let admin2 = mock.addr_make("admin2");
-        mock.add_balance(&mock.sender, vec![coin(10500000000, "ubtsg")])?;
-        // a. uploads all contracts
         self.upload()?;
         self.test_owner.upload()?;
+        self.blob.upload()?;
+
+        let admin2 = mock.addr_make("admin2");
+        mock.add_balance(&mock.sender, vec![coin(10500000000, "ubtsg")])?;
+        let blob_code_id = self.blob.code_id()?;
+        let sender_addr = mock.sender_addr();
+        let admin = sender_addr.to_string();
+        let creator_account_id: cosmrs::AccountId = admin.as_str().parse().unwrap();
+        let canon_creator = CanonicalAddr::from(creator_account_id.to_bytes());
+        let expected_addr = |salt: &[u8]| -> Result<CanonicalAddr, Instantiate2AddressError> {
+            instantiate2_address(&cw_blob::CHECKSUM, &canon_creator, salt)
+        };
+
+        // a. uploads all contracts
+
         // b. instantiates marketplace
         self.market.instantiate(
             &AccountMarketInitMsg {
@@ -67,7 +88,7 @@ impl BtsgAccountSuite<MockBech32> {
             .call_as(&creator.clone().unwrap_or_else(|| admin2.clone()))
             .instantiate(
                 &AccountMinterInitMsg {
-                    admin: admin.clone().map(|a| a.to_string()),
+                    admin: Some(admin.clone()),
                     verifier: Some(mock.addr_make("verifier").to_string()),
                     collection_code_id: self.nft.code_id()?,
                     marketplace_addr: self.market.addr_str()?,
@@ -125,7 +146,90 @@ impl BtsgAccountSuite<MockBech32> {
         // println!("ADMIN2:  {:#?}", admin2.to_string());
         // println!("ADMIN:   {:#?}", admin);
         // println!("CREATOR: {:#?}", creator);
+        // // // // // // // // // // // // // // // // // //
+        //  ABSTRACT ACCOUNTS
+        // // // // // // // // // // // // // // // // // //
 
+        // self.middleware.instantiate(
+        //     &account_registry_middleware::InstantiateMsg {
+        //         market: self.market.addr_str()?,
+        //         collection: self.nft.addr_str()?,
+        //         account_code_id: self.account.code_id()?,
+        //     },
+        //     Some(&Addr::unchecked(admin.clone())),
+        //     &[],
+        // )?;
+
+        // self.ans_host.deterministic_instantiate(
+        //     &abstract_std::ans_host::MigrateMsg::Instantiate(
+        //         abstract_std::ans_host::InstantiateMsg {
+        //             admin: admin.to_string(),
+        //         },
+        //     ),
+        //     blob_code_id,
+        //     expected_addr(native_addrs::ANS_HOST_SALT)?,
+        //     Binary::from(native_addrs::ANS_HOST_SALT),
+        // )?;
+
+        // self.registry.deterministic_instantiate(
+        //     &abstract_std::registry::MigrateMsg::Instantiate(
+        //         abstract_std::registry::InstantiateMsg {
+        //             admin: admin.to_string(),
+        //             security_enabled: Some(false),
+        //             namespace_registration_fee: None,
+        //         },
+        //     ),
+        //     blob_code_id,
+        //     expected_addr(native_addrs::REGISTRY_SALT)?,
+        //     Binary::from(native_addrs::REGISTRY_SALT),
+        // )?;
+
+        // self.module_factory.deterministic_instantiate(
+        //     &abstract_std::module_factory::MigrateMsg::Instantiate(
+        //         abstract_std::module_factory::InstantiateMsg {
+        //             admin: admin.to_string(),
+        //         },
+        //     ),
+        //     blob_code_id,
+        //     expected_addr(native_addrs::MODULE_FACTORY_SALT)?,
+        //     Binary::from(native_addrs::MODULE_FACTORY_SALT),
+        // )?;
+        // // We also instantiate ibc contracts
+        // self.ibc.instantiate(&Addr::unchecked(admin.clone()))?;
+        // self.registry
+        //     .call_as(&Addr::unchecked(admin.clone()))
+        //     .register_base(&self.account)
+        //     .map_err(|e| CwOrchError::AnyError(anyhow!(e.to_string())))?;
+        // self.registry
+        //     .call_as(&Addr::unchecked(admin.clone()))
+        //     .approve_any_abstract_modules()
+        //     .map_err(|e| CwOrchError::AnyError(anyhow!(e.to_string())))?;
+
+        // // self.middleware
+        // //     .update_config(None, None, None, Some(self.registry.addr_str()?))?;
+
+        // // Create the Abstract Account because it's needed for the fees for the dex module
+        // self.account.instantiate(
+        //     &abstract_std::account::InstantiateMsg::<Empty> {
+        //         code_id: self.account.code_id()?,
+        //         owner: Some(
+        //             abstract_std::objects::gov_type::GovernanceDetails::Monarchy {
+        //                 monarch: admin.to_string(),
+        //             },
+        //         ),
+        //         account_id: None,
+        //         authenticator: None,
+        //         namespace: None,
+        //         install_modules: vec![], // TODO: install USB
+        //         name: Some("deployment-dao".into()),
+        //         description: Some("Powered By Bitsong Account Framework".into()),
+        //         link: None,
+        //     },
+        //     None,
+        //     &[],
+        // )?;
+
+        println!("{:#?}", mock.state());
         Ok(())
     }
     /// mint and list an account token.
@@ -160,7 +264,7 @@ impl BtsgAccountSuite<MockBech32> {
         mock: MockBech32,
         account: &str,
         user: &Addr,
-    ) -> anyhow::Result<()> {
+    ) -> anyhow::Result<AppResponse> {
         // set approval for user, for all tokens
         // approve_all is needed because we don't know the token_id before-hand
         let market = self.market.address()?;
@@ -179,13 +283,13 @@ impl BtsgAccountSuite<MockBech32> {
             mock.add_balance(&user.clone(), name_fee.clone())?;
         };
         // call as user to mint and list the account name, with account fees
-        self.minter.call_as(user).execute(
+        let res = self.minter.call_as(user).execute(
             &bs721_account_minter::msg::ExecuteMsg::MintAndList {
                 account: account.to_string(),
             },
             &name_fee,
         )?;
-        Ok(())
+        Ok(res)
     }
 
     pub fn owner_of(&self, id: String) -> anyhow::Result<String> {

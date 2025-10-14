@@ -7,15 +7,15 @@
       "abstract:ibc-host": 98,
       "abstract:module-factory": 95,
       "abstract:registry": 94,
-      "bs721_account": 102,
-      "bs721_account_marketplace": 104,
-      "bs721_account_minter": 103,
+      "bs721_account": 111,
+      "bs721_account_marketplace": 113,
+      "bs721_account_minter": 112,
       "cw:blob": 92
     },
     "default": {
-      "bs721_account": "bitsong1lsqef5uhca854378hlawu9nxzxcyyj6hnjcqfn0upsyejfvwrdnstqk8hn",
-      "bs721_account_marketplace": "bitsong12nl6zzu0swpkmzw26vkqyc9geya8lwukeepujdgxv3040en8cxrsxyfdnt",
-      "bs721_account_minter": "bitsong14a43attc7ze3szz39ac9yhlxqxqmf5va752kfxs8jkf8ygckmtaslt4gqu"
+      "bs721_account": "bitsong1tw4gh2yjkk7jzdzjwdeg0ytk4k7jn4cwd48m0zlajqqndtld89hswhxsxk",
+      "bs721_account_marketplace": "bitsong19qzwjunusv4akkz42dygw0lk7knrg548vd4hgygpvqz25crzy5eqxtpfss",
+      "bs721_account_minter": "bitsong1yn9c2jrzx670v43nlglzjm06l22stcr8u986ntdcau4le3426pnquncdgq"
     }
   }
 }

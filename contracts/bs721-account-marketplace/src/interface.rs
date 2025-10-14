@@ -1,6 +1,9 @@
 use cw_orch::{interface, prelude::*};
 
-use crate::contract::{execute, instantiate, query, sudo, ACCOUNT_MARKETPLACE};
+use crate::{
+    contract::{execute, instantiate, query, sudo, ACCOUNT_MARKETPLACE},
+    hooks::reply,
+};
 use btsg_account::market::{ExecuteMsg, MarketplaceInstantiateMsg, QueryMsg};
 
 /// Uploadable trait for bs721_account_minter & use with cw-orchestrator library
@@ -16,6 +19,10 @@ impl<Chain> Uploadable for BtsgAccountMarket<Chain> {
     }
     /// Returns a CosmWasm contract wrapper
     fn wrapper() -> Box<dyn MockContract<Empty>> {
-        Box::new(ContractWrapper::new_with_empty(execute, instantiate, query).with_sudo(sudo))
+        Box::new(
+            ContractWrapper::new_with_empty(execute, instantiate, query)
+                .with_sudo(sudo)
+                .with_reply(reply),
+        )
     }
 }

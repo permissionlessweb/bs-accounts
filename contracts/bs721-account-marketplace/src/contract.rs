@@ -1,5 +1,6 @@
+use btsg_account::market::MigrateMsg;
 use cosmwasm_std::{
-    to_json_binary, Binary, Decimal, Deps, DepsMut, Env, MessageInfo, Response, StdResult, Uint128,
+    to_json_binary, Binary, Decimal, Deps, DepsMut, Env, MessageInfo, Response, StdError, StdResult, Uint128
 };
 use cw2::set_contract_version;
 
@@ -178,4 +179,16 @@ pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> Result<Response, ContractE
             sudo_update_account_minter(deps, api.addr_validate(&factory)?)
         } // SudoMsg::EndBlock {  } => todo!(),
     }
+}
+
+#[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
+pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, ContractError> {
+    let then = cw2::get_contract_version(deps.storage)?;
+    if then.version >= CONTRACT_VERSION.to_owned() || then.contract != ACCOUNT_MARKETPLACE.to_owned() {
+        return Err(ContractError::Std(StdError::generic_err(
+            "unable to migrate contract.",
+        )));
+    }
+    cw2::set_contract_version(deps.storage, ACCOUNT_MARKETPLACE, CONTRACT_VERSION)?;
+    Ok(Response::default())
 }

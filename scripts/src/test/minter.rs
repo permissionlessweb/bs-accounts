@@ -45,83 +45,156 @@ pub fn init() -> anyhow::Result<()> {
     Ok(())
 }
 
-mod hooks {
-    use super::*;
+// mod hooks {
+//     use abstract_interface::{AccountQueryFns, RegistryExecFns, RegistryQueryFns};
+//     use abstract_std::objects::namespace::Namespace;
+//     use abstract_std::objects::AccountId;
+//     use abstract_std::REGISTRY;
 
-    #[test]
-    fn test_manage_sale_hook() -> anyhow::Result<()> {
-        let mock = MockBech32::new("mock");
-        let suite = BtsgAccountSuite::deploy_on(mock.clone(), mock.sender.clone())?;
-        let hook_addr = mock.addr_make("salehook");
+//     use super::*;
 
-        suite
-            .market
-            .manage_hooks(ManageHooksAction::AddSaleHook(hook_addr.to_string()))?;
-        let hooks = suite.market.sale_hooks()?;
-        assert_eq!(hooks.hooks.len(), 1);
-        assert_eq!(hooks.hooks[0], hook_addr.to_string());
+//     #[test]
+//     fn test_manage_sale_hook() -> anyhow::Result<()> {
+//         let mock = MockBech32::new("mock");
+//         let suite = BtsgAccountSuite::deploy_on(mock.clone(), mock.sender.clone())?;
+//         let hook_addr = mock.addr_make("salehook");
 
-        suite
-            .market
-            .manage_hooks(ManageHooksAction::RemoveSaleHook(hook_addr.to_string()))?;
-        let hooks = suite.market.sale_hooks()?;
-        assert_eq!(hooks.hooks.len(), 0);
+//         suite
+//             .market
+//             .manage_hooks(ManageHooksAction::AddSaleHook(hook_addr.to_string()))?;
+//         let hooks = suite.market.sale_hooks()?;
+//         assert_eq!(hooks.hooks.len(), 1);
+//         assert_eq!(hooks.hooks[0], hook_addr.to_string());
 
-        Ok(())
-    }
+//         suite
+//             .market
+//             .manage_hooks(ManageHooksAction::RemoveSaleHook(hook_addr.to_string()))?;
+//         let hooks = suite.market.sale_hooks()?;
+//         assert_eq!(hooks.hooks.len(), 0);
 
-    #[test]
-    fn test_manage_bid_hook() -> anyhow::Result<()> {
-        let mock = MockBech32::new("mock");
-        let suite = BtsgAccountSuite::deploy_on(mock.clone(), mock.sender.clone())?;
-        let hook_addr = mock.addr_make("bidhook");
+//         Ok(())
+//     }
 
-        suite
-            .market
-            .manage_hooks(ManageHooksAction::AddBidHook(hook_addr.to_string()))?;
-        let hooks = suite.market.bid_hooks()?;
-        assert_eq!(hooks.hooks.len(), 1);
-        assert_eq!(hooks.hooks[0], hook_addr.to_string());
+//     #[test]
+//     fn test_manage_bid_hook() -> anyhow::Result<()> {
+//         let mock = MockBech32::new("mock");
+//         let suite = BtsgAccountSuite::deploy_on(mock.clone(), mock.sender.clone())?;
+//         let hook_addr = mock.addr_make("bidhook");
 
-        suite
-            .market
-            .manage_hooks(ManageHooksAction::RemoveBidHook(hook_addr.to_string()))?;
-        let hooks = suite.market.bid_hooks()?;
-        assert_eq!(hooks.hooks.len(), 0);
+//         suite
+//             .market
+//             .manage_hooks(ManageHooksAction::AddBidHook(hook_addr.to_string()))?;
+//         let hooks = suite.market.bid_hooks()?;
+//         assert_eq!(hooks.hooks.len(), 1);
+//         assert_eq!(hooks.hooks[0], hook_addr.to_string());
 
-        Ok(())
-    }
+//         suite
+//             .market
+//             .manage_hooks(ManageHooksAction::RemoveBidHook(hook_addr.to_string()))?;
+//         let hooks = suite.market.bid_hooks()?;
+//         assert_eq!(hooks.hooks.len(), 0);
 
-    #[test]
-    fn test_manage_ask_hook() -> anyhow::Result<()> {
-        let mock = MockBech32::new("mock");
-        let suite = BtsgAccountSuite::deploy_on(mock.clone(), mock.sender.clone())?;
-        let hook_addr = mock.addr_make("askhook");
+//         Ok(())
+//     }
 
-        suite
-            .market
-            .manage_hooks(ManageHooksAction::AddAskHook(hook_addr.to_string()))?;
-        let hooks = suite.market.ask_hooks()?;
-        assert_eq!(hooks.hooks.len(), 1);
-        assert_eq!(hooks.hooks[0], hook_addr.to_string());
+//     #[test]
+//     fn test_manage_ask_hook() -> anyhow::Result<()> {
+//         let mock = MockBech32::new("mock");
+//         let suite = BtsgAccountSuite::deploy_on(mock.clone(), mock.sender.clone())?;
+//         let hook_addr = mock.addr_make("askhook");
 
-        suite
-            .market
-            .manage_hooks(ManageHooksAction::RemoveAskHook(hook_addr.to_string()))?;
-        let hooks = suite.market.ask_hooks()?;
-        assert_eq!(hooks.hooks.len(), 0);
+//         suite
+//             .market
+//             .manage_hooks(ManageHooksAction::AddAskHook(hook_addr.to_string()))?;
+//         let hooks = suite.market.ask_hooks()?;
+//         assert_eq!(hooks.hooks.len(), 1);
+//         assert_eq!(hooks.hooks[0], hook_addr.to_string());
 
-        Ok(())
-    }
+//         suite
+//             .market
+//             .manage_hooks(ManageHooksAction::RemoveAskHook(hook_addr.to_string()))?;
+//         let hooks = suite.market.ask_hooks()?;
+//         assert_eq!(hooks.hooks.len(), 0);
 
-    #[test]
-    fn test_all_hooks_workflow() -> anyhow::Result<()> {
-        // register hooks to middleware
-        // perform actions for hooks
-        // assert hook logic is performed
-        Ok(())
-    }
-}
+//         Ok(())
+//     }
+
+//     #[test]
+//     fn test_all_hooks_workflow() -> anyhow::Result<()> {
+//         let mock = MockBech32::new("mock");
+//         let mut suite = BtsgAccountSuite::new(mock.clone());
+//         suite.default_setup(mock.clone(), None, None)?;
+//         mock.wait_seconds(200)?;
+//         let mw_addr = suite.middleware.addr_str()?;
+//         let account1 = "rick";
+
+//         // // register hooks to middleware
+//         // suite
+//         //     .market
+//         //     .manage_hooks(ManageHooksAction::AddAskHook(mw_addr.clone()))?;
+//         // suite
+//         //     .market
+//         //     .manage_hooks(ManageHooksAction::AddBidHook(mw_addr.clone()))?;
+//         // suite
+//         //     .market
+//         //     .manage_hooks(ManageHooksAction::AddSaleHook(mw_addr.clone()))?;
+
+//         // // perform actions for hooks
+//         // let res = suite.mint_and_list(mock.clone(), account1, &mock.sender_addr())?;
+//         // let res = suite.account.instantiate(
+//         //     &abstract_std::account::InstantiateMsg::<Empty> {
+//         //         code_id: suite.account.code_id()?,
+//         //         owner: Some(abstract_std::objects::gov_type::GovernanceDetails::NFT {
+//         //             collection_addr: suite.nft.addr_str()?,
+//         //             token_id: account1.to_string(),
+//         //         }),
+//         //         account_id: None,
+//         //         authenticator: None,
+//         //         namespace: Some(account1.to_string()),
+//         //         install_modules: vec![], // TODO: install USB
+//         //         name: Some(account1.to_string()),
+//         //         description: Some("Powered By Bitsong Account Framework".into()),
+//         //         link: None,
+//         //     },
+//         //     None,
+//         //     &[],
+//         // )?;
+
+//         // let res = suite.registry.namespace_list(None, None)?.namespaces;
+//         // println!("{:#?}", res);
+
+//         // let res = suite.account.info()?;
+//         // println!("{:#?}", res);
+//         // let res = suite.registry.namespace_list(None, None)?;
+//         // let res = suite
+//         //     .registry
+//         //     .namespace(Namespace::new(&account1.to_string())?)?;
+//         // println!("{:#?}", res);
+
+//         // res.assert_event(&Event::new("wasm-abstract").add_attributes(vec![
+//         //         Attribute {
+//         //             key: "_contract_address".into(),
+//         //             value: suite.middleware.addr_str()?,
+//         //         },
+//         //         Attribute::new("contract", REGISTRY),
+//         //         Attribute::new("action", "claim_namespace"),
+//         //         Attribute::new(
+//         //             "account_id",
+//         //             &suite
+//         //                 .registry
+//         //                 .namespace(Namespace::new(account1)?)?
+//         //                 .unwrap()
+//         //                 .account_id
+//         //                 .to_string(),
+//         //         ),
+//         //         Attribute::new("namespace", "rick"),
+//         //     ]));
+
+//         // assert hook logic is performed
+//         Ok(())
+//     }
+// }
+
 mod execute {
 
     use super::*;

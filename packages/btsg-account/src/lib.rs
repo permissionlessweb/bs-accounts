@@ -12,7 +12,10 @@ pub const MAX_QUERY_LIMIT: u32 = 100;
 pub const MAX_TEXT_LENGTH: u32 = 512;
 pub const NATIVE_DENOM: &str = "ubtsg";
 pub const SECONDS_PER_YEAR: u64 = 31536000;
-pub const CURRENT_BASE_PRICE: u64 = 710_000_000u64; // 1,600 BTSG
+// FEES
+pub const CURRENT_COOLDOWN_FEE: u64 = 1_000_000_000u64; // 1,000 BTSG
+pub const CURRENT_MINIMUM_BID_PRICE: u64 = 1_000_000_000u64; // 1,000 BTSG
+pub const CURRENT_BASE_PRICE: u64 = 710_000_000u64; // 710 BTSG
 pub const CURRENT_BASE_DELEGATION: u64 = 1_000_000_000u64; // 1,000 BTSG
 pub const DEPLOYMENT_DAO: &str =
     "bitsong13hmdq0slwmff7sej79kfa8mgnx4rl46nj2fvmlgu6u32tz6vfqesdfq4vm";

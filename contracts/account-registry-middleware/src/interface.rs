@@ -1,6 +1,8 @@
 use cw_orch::{interface, prelude::*};
 
-use crate::{execute, instantiate, query, ExecuteMsg, InstantiateMsg, QueryMsg, CONTRACT_NAME};
+use crate::{
+    execute, instantiate, query, reply, ExecuteMsg, InstantiateMsg, QueryMsg, CONTRACT_NAME,
+};
 
 /// Uploadable trait for bs721_account_minter & use with cw-orchestrator library
 #[interface(InstantiateMsg, ExecuteMsg, QueryMsg, Empty)]
@@ -15,6 +17,6 @@ impl<Chain> Uploadable for AccountRegistryMiddleware<Chain> {
     }
     /// Returns a CosmWasm contract wrapper
     fn wrapper() -> Box<dyn MockContract<Empty>> {
-        Box::new(ContractWrapper::new_with_empty(execute, instantiate, query))
+        Box::new(ContractWrapper::new_with_empty(execute, instantiate, query).with_reply(reply))
     }
 }

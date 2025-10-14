@@ -1,7 +1,8 @@
+use btsg_account::market::MigrateMsg;
 use btsg_account::minter::{Config, SudoParams};
 use cosmwasm_std::{
     instantiate2_address, to_json_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response,
-    StdResult, WasmMsg,
+    StdError, StdResult, WasmMsg,
 };
 use cw2::set_contract_version;
 
@@ -143,6 +144,18 @@ pub fn sudo(deps: DepsMut, _env: Env, msg: SudoMsg) -> Result<Response, Contract
             sudo_update_account_marketplace(deps, api.addr_validate(&marketplace)?)
         }
     }
+}
+
+#[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
+pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, ContractError> {
+    let then = cw2::get_contract_version(deps.storage)?;
+    if then.version >= CONTRACT_VERSION.to_owned() || then.contract != ACCOUNT_MINTER.to_owned() {
+        return Err(ContractError::Std(StdError::generic_err(
+            "unable to migrate bs721-account minter.",
+        )));
+    }
+    cw2::set_contract_version(deps.storage, ACCOUNT_MINTER, CONTRACT_VERSION)?;
+    Ok(Response::default())
 }
 
 #[cfg(test)]
