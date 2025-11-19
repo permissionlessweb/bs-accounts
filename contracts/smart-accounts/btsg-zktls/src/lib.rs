@@ -23,10 +23,9 @@ const CONTRACT_NAME: &str = "crates.io:btsg-zktls";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BtsgAccountZkTls {}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct BtsgAccountZkTslAuthStuct {}
+pub type BtsgAccountZkTslAuthStuct = Proof;
 pub type SudoMsg = <BtsgAccountZkTls as BtsgAccountTrait>::SudoMsg;
+
 #[cw_serde]
 pub struct InstantiateMsg {
     pub owner: String,
@@ -57,11 +56,6 @@ pub struct GetAllEpochResponse {
 #[cw_serde]
 pub struct GetEpochResponse {
     pub epoch: Epoch,
-}
-
-#[cw_serde]
-pub struct ProofMsg {
-    pub proof: Proof,
 }
 
 #[entry_point]
@@ -120,7 +114,6 @@ impl btsg_account::traits::default::BtsgAccountTrait for BtsgAccountZkTls {
     type ContractError = ContractError;
 
     type AuthMethodStructs = BtsgAccountZkTslAuthStuct;
-
     type AuthProcessResult = Result<Response, ContractError>;
 
     fn extended_authenticate(

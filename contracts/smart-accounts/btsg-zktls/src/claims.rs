@@ -1,6 +1,9 @@
 #![allow(non_snake_case)]
 
-use crate::{error::ContractError, state::{Epoch, Witness}};
+use crate::{
+    error::ContractError,
+    state::{Epoch, Witness},
+};
 use cosmwasm_schema::cw_serde;
 use k256::{
     ecdsa::{RecoveryId, Signature, VerifyingKey}, // type aliases
@@ -9,6 +12,34 @@ use sha2::Sha256;
 use sha3::{Digest, Keccak256};
 
 use cosmwasm_std::{DepsMut, StdError};
+
+#[cw_serde]
+pub struct ProofMsg {
+    pub proof: Proof,
+}
+
+#[cw_serde]
+#[serde(rename_all = "snake_case")]
+pub struct ClaimInfo {
+    pub provider: String,
+    pub parameters: String,
+    pub context: String,
+}
+
+#[cw_serde]
+pub struct CompleteClaimData {
+    pub identifier: String,
+    pub owner: String,
+    pub epoch: u64,
+    pub timestampS: u64,
+}
+
+#[cw_serde]
+#[serde(rename_all = "snake_case")]
+pub struct SignedClaim {
+    pub claim: CompleteClaimData,
+    pub signatures: Vec<String>,
+}
 
 pub fn append_0x(content: &str) -> String {
     let mut initializer = String::from("0x");
@@ -37,7 +68,6 @@ fn generate_random_seed(bytes: Vec<u8>, offset: usize) -> u32 {
 
     seed
 }
-
 
 pub fn fetch_witness_for_claim(
     epoch: Epoch,
@@ -73,14 +103,6 @@ pub fn fetch_witness_for_claim(
     selected_witness
 }
 
-#[cw_serde]
-#[serde(rename_all = "snake_case")]
-pub struct ClaimInfo {
-    pub provider: String,
-    pub parameters: String,
-    pub context: String,
-}
-
 impl ClaimInfo {
     pub fn hash(&self) -> String {
         let mut hasher = Keccak256::new();
@@ -95,14 +117,6 @@ impl ClaimInfo {
     }
 }
 
-#[cw_serde]
-pub struct CompleteClaimData {
-    pub identifier: String,
-    pub owner: String,
-    pub epoch: u64,
-    pub timestampS: u64,
-}
-
 impl CompleteClaimData {
     pub fn serialise(&self) -> String {
         format!(
@@ -113,13 +127,6 @@ impl CompleteClaimData {
             &self.epoch.to_string()
         )
     }
-}
-
-#[cw_serde]
-#[serde(rename_all = "snake_case")]
-pub struct SignedClaim {
-    pub claim: CompleteClaimData,
-    pub signatures: Vec<String>,
 }
 
 impl SignedClaim {

@@ -13,7 +13,9 @@ pub struct Config {
 
 #[cw_serde]
 pub struct Witness {
+    /// 0x.. address of witness adding epochs
     pub address: String,
+    /// host url: ex. https://goup.terp.network
     pub host: String,
 }
 

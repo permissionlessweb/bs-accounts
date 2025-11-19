@@ -1,12 +1,10 @@
 mod error;
 mod state;
+use saa::Ed25519;
+
 pub use crate::error::ContractError;
 
-use {
-    btsg_account::traits::default::BtsgAccountTrait,
-    saa::{EthPersonalSign, Verifiable},
-    saa_common::from_json,
-};
+use {btsg_account::traits::default::BtsgAccountTrait, saa::Verifiable};
 
 use {
     cosmwasm_schema::{cw_serde, QueryResponses},
@@ -20,7 +18,8 @@ use {
 #[cw_serde]
 pub struct InstantiateMsg {
     pub owner: Option<Addr>,
-    pub pubkey: String,
+    /// binary representation of pubkey
+    pub pubkey: Binary,
 }
 
 #[cw_serde]
@@ -39,7 +38,7 @@ pub struct BtsgAccountEd25519 {}
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:btsg-ed25519";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
-pub const PUBLIC_KEY: Item<String> = Item::new("pk");
+pub const PUBLIC_KEY: Item<Binary> = Item::new("pk");
 
 /// Can only be called by governance
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -119,7 +118,7 @@ impl btsg_account::traits::default::BtsgAccountTrait for BtsgAccountEd25519 {
         req: &btsg_auth::OnAuthenticatorAddedRequest,
     ) -> Self::AuthProcessResult {
         let params = req.authenticator_params.clone();
-        let reg: String = from_json(params.expect("needs pubkey string"))?;
+        let reg = params.expect("needs pubkey binary");
         match PUBLIC_KEY.may_load(deps.storage)? {
             Some(pk) => {
                 if reg != pk {
@@ -148,10 +147,10 @@ impl btsg_account::traits::default::BtsgAccountTrait for BtsgAccountEd25519 {
         env: Env,
         req: &Box<btsg_auth::AuthenticationRequest>,
     ) -> Self::AuthProcessResult {
-        EthPersonalSign {
+        Ed25519 {
             message: req.sign_mode_tx_data.sign_mode_direct.clone(),
             signature: req.signature.clone(),
-            signer: PUBLIC_KEY.load(deps.storage)?,
+            pubkey: PUBLIC_KEY.load(deps.storage)?,
         }
         .verify(deps.as_ref())?;
         Ok(Response::new().add_attribute("action", "auth_req"))
