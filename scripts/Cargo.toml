@@ -7,7 +7,7 @@ version    = { workspace = true }
 
 [dependencies]
 abstract-std                  = { workspace = true }
-bs721                         = { workspace = true }  # Not present in original, assuming it's not needed
+# bs721                         = { workspace = true }  # Not present in original, assuming it's not needed
 bs721-account                 = { workspace = true, features = ["interface", "abstract"] }
 bs721-account-marketplace     = { workspace = true }
 bs721-account-minter          = { workspace = true }

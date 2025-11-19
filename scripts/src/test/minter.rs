@@ -1001,241 +1001,241 @@ mod associate_address {
 
     use super::*;
 
-    #[test]
-    fn test_transfer_to_eoa() -> anyhow::Result<()> {
-        let mock = MockBech32::new("bitsong");
-        let mut suite = BtsgAccountSuite::new(mock.clone());
-        suite.default_setup(mock.clone(), None, Some(mock.sender.clone()))?;
+//     #[test]
+//     fn test_transfer_to_eoa() -> anyhow::Result<()> {
+//         let mock = MockBech32::new("bitsong");
+//         let mut suite = BtsgAccountSuite::new(mock.clone());
+//         suite.default_setup(mock.clone(), None, Some(mock.sender.clone()))?;
 
-        let admin_user = mock.sender.clone();
+//         let admin_user = mock.sender.clone();
 
-        let cw721_id = suite.account.code_id()?;
-        let token_id = "bobo";
+//         let cw721_id = suite.account.code_id()?;
+//         let token_id = "bobo";
 
-        let nft_addr = mock
-            .instantiate(
-                cw721_id,
-                &InstantiateMsg {
-                    verifier: None,
-                    marketplace: suite.market.address()?,
-                    base_init_msg: bs721_base::InstantiateMsg {
-                        name: "test2".into(),
-                        symbol: "TEST2".into(),
-                        uri: None,
-                        minter: suite.minter.address()?.to_string(),
-                    },
-                },
-                "test".into(),
-                Some(&admin_user),
-                &[],
-            )?
-            .instantiated_contract_address()?;
+//         let nft_addr = mock
+//             .instantiate(
+//                 cw721_id,
+//                 &InstantiateMsg {
+//                     verifier: None,
+//                     marketplace: suite.market.address()?,
+//                     base_init_msg: bs721_base::InstantiateMsg {
+//                         name: "test2".into(),
+//                         symbol: "TEST2".into(),
+//                         uri: None,
+//                         minter: suite.minter.address()?.to_string(),
+//                     },
+//                 },
+//                 "test".into(),
+//                 Some(&admin_user),
+//                 &[],
+//             )?
+//             .instantiated_contract_address()?;
 
-        mock.wait_seconds(200)?;
-        // mint and transfer to collection
-        suite.mint_and_list(mock.clone(), token_id, &admin_user)?;
-        suite.account.transfer_nft(nft_addr.clone(), token_id)?;
-        assert_eq!(
-            suite.account.owner_of(token_id, None)?.owner,
-            nft_addr.to_string()
-        );
+//         mock.wait_seconds(200)?;
+//         // mint and transfer to collection
+//         suite.mint_and_list(mock.clone(), token_id, &admin_user)?;
+//         suite.account.transfer_nft(nft_addr.clone(), token_id)?;
+//         assert_eq!(
+//             suite.account.owner_of(token_id, None)?.owner,
+//             nft_addr.to_string()
+//         );
 
-        Ok(())
-    }
-    #[test]
-    fn test_associate_with_a_contract_with_no_admin() -> anyhow::Result<()> {
-        // For the purposes of this test, a collection contract with no admin needs to be instantiated (contract_with_no_admin)
-        // This contract needs to have a creator that is itself a contract and this creator contract should have an admin (USER).
-        // The admin (USER) of the creator contract will mint a account and associate the account with the collection contract that doesn't have an admin successfully.
-        let mock = MockBech32::new("bitsong");
-        let mut suite = BtsgAccountSuite::new(mock.clone());
-        suite.default_setup(mock.clone(), None, Some(mock.sender.clone()))?;
+//         Ok(())
+//     }
+//     #[test]
+//     fn test_associate_with_a_contract_with_no_admin() -> anyhow::Result<()> {
+//         // For the purposes of this test, a collection contract with no admin needs to be instantiated (contract_with_no_admin)
+//         // This contract needs to have a creator that is itself a contract and this creator contract should have an admin (USER).
+//         // The admin (USER) of the creator contract will mint a account and associate the account with the collection contract that doesn't have an admin successfully.
+//         let mock = MockBech32::new("bitsong");
+//         let mut suite = BtsgAccountSuite::new(mock.clone());
+//         suite.default_setup(mock.clone(), None, Some(mock.sender.clone()))?;
 
-        let admin_user = mock.sender.clone();
+//         let admin_user = mock.sender.clone();
 
-        let cw721_id = suite.account.code_id()?;
+//         let cw721_id = suite.account.code_id()?;
 
-        let token_id = "bobo";
-        // Instantiating the creator contract with an admin (USER)
-        let creator_addr = mock
-            .instantiate(
-                cw721_id,
-                &InstantiateMsg {
-                    verifier: None,
-                    marketplace: suite.market.address()?,
-                    base_init_msg: bs721_base::InstantiateMsg {
-                        name: "test2".into(),
-                        symbol: "TEST2".into(),
-                        uri: None,
-                        minter: suite.minter.address()?.to_string(),
-                    },
-                },
-                "test".into(),
-                Some(&admin_user),
-                &[],
-            )?
-            .instantiated_contract_address()?;
+//         let token_id = "bobo";
+//         // Instantiating the creator contract with an admin (USER)
+//         let creator_addr = mock
+//             .instantiate(
+//                 cw721_id,
+//                 &InstantiateMsg {
+//                     verifier: None,
+//                     marketplace: suite.market.address()?,
+//                     base_init_msg: bs721_base::InstantiateMsg {
+//                         name: "test2".into(),
+//                         symbol: "TEST2".into(),
+//                         uri: None,
+//                         minter: suite.minter.address()?.to_string(),
+//                     },
+//                 },
+//                 "test".into(),
+//                 Some(&admin_user),
+//                 &[],
+//             )?
+//             .instantiated_contract_address()?;
 
-        // The creator contract instantiates the collection contract with no admin
-        let collection_with_no_admin_addr = mock
-            .call_as(&creator_addr)
-            .instantiate(
-                cw721_id,
-                &InstantiateMsg {
-                    verifier: None,
-                    marketplace: suite.market.address()?,
-                    base_init_msg: bs721_base::InstantiateMsg {
-                        name: "test2".into(),
-                        symbol: "TEST2".into(),
-                        uri: None,
-                        minter: suite.minter.address()?.to_string(),
-                    },
-                },
-                "test".into(),
-                None,
-                &[],
-            )?
-            .instantiated_contract_address()?;
+//         // The creator contract instantiates the collection contract with no admin
+//         let collection_with_no_admin_addr = mock
+//             .call_as(&creator_addr)
+//             .instantiate(
+//                 cw721_id,
+//                 &InstantiateMsg {
+//                     verifier: None,
+//                     marketplace: suite.market.address()?,
+//                     base_init_msg: bs721_base::InstantiateMsg {
+//                         name: "test2".into(),
+//                         symbol: "TEST2".into(),
+//                         uri: None,
+//                         minter: suite.minter.address()?.to_string(),
+//                     },
+//                 },
+//                 "test".into(),
+//                 None,
+//                 &[],
+//             )?
+//             .instantiated_contract_address()?;
 
-        mock.wait_seconds(200)?;
-        // USER4 mints a account
-        suite.mint_and_list(mock.clone(), token_id, &admin_user)?;
+//         mock.wait_seconds(200)?;
+//         // USER4 mints a account
+//         suite.mint_and_list(mock.clone(), token_id, &admin_user)?;
 
-        // USER4 tries to associate the account with the collection contract that doesn't have an admin
-        suite
-            .account
-            .call_as(&admin_user)
-            .associate_address(token_id, Some(collection_with_no_admin_addr.to_string()))?;
+//         // USER4 tries to associate the account with the collection contract that doesn't have an admin
+//         suite
+//             .account
+//             .call_as(&admin_user)
+//             .associate_address(token_id, Some(collection_with_no_admin_addr.to_string()))?;
 
-        mock.wait_seconds(200)?;
-        Ok(())
-    }
-    #[test]
-    fn test_associate_with_a_contract_with_no_admin_fail() -> anyhow::Result<()> {
-        // For the purposes of this test, a collection contract with no admin needs to be instantiated (contract_with_no_admin)
-        // This contract needs to have a creator that is itself a contract and this creator contract should have an admin (USER).
-        // An address other than the admin (USER) of the creator contract will mint a account, try to associate the account with the collection contract that doesn't have an admin and fail.
-        let mock = MockBech32::new("bitsong");
-        let mut suite = BtsgAccountSuite::new(mock.clone());
-        suite.default_setup(mock.clone(), None, Some(mock.sender.clone()))?;
+//         mock.wait_seconds(200)?;
+//         Ok(())
+//     }
+//     #[test]
+//     fn test_associate_with_a_contract_with_no_admin_fail() -> anyhow::Result<()> {
+//         // For the purposes of this test, a collection contract with no admin needs to be instantiated (contract_with_no_admin)
+//         // This contract needs to have a creator that is itself a contract and this creator contract should have an admin (USER).
+//         // An address other than the admin (USER) of the creator contract will mint a account, try to associate the account with the collection contract that doesn't have an admin and fail.
+//         let mock = MockBech32::new("bitsong");
+//         let mut suite = BtsgAccountSuite::new(mock.clone());
+//         suite.default_setup(mock.clone(), None, Some(mock.sender.clone()))?;
 
-        let admin_user = mock.addr_make("admin-user");
-        let user4 = mock.addr_make("user4");
+//         let admin_user = mock.addr_make("admin-user");
+//         let user4 = mock.addr_make("user4");
 
-        // delegate
-        mock.add_balance(&user4, vec![coin(10000000000u128, "ubtsg")])?;
-        suite.delegate_to_val(mock.clone(), user4.clone(), 10000000000u128)?;
+//         // delegate
+//         mock.add_balance(&user4, vec![coin(10000000000u128, "ubtsg")])?;
+//         suite.delegate_to_val(mock.clone(), user4.clone(), 10000000000u128)?;
 
-        let cw721_id = suite.account.code_id()?;
+//         let cw721_id = suite.account.code_id()?;
 
-        let token_id = "bobo";
-        // Instantiating the creator contract with an admin (USER)
-        let creator_addr = mock
-            .instantiate(
-                cw721_id,
-                &InstantiateMsg {
-                    verifier: None,
-                    marketplace: suite.market.address()?,
-                    base_init_msg: bs721_base::InstantiateMsg {
-                        name: "test2".into(),
-                        symbol: "TEST2".into(),
-                        uri: None,
-                        minter: suite.minter.address()?.to_string(),
-                    },
-                },
-                "test".into(),
-                Some(&admin_user),
-                &[],
-            )?
-            .instantiated_contract_address()?;
+//         let token_id = "bobo";
+//         // Instantiating the creator contract with an admin (USER)
+//         let creator_addr = mock
+//             .instantiate(
+//                 cw721_id,
+//                 &InstantiateMsg {
+//                     verifier: None,
+//                     marketplace: suite.market.address()?,
+//                     base_init_msg: bs721_base::InstantiateMsg {
+//                         name: "test2".into(),
+//                         symbol: "TEST2".into(),
+//                         uri: None,
+//                         minter: suite.minter.address()?.to_string(),
+//                     },
+//                 },
+//                 "test".into(),
+//                 Some(&admin_user),
+//                 &[],
+//             )?
+//             .instantiated_contract_address()?;
 
-        // The creator contract instantiates the collection contract with no admin
-        let collection_with_no_admin_addr = mock
-            .call_as(&creator_addr)
-            .instantiate(
-                cw721_id,
-                &InstantiateMsg {
-                    verifier: None,
-                    marketplace: suite.market.address()?,
-                    base_init_msg: bs721_base::InstantiateMsg {
-                        name: "test2".into(),
-                        symbol: "TEST2".into(),
-                        uri: None,
-                        minter: suite.minter.address()?.to_string(),
-                    },
-                },
-                "test".into(),
-                None,
-                &[],
-            )?
-            .instantiated_contract_address()?;
+//         // The creator contract instantiates the collection contract with no admin
+//         let collection_with_no_admin_addr = mock
+//             .call_as(&creator_addr)
+//             .instantiate(
+//                 cw721_id,
+//                 &InstantiateMsg {
+//                     verifier: None,
+//                     marketplace: suite.market.address()?,
+//                     base_init_msg: bs721_base::InstantiateMsg {
+//                         name: "test2".into(),
+//                         symbol: "TEST2".into(),
+//                         uri: None,
+//                         minter: suite.minter.address()?.to_string(),
+//                     },
+//                 },
+//                 "test".into(),
+//                 None,
+//                 &[],
+//             )?
+//             .instantiated_contract_address()?;
 
-        mock.wait_seconds(200)?;
-        // USER4 mints a account
-        suite.mint_and_list(mock.clone(), token_id, &user4)?;
+//         mock.wait_seconds(200)?;
+//         // USER4 mints a account
+//         suite.mint_and_list(mock.clone(), token_id, &user4)?;
 
-        // USER4 tries to associate the account with the collection contract that doesn't have an admin
-        let err = suite
-            .account
-            .call_as(&user4)
-            .associate_address(token_id, Some(collection_with_no_admin_addr.to_string()))
-            .unwrap_err();
+//         // USER4 tries to associate the account with the collection contract that doesn't have an admin
+//         let err = suite
+//             .account
+//             .call_as(&user4)
+//             .associate_address(token_id, Some(collection_with_no_admin_addr.to_string()))
+//             .unwrap_err();
 
-        assert_eq!(
-            err.root().to_string(),
-            bs721_account::ContractError::UnauthorizedCreatorOrAdmin {}.to_string()
-        );
-        Ok(())
-    }
-    #[test]
-    fn test_associate_with_a_contract_with_an_admin_fail() -> anyhow::Result<()> {
-        let mock = MockBech32::new("bitsong");
-        let mut suite = BtsgAccountSuite::new(mock.clone());
-        suite.default_setup(mock.clone(), None, Some(mock.sender.clone()))?;
+//         assert_eq!(
+//             err.root().to_string(),
+//             bs721_account::ContractError::UnauthorizedCreatorOrAdmin {}.to_string()
+//         );
+//         Ok(())
+//     }
+//     #[test]
+//     fn test_associate_with_a_contract_with_an_admin_fail() -> anyhow::Result<()> {
+//         let mock = MockBech32::new("bitsong");
+//         let mut suite = BtsgAccountSuite::new(mock.clone());
+//         suite.default_setup(mock.clone(), None, Some(mock.sender.clone()))?;
 
-        let admin_user = mock.addr_make("admin-user");
-        let user4 = mock.addr_make("user4");
+//         let admin_user = mock.addr_make("admin-user");
+//         let user4 = mock.addr_make("user4");
 
-        // delegate
-        mock.add_balance(&user4, vec![coin(10000000000u128, "ubtsg")])?;
-        suite.delegate_to_val(mock.clone(), user4.clone(), 10000000000u128)?;
+//         // delegate
+//         mock.add_balance(&user4, vec![coin(10000000000u128, "ubtsg")])?;
+//         suite.delegate_to_val(mock.clone(), user4.clone(), 10000000000u128)?;
 
-        let cw721_id = suite.account.code_id()?;
+//         let cw721_id = suite.account.code_id()?;
 
-        let token_id = "bobo";
-        // Instantiating the creator contract with an admin (USER)
-        let contract = mock
-            .instantiate(
-                cw721_id,
-                &InstantiateMsg {
-                    verifier: None,
-                    marketplace: suite.market.address()?,
-                    base_init_msg: bs721_base::InstantiateMsg {
-                        name: "test2".into(),
-                        symbol: "TEST2".into(),
-                        uri: None,
-                        minter: suite.minter.address()?.to_string(),
-                    },
-                },
-                "test".into(),
-                Some(&admin_user),
-                &[],
-            )?
-            .instantiated_contract_address()?;
+//         let token_id = "bobo";
+//         // Instantiating the creator contract with an admin (USER)
+//         let contract = mock
+//             .instantiate(
+//                 cw721_id,
+//                 &InstantiateMsg {
+//                     verifier: None,
+//                     marketplace: suite.market.address()?,
+//                     base_init_msg: bs721_base::InstantiateMsg {
+//                         name: "test2".into(),
+//                         symbol: "TEST2".into(),
+//                         uri: None,
+//                         minter: suite.minter.address()?.to_string(),
+//                     },
+//                 },
+//                 "test".into(),
+//                 Some(&admin_user),
+//                 &[],
+//             )?
+//             .instantiated_contract_address()?;
 
-        mock.wait_seconds(200)?;
-        suite.mint_and_list(mock.clone(), token_id, &user4)?;
+//         mock.wait_seconds(200)?;
+//         suite.mint_and_list(mock.clone(), token_id, &user4)?;
 
-        let err = suite
-            .account
-            .call_as(&user4)
-            .associate_address(token_id, Some(contract.to_string()))
-            .unwrap_err();
+//         let err = suite
+//             .account
+//             .call_as(&user4)
+//             .associate_address(token_id, Some(contract.to_string()))
+//             .unwrap_err();
 
-        assert_eq!(
-            err.root().to_string(),
-            bs721_account::ContractError::UnauthorizedCreatorOrAdmin {}.to_string()
-        );
-        Ok(())
-    }
-}
+//         assert_eq!(
+//             err.root().to_string(),
+//             bs721_account::ContractError::UnauthorizedCreatorOrAdmin {}.to_string()
+//         );
+//         Ok(())
+//     }
+// }

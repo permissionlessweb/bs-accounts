@@ -29,19 +29,14 @@ btsg-zktls                   = { path = "contracts/smart-accounts/btsg-zktls"  }
 abstract-std      = { version = "0.26.0" }
 cw-orch           = { version = "0.28.0" }
 
-bs721                        = { git = "https://github.com/permissionlessweb/bs-nfts", branch = "feat/cosmwasm@v3",package = "bs721" }
+# bs721                        = { git = "https://github.com/permissionlessweb/bs-nfts", branch = "feat/cosmwasm@v3",package = "bs721" }
 bs721-base                   = { git = "https://github.com/permissionlessweb/bs-nfts", branch = "feat/cosmwasm@v3"}
-bitsong-rs                   = { git = "https://github.com/permissionlessweb/rs-bitsong", default-features = false, features = ["cosmwasm"]}
 bs-controllers               = { git = "https://github.com/permissionlessweb/bs-nfts", branch = "feat/cosmwasm@v3", library = "bs-controllers" } 
 btsg-nft-scripts             = { git = "https://github.com/permissionlessweb/bs-nfts", branch = "feat/cosmwasm@v3", package = "btsg-nft-scripts" }
 
-saa                  = { path = "../smart-account-auth/packages/bundle", package = "smart-account-auth", features = ["cosmwasm", "native", "curves", "session", "utils", "types"]}
-saa-passkeys         = { path = "../smart-account-auth/packages/passkeys", features = ["cosmwasm"]}
-saa-common              = {   path = "../smart-account-auth/packages/common", default-features = false }
-saa-schema              = {   path = "../smart-account-auth/packages/schema" }
-saa-crypto              = {  path = "../smart-account-auth/packages/crypto" }
-saa-auth                = { path = "../smart-account-auth/packages/auth" }
-saa-curves              = {  path = "../smart-account-auth/packages/curves" }
+saa = { git = "https://github.com/permissionlessweb/smart-account-auth", package = "smart-account-auth",branch = "feat/cosmwasm@v3", features = ["cosmwasm", "native", "curves", "session", "utils", "types"]}
+saa-common           = { git = "https://github.com/permissionlessweb/smart-account-auth", branch = "feat/cosmwasm@v3", features = [ ]}
+saa-passkeys         = { git = "https://github.com/permissionlessweb/smart-account-auth", library = "passkeys",features = ["cosmwasm"]}
  
 cosmos-sdk-proto  = { version = "0.28.0",  git = "https://github.com/permissionlessweb/cosmos-rust", default-features = false }
 cosmwasm-schema   = { version = "3.0.2" }

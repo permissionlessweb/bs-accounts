@@ -1,10 +1,11 @@
 #![allow(non_snake_case)]
 
-use crate::error::ContractError;
+use crate::{error::ContractError, state::{Epoch, Witness}};
 use cosmwasm_schema::cw_serde;
 use k256::{
     ecdsa::{RecoveryId, Signature, VerifyingKey}, // type aliases
 };
+use sha2::Sha256;
 use sha3::{Digest, Keccak256};
 
 use cosmwasm_std::{DepsMut, StdError};
@@ -24,6 +25,52 @@ pub fn keccak256(message: &str) -> Vec<u8> {
     hasher.update(&eth_message);
 
     hasher.finalize().to_vec()
+}
+
+fn generate_random_seed(bytes: Vec<u8>, offset: usize) -> u32 {
+    // Convert the hash result into a u32 using the offset
+    let hash_slice = &bytes[offset..offset + 4];
+    let mut seed = 0u32;
+    for (i, &byte) in hash_slice.iter().enumerate() {
+        seed |= u32::from(byte) << (i * 8);
+    }
+
+    seed
+}
+
+
+pub fn fetch_witness_for_claim(
+    epoch: Epoch,
+    identifier: String,
+    timestamp: cosmwasm_std::Timestamp,
+) -> Vec<Witness> {
+    let mut selected_witness = vec![];
+
+    // Create a hash from identifier+epoch+minimum+timestamp
+    let hash_str = format!(
+        "{}\n{}\n{}\n{}",
+        hex::encode(identifier),
+        epoch.minimum_witness_for_claim_creation,
+        timestamp.nanos(),
+        epoch.id
+    );
+    let result = hash_str.as_bytes().to_vec();
+    let hash_result: [u8; 32] = Sha256::digest(&result).to_vec().try_into().unwrap();
+
+    let witenesses_left_list = epoch.witness;
+    let mut byte_offset = 0;
+    let witness_left = witenesses_left_list.len();
+    for _i in 0..epoch.minimum_witness_for_claim_creation.into() {
+        let random_seed = generate_random_seed(hash_result.to_vec(), byte_offset) as usize;
+        let witness_index = random_seed % witness_left;
+        let witness = witenesses_left_list.get(witness_index);
+        if let Some(data) = witness {
+            selected_witness.push(data.clone())
+        }
+        byte_offset = (byte_offset + 4) % hash_result.len();
+    }
+
+    selected_witness
 }
 
 #[cw_serde]

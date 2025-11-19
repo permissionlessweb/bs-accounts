@@ -26,19 +26,11 @@ impl btsg_account::traits::default::BtsgAccountTrait for BtsgAccountDao {
         req: &Self::SudoMsg,
     ) -> Self::AuthProcessResult {
         match req {
-            btsg_auth::AuthSudoMsg::OnAuthAdded(req) => {
-                Self::on_auth_added(deps, env, req)
-            }
-            btsg_auth::AuthSudoMsg::OnAuthRemoved(req) => {
-                Self::on_auth_removed(deps, env, req)
-            }
-            btsg_auth::AuthSudoMsg::Authenticate(req) => {
-                Self::on_auth_request(deps, env, req)
-            }
+            btsg_auth::AuthSudoMsg::OnAuthAdded(req) => Self::on_auth_added(deps, env, req),
+            btsg_auth::AuthSudoMsg::OnAuthRemoved(req) => Self::on_auth_removed(deps, env, req),
+            btsg_auth::AuthSudoMsg::Authenticate(req) => Self::on_auth_request(deps, env, req),
             btsg_auth::AuthSudoMsg::Track(req) => Self::on_auth_track(deps, env, req),
-            btsg_auth::AuthSudoMsg::ConfirmExecution(req) => {
-                Self::on_auth_confirm(deps, env, req)
-            }
+            btsg_auth::AuthSudoMsg::ConfirmExecution(req) => Self::on_auth_confirm(deps, env, req),
         }
     }
 
@@ -54,12 +46,9 @@ impl btsg_account::traits::default::BtsgAccountTrait for BtsgAccountDao {
         env: cosmwasm_std::Env,
         req: &btsg_auth::OnAuthenticatorAddedRequest,
     ) -> Self::AuthProcessResult {
-
-        /// Check if passed dao membership registration in json string form
-        /// 
         /// check if dao member
-        /// 
-        /// save auth by addr prefix to binary object (to be typed-defined later)
+        ///
+        /// - save auth by addr prefix to binary object for params (to be typed-defined later for things like filters/rate-limits)
         todo!()
     }
 
@@ -97,7 +86,7 @@ impl btsg_account::traits::default::BtsgAccountTrait for BtsgAccountDao {
         env: cosmwasm_std::Env,
         req: &btsg_auth::ConfirmExecutionRequest,
     ) -> Self::AuthProcessResult {
-                // ?
+        // ?
         todo!()
     }
 

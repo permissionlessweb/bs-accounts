@@ -1,18 +1,32 @@
+use crate::{
+    claims::{fetch_witness_for_claim, Proof},
+    state::{Config, Epoch, Witness, CONFIG, EPOCHS},
+};
+use btsg_account::traits::default::BtsgAccountTrait;
+use cosmwasm_schema::{cw_serde, QueryResponses};
+use cosmwasm_std::{from_json, Addr, Event, Response, Uint128};
+use serde::{Deserialize, Serialize};
+
+pub use crate::error::ContractError;
 pub mod claims;
-pub mod contract;
 pub mod digest;
 mod error;
 mod state;
-use cosmwasm_schema::{cw_serde, QueryResponses};
-use cosmwasm_std::{from_json, Event, Response, Uint128};
-use serde::{Deserialize, Serialize};
 
-use crate::{
-    claims::Proof,
-    contract::fetch_witness_for_claim,
-    state::{Epoch, Witness, EPOCHS},
+use cosmwasm_std::{
+    entry_point, to_json_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdError, StdResult,
 };
 
+// version info for migration info
+use cw2::set_contract_version;
+const CONTRACT_NAME: &str = "crates.io:btsg-zktls";
+const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BtsgAccountZkTls {}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BtsgAccountZkTslAuthStuct {}
+pub type SudoMsg = <BtsgAccountZkTls as BtsgAccountTrait>::SudoMsg;
 #[cw_serde]
 pub struct InstantiateMsg {
     pub owner: String,
@@ -50,13 +64,52 @@ pub struct ProofMsg {
     pub proof: Proof,
 }
 
-pub use crate::error::ContractError;
+#[entry_point]
+pub fn instantiate(
+    deps: DepsMut,
+    _env: Env,
+    _info: MessageInfo,
+    msg: InstantiateMsg,
+) -> Result<Response, ContractError> {
+    set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+    CONFIG.save(
+        deps.storage,
+        &Config {
+            owner: msg.owner.to_string(),
+            current_epoch: Uint128::zero(),
+        },
+    )?;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct BtsgAccountZkTls {}
+    Ok(Response::default())
+}
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct BtsgAccountZkTslAuthStuct {}
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
+    match msg {
+        QueryMsg::GetEpoch { id } => to_json_binary(&query_epoch_id(deps, id)?),
+        QueryMsg::GetAllEpoch {} => to_json_binary(&query_all_epoch_ids(deps)?),
+    }
+}
+
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn execute(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    msg: ExecuteMsg,
+) -> Result<Response, ContractError> {
+    match msg {
+        ExecuteMsg::AddEpoch {
+            witness,
+            minimum_witness,
+        } => add_epoch(deps, env, witness, minimum_witness, info.sender.clone()),
+    }
+}
+
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> Result<Response, ContractError> {
+    BtsgAccountZkTls::process_sudo_auth(deps, env, &msg)
+}
 
 impl btsg_account::traits::default::BtsgAccountTrait for BtsgAccountZkTls {
     type InstantiateMsg = InstantiateMsg;
@@ -111,7 +164,6 @@ impl btsg_account::traits::default::BtsgAccountTrait for BtsgAccountZkTls {
         req: &Box<btsg_auth::AuthenticationRequest>,
     ) -> Self::AuthProcessResult {
         let mut resp = Response::new().add_attribute("action", "auth_req");
-
         let Proof {
             claimInfo,
             signedClaim,
@@ -175,4 +227,51 @@ impl btsg_account::traits::default::BtsgAccountTrait for BtsgAccountZkTls {
     fn on_hooks(deps: cosmwasm_std::DepsMut, env: cosmwasm_std::Env) -> Self::AuthProcessResult {
         todo!()
     }
+}
+
+//NOTE: Unimplemented as secret doesn't allow to iterate via keys
+fn query_all_epoch_ids(_deps: Deps) -> StdResult<GetAllEpochResponse> {
+    Ok(GetAllEpochResponse { ids: vec![] })
+}
+
+fn query_epoch_id(deps: Deps, id: u128) -> StdResult<GetEpochResponse> {
+    match EPOCHS.may_load(deps.storage, id)? {
+        Some(epoch) => Ok(GetEpochResponse { epoch }),
+        None => Err(StdError::msg("No such epoch")),
+    }
+}
+
+// @dev - add epoch
+pub fn add_epoch(
+    deps: DepsMut,
+    env: Env,
+    witness: Vec<Witness>,
+    minimum_witness: Uint128,
+    sender: Addr,
+) -> Result<Response, ContractError> {
+    // load configs
+    let mut config = CONFIG.load(deps.storage)?;
+
+    if config.owner != sender.to_string() {
+        return Err(ContractError::Unauthorized {});
+    }
+
+    // Increment Epoch number
+    let new_epoch = config.current_epoch + Uint128::one();
+    // Create the new epoch
+    let epoch = Epoch {
+        id: new_epoch,
+        witness,
+        timestamp_start: env.block.time.nanos(),
+        timestamp_end: env.block.time.plus_seconds(86400).nanos(),
+        minimum_witness_for_claim_creation: minimum_witness,
+    };
+
+    // Upsert the new epoch into memory
+    EPOCHS.save(deps.storage, new_epoch.into(), &epoch)?;
+
+    // Save the new epoch
+    config.current_epoch = new_epoch;
+    CONFIG.save(deps.storage, &config)?;
+    Ok(Response::default())
 }

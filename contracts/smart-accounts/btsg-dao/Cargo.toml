@@ -24,7 +24,6 @@ cw-ownable         = { workspace = true }
 cw-orch            = { workspace = true }
 cw-utils           = { workspace = true }
 btsg-auth          = { workspace = true }
-bitsong-rs          = { workspace = true }
 btsg-account       = { workspace = true }
 cw2                = { workspace = true }
 sha2               = { workspace = true }

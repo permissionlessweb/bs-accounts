@@ -3,7 +3,7 @@ use cw_orch::{interface, prelude::*};
 use btsg_wavs::contract::{execute, instantiate, query, sudo};
 use btsg_wavs::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
-/// Uploadable trait for bs721_account_minter & use with cw-orchestrator library
+/// Uploadable trait for BtsgWavsAuth & use with cw-orchestrator library
 #[interface(InstantiateMsg, ExecuteMsg, QueryMsg, Empty)]
 pub struct BtsgWavsAuth;
 

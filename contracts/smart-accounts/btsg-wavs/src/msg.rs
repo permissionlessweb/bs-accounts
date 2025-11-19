@@ -1,7 +1,7 @@
 use btsg_auth::AuthSudoMsg;
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Addr, Binary};
-
+// - register proof of ownership for keys
 #[cw_serde]
 pub struct InstantiateMsg {
     /// Owner of this contract. Expected to be address that is making use of this custom authenticator.

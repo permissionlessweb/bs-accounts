@@ -5,7 +5,7 @@ use crate::deploy::{
     account::*, btsg_wavs::BtsgWavsAuth, market::BtsgAccountMarket, minter::BtsgAccountMinter,
 };
 use bs721_account_marketplace::msgs::ExecuteMsgFns as _;
-use btsg_nft_scripts::base::Bs721Base;
+// use btsg_nft_scripts::base::Bs721Base;
 use cosmwasm_std::Uint128;
 
 use cw_orch::prelude::*;
@@ -14,10 +14,10 @@ where
     Chain: cw_orch::prelude::CwEnv,
 {
     pub account: BtsgAccountCollection<Chain, Metadata>,
-    pub minter: BtsgAccountMinter<Chain>,
-    pub market: BtsgAccountMarket<Chain>,
     pub wavs: BtsgWavsAuth<Chain>,
-    pub bs721base: Bs721Base<Chain, Empty>,
+    // pub minter: BtsgAccountMinter<Chain>,
+    // pub market: BtsgAccountMarket<Chain>,
+    // pub bs721base: Bs721Base<Chain, Empty>,
     // pub abs: Abstract<Chain>,
 }
 
@@ -27,10 +27,10 @@ impl<Chain: CwEnv> BtsgAccountSuite<Chain> {
     pub fn new(chain: Chain) -> BtsgAccountSuite<Chain> {
         BtsgAccountSuite::<Chain> {
             account: BtsgAccountCollection::new("bs721_account", chain.clone()),
-            minter: BtsgAccountMinter::new("bs721_account_minter", chain.clone()),
-            market: BtsgAccountMarket::new("bs721_account_market", chain.clone()),
             wavs: BtsgWavsAuth::new("btsg_wavs", chain.clone()),
             bs721base: Bs721Base::new("bs721_base", chain.clone()),
+            // minter: BtsgAccountMinter::new("bs721_account_minter", chain.clone()),
+            // market: BtsgAccountMarket::new("bs721_account_market", chain.clone()),
             // abs: Abstract::new(chain.clone()),
         }
     }

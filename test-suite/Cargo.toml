@@ -7,7 +7,7 @@ version    = { workspace = true }
 
 [dependencies]
 # Contract dependencies
-bs721                         = { workspace = true }
+# bs721                         = { workspace = true }
 bs721-base                    = { workspace = true }
 btsg-auth                     = { workspace = true }
 btsg-irl                      = { workspace = true }

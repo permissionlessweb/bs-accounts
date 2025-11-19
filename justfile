@@ -1,17 +1,12 @@
 #!/bin/bash
-
 fmt:
 	cargo fmt --all --check
 schema:
 	sh scripts/sh/schema-and-codegen.sh
-
 lint:
-	cargo clippy --fix --tests -- -D warnings
-   
+	cargo clippy --fix --tests -- -D warnings 
 build:
 	sh scripts/sh/optimize.sh
-	
- 
 test:
     cargo test --locked
 

@@ -26,23 +26,8 @@ move_schema() {
     echo "✅  Moved $json_file → $dest"
 }
 
-# ------------------------------------------------------------------
-# 1️⃣ Specific contracts listed explicitly
-# ------------------------------------------------------------------
-for contract in bs721-account bs721-account-marketplace bs721-account-minter; do
-    echo "=== contracts/$contract ==="
-    (
-        cd "contracts/$contract" || exit 1
-        cargo schema
-        move_schema "../../$SCHEMA_OUTPUT_DIR/$contract.json"
-    )
-done
-
-# ------------------------------------------------------------------
-# 2️⃣ All contracts under contracts/smart-accounts/
-# ------------------------------------------------------------------
 for dir in contracts/smart-accounts/*; do
-    [ -d "$dir" ] || continue               # skip non‑directories
+    [ -d "$dir" ] || continue 
     name=$(basename "$dir")
     echo "=== $dir ==="
     (

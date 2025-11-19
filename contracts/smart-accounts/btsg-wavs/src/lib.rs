@@ -4,7 +4,6 @@ pub mod msg;
 mod state;
 
 use cosmwasm_std::{to_json_binary, Env, HashFunction, Response, BLS12_381_G1_GENERATOR};
-use cw_orch::core::env;
 use serde::{Deserialize, Serialize};
 
 pub use crate::error::ContractError;
