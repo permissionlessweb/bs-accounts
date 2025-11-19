@@ -1,4 +1,3 @@
 # btsg-zktls
-Authorize actions via zktls-proof verification.
- 
 
+Authorize actions via zktls-proof verification.

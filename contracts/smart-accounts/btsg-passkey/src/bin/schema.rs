@@ -1,6 +1,5 @@
-use cosmwasm_schema::write_api;
-
-// use btsg_passkey::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
+// use cosmwasm_schema::write_api;
+// use btsg_passkey::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
 fn main() {
     // write_api! {

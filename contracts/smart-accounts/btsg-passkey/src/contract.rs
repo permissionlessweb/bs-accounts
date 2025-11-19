@@ -1,20 +1,13 @@
-use btsg_auth::{
-    AuthenticationRequest, ConfirmExecutionRequest, OnAuthenticatorAddedRequest,
-    OnAuthenticatorRemovedRequest, TrackRequest,
-};
-use cosmwasm_std::{from_json, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
+use btsg_account::traits::default::BtsgAccountTrait;
+use cosmwasm_std::{Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
 use cw2::set_contract_version;
-use saa_common::Verifiable;
 
 use crate::{
-    msg::{ExecuteMsg, InstantiateMsg, QueryMsg, SudoMsg},
     state::PAYLOAD,
-    ContractError,
+    BtsgAccountPasskey, ContractError, {ExecuteMsg, InstantiateMsg, QueryMsg, SudoMsg},
 };
 
 use cosmwasm_std::entry_point;
-
-use saa::PasskeyCredential;
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:btsg-passkey";
@@ -56,76 +49,8 @@ pub fn execute(
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn sudo(deps: DepsMut, _env: Env, msg: SudoMsg) -> Result<Response, ContractError> {
-    match msg {
-        btsg_auth::AuthenticatorSudoMsg::OnAuthenticatorAdded(auth_add) => {
-            sudo_on_authenticator_added_request(deps, auth_add)
-        }
-        btsg_auth::AuthenticatorSudoMsg::OnAuthenticatorRemoved(auth_remove) => {
-            sudo_on_authenticator_removed_request(deps, auth_remove)
-        }
-        btsg_auth::AuthenticatorSudoMsg::Authenticate(auth_req) => {
-            sudo_authentication_request(deps, auth_req)
-        }
-        btsg_auth::AuthenticatorSudoMsg::Track(track_req) => sudo_track_request(deps, track_req),
-        btsg_auth::AuthenticatorSudoMsg::ConfirmExecution(conf_exec_req) => {
-            sudo_confirm_execution_request(deps, conf_exec_req)
-        }
-    }
-}
-
-fn sudo_on_authenticator_added_request(
-    _deps: DepsMut,
-    auth_added: OnAuthenticatorAddedRequest,
-) -> Result<Response, ContractError> {
-    // small storage writes, for example global contract entropy or count of registered accounts
-    match auth_added.authenticator_params {
-        Some(_) => Ok(Response::new().add_attribute("action", "auth_added_req")),
-        None => Err(ContractError::Unauthorized {}),
-    }
-}
-
-fn sudo_on_authenticator_removed_request(
-    _deps: DepsMut,
-    _auth_removed: OnAuthenticatorRemovedRequest,
-) -> Result<Response, ContractError> {
-    Ok(Response::new().add_attribute("action", "auth_removed_req"))
-}
-
-fn sudo_authentication_request(
-    deps: DepsMut,
-    auth_req: Box<AuthenticationRequest>,
-) -> Result<Response, ContractError> {
-    let cred: PasskeyCredential = from_json(&auth_req.signature)?;
-    cw_ownable::is_owner(deps.storage, &auth_req.account)?;
-
-    // assert client origin is same as one registered
-    if let Some(origin) = PAYLOAD.load(deps.storage)?.origin {
-        if cred.client_data.origin != origin {
-            return Err(ContractError::Unauthorized {});
-        }
-    }
-
-    // verify passkey request
-    // cred.verify(deps)?;
-
-    Ok(Response::new().add_attribute("action", "auth_req"))
-}
-
-fn sudo_track_request(
-    _deps: DepsMut,
-    TrackRequest { .. }: TrackRequest,
-) -> Result<Response, ContractError> {
-    // this is where we handle any processes after authentication, regarding message contents, prep to track balances prior to msg execution, etc..
-    Ok(Response::new().add_attribute("action", "track_req"))
-}
-
-fn sudo_confirm_execution_request(
-    _deps: DepsMut,
-    _confirm_execution_req: ConfirmExecutionRequest,
-) -> Result<Response, ContractError> {
-    // here is were we compare balances post event execution, based on data saved from sudo_track_request,etc..
-    Ok(Response::new().add_attribute("action", "conf_exec_req"))
+pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> Result<Response, ContractError> {
+    BtsgAccountPasskey::process_sudo_auth(deps, env, &msg)
 }
 
 pub fn execute_update_owner(

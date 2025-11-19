@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "AuthenticatorSudoMsg",
-  "description": "`AuthenticatorSudoMsg` contains variants of messages that can be sent to the authenticator contract from smart account module through `CosmWasmAuthenticator`.\n\n`AuthenticateRequest` is `Box`-ed due to large size difference between other variants",
+  "title": "AuthSudoMsg",
+  "description": "`AuthSudoMsg` contains variants of messages that can be sent to the authenticator contract from smart account module through `CosmWasmAuthenticator`.\n\n`AuthenticateRequest` is `Box`-ed due to large size difference between other variants",
   "oneOf": [
     {
       "type": "object",

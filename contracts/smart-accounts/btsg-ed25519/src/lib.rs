@@ -33,7 +33,7 @@ impl btsg_account::traits::default::BtsgAccountTrait for BtsgAccountEd25519 {
     type InstantiateMsg = crate::InstantiateMsg;
     type ExecuteMsg = crate::ExecuteMsg;
     type QueryMsg = crate::QueryMsg;
-    type SudoMsg = btsg_auth::AuthenticatorSudoMsg;
+    type SudoMsg = btsg_auth::AuthSudoMsg;
     type ContractError = ContractError;
     type AuthMethodStructs = BtsgAccountEthStructs;
     type AuthProcessResult = Result<cosmwasm_std::Response, ContractError>;

@@ -1,4 +1,4 @@
-use btsg_auth::AuthenticatorSudoMsg;
+use btsg_auth::AuthSudoMsg;
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Addr, Binary};
 

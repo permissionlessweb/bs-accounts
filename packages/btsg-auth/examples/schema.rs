@@ -2,7 +2,7 @@ use std::env::current_dir;
 use std::fs::create_dir_all;
 
 use btsg_auth::{
-    Any, AuthenticationRequest, AuthenticatorSudoMsg, ConfirmExecutionRequest,
+    Any, AuthenticationRequest, AuthSudoMsg, ConfirmExecutionRequest,
     OnAuthenticatorRemovedRequest, SignModeTxData, SignatureData, TrackRequest, TxData,
 };
 use cosmwasm_schema::{export_schema, remove_schemas, schema_for};
@@ -13,7 +13,7 @@ pub fn main() {
     create_dir_all(&out_dir).unwrap();
     remove_schemas(&out_dir).unwrap();
 
-    export_schema(&schema_for!(AuthenticatorSudoMsg), &out_dir);
+    export_schema(&schema_for!(AuthSudoMsg), &out_dir);
     export_schema(&schema_for!(OnAuthenticatorRemovedRequest), &out_dir);
     export_schema(&schema_for!(AuthenticationRequest), &out_dir);
     export_schema(&schema_for!(TrackRequest), &out_dir);

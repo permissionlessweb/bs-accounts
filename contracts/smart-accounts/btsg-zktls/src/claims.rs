@@ -5,8 +5,6 @@ use cosmwasm_schema::cw_serde;
 use k256::{
     ecdsa::{RecoveryId, Signature, VerifyingKey}, // type aliases
 };
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 use sha3::{Digest, Keccak256};
 
 use cosmwasm_std::{DepsMut, StdError};

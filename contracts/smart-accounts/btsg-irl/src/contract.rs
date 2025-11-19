@@ -56,7 +56,7 @@ pub fn instantiate(
         };
         // Create the fantoken creation message
         let create_msg = AnyMsg {
-            type_url: "/bitsong.fantoken.v1beta1.MsgIssue".into(),
+            type_url: "rs".into(),
             value: to_json_binary(&CreateFantokenMsg {
                 symbol: a.symbol.clone(),
                 name: a.name.clone(),

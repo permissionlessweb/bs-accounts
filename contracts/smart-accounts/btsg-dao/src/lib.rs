@@ -15,7 +15,7 @@ impl btsg_account::traits::default::BtsgAccountTrait for BtsgAccountDao {
     type InstantiateMsg = crate::msg::InstantiateMsg;
     type ExecuteMsg = crate::msg::ExecuteMsg;
     type QueryMsg = crate::msg::QueryMsg;
-    type SudoMsg = btsg_auth::AuthenticatorSudoMsg;
+    type SudoMsg = btsg_auth::AuthSudoMsg;
     type ContractError = crate::error::ContractError;
     type AuthMethodStructs = BtsgAccountDaoStructs;
     type AuthProcessResult = Result<Response, ContractError>;
@@ -26,17 +26,17 @@ impl btsg_account::traits::default::BtsgAccountTrait for BtsgAccountDao {
         req: &Self::SudoMsg,
     ) -> Self::AuthProcessResult {
         match req {
-            btsg_auth::AuthenticatorSudoMsg::OnAuthAdded(req) => {
+            btsg_auth::AuthSudoMsg::OnAuthAdded(req) => {
                 Self::on_auth_added(deps, env, req)
             }
-            btsg_auth::AuthenticatorSudoMsg::OnAuthRemoved(req) => {
+            btsg_auth::AuthSudoMsg::OnAuthRemoved(req) => {
                 Self::on_auth_removed(deps, env, req)
             }
-            btsg_auth::AuthenticatorSudoMsg::Authenticate(req) => {
+            btsg_auth::AuthSudoMsg::Authenticate(req) => {
                 Self::on_auth_request(deps, env, req)
             }
-            btsg_auth::AuthenticatorSudoMsg::Track(req) => Self::on_auth_track(deps, env, req),
-            btsg_auth::AuthenticatorSudoMsg::ConfirmExecution(req) => {
+            btsg_auth::AuthSudoMsg::Track(req) => Self::on_auth_track(deps, env, req),
+            btsg_auth::AuthSudoMsg::ConfirmExecution(req) => {
                 Self::on_auth_confirm(deps, env, req)
             }
         }
@@ -54,6 +54,12 @@ impl btsg_account::traits::default::BtsgAccountTrait for BtsgAccountDao {
         env: cosmwasm_std::Env,
         req: &btsg_auth::OnAuthenticatorAddedRequest,
     ) -> Self::AuthProcessResult {
+
+        /// Check if passed dao membership registration in json string form
+        /// 
+        /// check if dao member
+        /// 
+        /// save auth by addr prefix to binary object (to be typed-defined later)
         todo!()
     }
 
@@ -70,6 +76,10 @@ impl btsg_account::traits::default::BtsgAccountTrait for BtsgAccountDao {
         env: cosmwasm_std::Env,
         req: &Box<btsg_auth::AuthenticationRequest>,
     ) -> Self::AuthProcessResult {
+        // ensure still dao-member (raw-request)
+
+        // check msg involves dao-goodie bag?
+
         todo!()
     }
 
@@ -78,6 +88,7 @@ impl btsg_account::traits::default::BtsgAccountTrait for BtsgAccountDao {
         env: cosmwasm_std::Env,
         req: &btsg_auth::TrackRequest,
     ) -> Self::AuthProcessResult {
+        // ?
         todo!()
     }
 
@@ -86,6 +97,7 @@ impl btsg_account::traits::default::BtsgAccountTrait for BtsgAccountDao {
         env: cosmwasm_std::Env,
         req: &btsg_auth::ConfirmExecutionRequest,
     ) -> Self::AuthProcessResult {
+                // ?
         todo!()
     }
 

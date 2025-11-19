@@ -19,7 +19,7 @@ impl btsg_account::traits::default::BtsgAccountTrait for BtsgAccountWavs {
     type InstantiateMsg = crate::msg::InstantiateMsg;
     type ExecuteMsg = crate::msg::ExecuteMsg;
     type QueryMsg = crate::msg::QueryMsg;
-    type SudoMsg = btsg_auth::AuthenticatorSudoMsg;
+    type SudoMsg = btsg_auth::AuthSudoMsg;
     type ContractError = crate::error::ContractError;
     type AuthMethodStructs = BtsgAccountWavsAuthStruct;
     type AuthProcessResult = Result<Response, ContractError>;

@@ -62,7 +62,7 @@ impl btsg_account::traits::default::BtsgAccountTrait for BtsgAccountZkTls {
     type InstantiateMsg = InstantiateMsg;
     type ExecuteMsg = ExecuteMsg;
     type QueryMsg = QueryMsg;
-    type SudoMsg = btsg_auth::AuthenticatorSudoMsg;
+    type SudoMsg = btsg_auth::AuthSudoMsg;
 
     type ContractError = ContractError;
 

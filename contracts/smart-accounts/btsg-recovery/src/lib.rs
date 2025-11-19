@@ -15,7 +15,7 @@ impl btsg_account::traits::default::BtsgAccountTrait for BtsgAccountBackup {
     type InstantiateMsg = crate::msg::InstantiateMsg;
     type ExecuteMsg = crate::msg::ExecuteMsg;
     type QueryMsg = crate::msg::QueryMsg;
-    type SudoMsg = btsg_auth::AuthenticatorSudoMsg;
+    type SudoMsg = btsg_auth::AuthSudoMsg;
     type ContractError = crate::error::ContractError;
     type AuthMethodStructs = BtsgAccountBackupStructs;
     type AuthProcessResult = Result<Response, ContractError>;
@@ -26,17 +26,17 @@ impl btsg_account::traits::default::BtsgAccountTrait for BtsgAccountBackup {
         req: &Self::SudoMsg,
     ) -> Self::AuthProcessResult {
         match req {
-            btsg_auth::AuthenticatorSudoMsg::OnAuthAdded(req) => {
+            btsg_auth::AuthSudoMsg::OnAuthAdded(req) => {
                 Self::on_auth_added(deps, env, req)
             }
-            btsg_auth::AuthenticatorSudoMsg::OnAuthRemoved(req) => {
+            btsg_auth::AuthSudoMsg::OnAuthRemoved(req) => {
                 Self::on_auth_removed(deps, env, req)
             }
-            btsg_auth::AuthenticatorSudoMsg::Authenticate(req) => {
+            btsg_auth::AuthSudoMsg::Authenticate(req) => {
                 Self::on_auth_request(deps, env, req)
             }
-            btsg_auth::AuthenticatorSudoMsg::Track(req) => Self::on_auth_track(deps, env, req),
-            btsg_auth::AuthenticatorSudoMsg::ConfirmExecution(req) => {
+            btsg_auth::AuthSudoMsg::Track(req) => Self::on_auth_track(deps, env, req),
+            btsg_auth::AuthSudoMsg::ConfirmExecution(req) => {
                 Self::on_auth_confirm(deps, env, req)
             }
         }

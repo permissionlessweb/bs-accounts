@@ -1,5 +1,3 @@
-#[cfg(test)]
-mod multi_test;
 pub mod suite;
 pub use suite::*;
 

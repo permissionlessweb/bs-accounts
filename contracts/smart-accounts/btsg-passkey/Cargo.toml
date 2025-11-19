@@ -17,6 +17,7 @@ crate-type = ["cdylib", "rlib"]
 library = []
 
 [dependencies]
+btsg-account    = { workspace = true }
 cosmwasm-schema    = { workspace = true }
 cw-storage-plus    = { workspace = true }
 cosmwasm-std       = { workspace = true }
