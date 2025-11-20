@@ -7,15 +7,8 @@ version    = { workspace = true }
 
 [dependencies]
 abstract-std                  = { workspace = true }
-# bs721                         = { workspace = true }  # Not present in original, assuming it's not needed
-bs721-account                 = { workspace = true, features = ["interface", "abstract"] }
-bs721-account-marketplace     = { workspace = true }
-bs721-account-minter          = { workspace = true }
-bs721-base                    = { workspace = true }
-btsg-account                  = { workspace = true }
 btsg-auth                     = { workspace = true }
 btsg-irl                      = { workspace = true }
-btsg-nft-scripts              = { workspace = true }
 btsg-wavs                     = { workspace = true }
 
 cosmos-sdk-proto              = { workspace = true }

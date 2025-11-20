@@ -28,7 +28,7 @@ impl<Chain: CwEnv> BtsgAccountSuite<Chain> {
         BtsgAccountSuite::<Chain> {
             account: BtsgAccountCollection::new("bs721_account", chain.clone()),
             wavs: BtsgWavsAuth::new("btsg_wavs", chain.clone()),
-            bs721base: Bs721Base::new("bs721_base", chain.clone()),
+            // bs721base: Bs721Base::new("bs721_base", chain.clone()),
             // minter: BtsgAccountMinter::new("bs721_account_minter", chain.clone()),
             // market: BtsgAccountMarket::new("bs721_account_market", chain.clone()),
             // abs: Abstract::new(chain.clone()),

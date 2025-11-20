@@ -5,6 +5,7 @@
 This library provides the `BtsgAccountTrait` for implementing CosmWasm-based authenticators in the [x/smart-account module](https://github.com/terpnetwork/terp-core/blob/main/x/smart-account/README.md). The trait enables your contract to handle authentication logic as a "CosmWasm Authenticator," allowing custom, on-chain verification of transactions while integrating seamlessly with the Cosmos SDK's authentication flow.
 
 ### Key Concepts from x/smart-account
+
 - **Authenticators**: Custom logic for verifying transactions. CosmWasm authenticators are contracts that respond to sudo messages from the module.
 - **Flow Integration**:
   - **Circuit Breaker**: The module acts as an ante handler. If disabled (`is_smart_account_active = false`), it falls back to standard Cosmos SDK auth.
@@ -26,12 +27,15 @@ This library provides the `BtsgAccountTrait` for implementing CosmWasm-based aut
 Implementing `BtsgAccountTrait` makes your contract callable via the module's sudo entrypoint, routing to these hooks.
 
 ### When to Use
+
 - Build custom auth like spend limits, multisig, inheritance, or message filters.
 - Reuse contracts across users via `params` (e.g., pubkeys, thresholds).
 - Store dynamic state in contract storage (e.g., nonce tracking).
 
 ## Dependencies
+
 Add to `Cargo.toml`:
+
 ```toml
 [dependencies]
 btsg-auth = "0.1"  # Or latest version
@@ -45,6 +49,7 @@ serde = { version = "1.0", features = ["derive"] }
 Define your contract's messages and implement `BtsgAccountTrait`. The trait's associated types must match your contract's (e.g., `InstantiateMsg`, `ExecuteMsg`).
 
 ### Associated Types
+
 | Type                  | Description |
 |-----------------------|-------------|
 | `InstantiateMsg`     | Contract instantiation params (e.g., admin, config). |
@@ -58,22 +63,27 @@ Define your contract's messages and implement `BtsgAccountTrait`. The trait's as
 ### Core Methods
 
 #### `extended_authenticate(deps: DepsMut, auth: Self::AuthMethodStructs) -> Self::AuthProcessResult`
+
 - **Purpose**: Internal wrapper for custom auth logic. Use for one-off validation outside the standard flow (e.g., init helpers). Not called by the module—separate from `on_auth_request`.
 - **Notes**: Can mutate state if needed, but prefer stateless for module integration.
 - **Relation to Module**: N/A (internal use).
 
 #### `process_sudo_auth(deps: DepsMut, env: Env, req: &Self::SudoMsg) -> Self::AuthProcessResult`
+
 - **Purpose**: Entry point for all sudo calls from x/smart-account. Route `req` to appropriate hooks (e.g., match on `AuthSudoMsg`).
 - **Usage**: In your contract's `sudo` function:
+
   ```rust
   #[cfg_attr(not(feature = "library"), entry_point)]
   pub fn sudo(deps: DepsMut, env: Env, msg: AuthSudoMsg) -> Result<Response, ContractError> {
       BtsgAccountTrait::process_sudo_auth(deps, env, &msg)
   }
   ```
+
 - **Relation to Module**: Dispatches to `Authenticate`, `Track`, etc., via sudo.
 
 #### `on_auth_added(deps: DepsMut, env: Env, req: &OnAuthenticatorAddedRequest) -> Self::AuthProcessResult`
+
 - **Purpose**: Validate/setup on `MsgAddAuthenticator`. Check `req.config` (user `params`), store account-specific state (e.g., pubkey).
 - **Inputs** (from `OnAuthenticatorAddedRequest`):
   - `account`: Bech32 address.
@@ -83,6 +93,7 @@ Define your contract's messages and implement `BtsgAccountTrait`. The trait's as
 - **Relation to Module**: Invoked on add; ensures integrity (see [OnAuthenticatorAdded](https://github.com/terpnetwork/terp-core/blob/main/x/smart-account/README.md#on-authenticatoradded)).
 
 #### `on_auth_removed(deps: DepsMut, env: Env, req: &OnAuthenticatorRemovedRequest) -> Self::AuthProcessResult`
+
 - **Purpose**: Cleanup on `MsgRemoveAuthenticator`. Remove account state (e.g., counters) for optimization.
 - **Inputs** (from `OnAuthenticatorRemovedRequest`):
   - `account`: Bech32 address.
@@ -92,6 +103,7 @@ Define your contract's messages and implement `BtsgAccountTrait`. The trait's as
 - **Relation to Module**: Ensures stability; global data updates (see [OnAuthenticatorRemoved](https://github.com/terpnetwork/terp-core/blob/main/x/smart-account/README.md#on-authenticatorremoved)).
 
 #### `on_auth_request(deps: DepsMut, env: Env, req: &Box<AuthenticationRequest>) -> Self::AuthProcessResult`
+
 - **Purpose**: Stateless validation of message. Return `Ok` to approve, `Err` to reject.
 - **Inputs** (from `AuthenticationRequest`):
   - `message`: Protobuf-encoded msg.
@@ -103,18 +115,21 @@ Define your contract's messages and implement `BtsgAccountTrait`. The trait's as
 - **Relation to Module**: Ante handler step 3; fails tx if `Err` (see [Authenticate](https://github.com/terpnetwork/terp-core/blob/main/x/smart-account/README.md#authenticate)).
 
 #### `on_auth_track(deps: DepsMut, env: Env, req: &TrackRequest) -> Self::AuthProcessResult`
+
 - **Purpose**: Commit post-auth state (e.g., increment nonce). Called after all msgs auth, before execution.
 - **Inputs** (from `TrackRequest`): Same as `AuthenticationRequest`, plus tx context.
 - **Notes**: Changes **committed always** if auth succeeds (not reverted on exec failure). For composites: Called on all subs (AnyOf) or used subs (AllOf).
 - **Relation to Module**: Step 5; notifies for future rules (see [Track](https://github.com/terpnetwork/terp-core/blob/main/x/smart-account/README.md#track)).
 
 #### `on_auth_confirm(deps: DepsMut, env: Env, req: &ConfirmExecutionRequest) -> Self::AuthProcessResult`
+
 - **Purpose**: Post-exec rules (e.g., check spend limits). `Ok` commits exec changes; `Err` reverts them.
 - **Inputs** (from `ConfirmExecutionRequest`): Includes exec results/events.
 - **Notes**: No auth guarantee from `on_auth_request` (e.g., AnyOf may call confirm on unused subs). For composites: OR/AND logic.
 - **Relation to Module**: Post-handler step 7; enforces outcomes (see [ConfirmExecution](https://github.com/terpnetwork/terp-core/blob/main/x/smart-account/README.md#confirmexecution)).
 
 #### `on_hooks(deps: DepsMut, env: Env) -> Self::AuthProcessResult`
+
 - **Purpose**: Generic hook for chain-specific events (e.g., epoch triggers). Optional; return `Ok(())` if unused.
 - **Notes**: Mutate state as needed. Call from custom sudo if extended.
 - **Relation to Module**: N/A—extend for advanced use (e.g., inheritance timers).
@@ -245,6 +260,7 @@ impl BtsgAccountTrait for SpendLimitAuthenticator {
 ```
 
 ### Contract Entry Points
+
 ```rust
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(...) -> Result<Response, ContractError> { ... }
@@ -262,25 +278,30 @@ pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> Result<Response, ContractE
 ```
 
 ## Adding to Account
+
 Via CLI/JS:
+
 ```bash
 # MsgAddAuthenticator
 terpd tx smart-account add-authenticator <account> CosmWasmAuthenticatorV1 '{"contract": "<addr>", "params": [{"daily_threshold": "1000000", "denom": "uatom"}]}' --from <user>
 ```
 
 ## Testing
+
 - Use `cw-multi-test` for local sim.
 - Mock `AuthenticationRequest` with sample msgs/signers.
 - Verify state commits/reverts per flow.
 
 ## Advanced: Composites & Examples
+
 - **Multisig**: Parse partitioned sigs in `on_auth_request`, delegate to sub-calls (recurse with updated ID).
 - **Inheritance**: Use `on_hooks` for inactivity checks; `AnyOf` with standard sig.
 - See module docs for [One-Click Trading](https://github.com/terpnetwork/terp-core/blob/main/x/smart-account/README.md#one-click-trading), [Cosigner](https://github.com/terpnetwork/terp-core/blob/main/x/smart-account/README.md#cosigner).
 
 ## Limitations & Future
+
 - No sub-authenticator selection (calls all for AnyOf).
 - Confirm may call unused auths.
 - Track for [improved tracking](https://github.com/terpnetwork/terp-core/issues/8373).
 
-For full types, see [btsg-auth crate](https://docs.rs/btsg-auth). Contribute via xAI!
+For full types, see [btsg-auth crate](https://docs.rs/btsg-auth)

@@ -1,3 +1,4 @@
+/// Implements the de/serialization via base64 encoding as string
 pub mod as_base64_encoded_string {
     use cosmwasm_std::Binary;
     use serde::{de, Deserialize, Deserializer, Serialize, Serializer};

@@ -25,6 +25,9 @@ easy-addr                    = { path = "packages/easy-addr" }
 btsg-irl                     = { path = "contracts/smart-accounts/btsg-irl"  }
 btsg-wavs                    = { path = "contracts/smart-accounts/btsg-wavs" }
 btsg-zktls                   = { path = "contracts/smart-accounts/btsg-zktls"  }
+btsg-eth                   = { path = "contracts/smart-accounts/btsg-eth"  }
+btsg-ed25519                   = { path = "contracts/smart-accounts/btsg-ed25519"  }
+btsg-passkey                   = { path = "contracts/smart-accounts/btsg-passkey"  }
 
 abstract-std      = { version = "0.26.0" }
 cw-orch           = { version = "0.28.0" }

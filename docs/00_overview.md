@@ -1,13 +1,14 @@
+# Smart-Accounts: Cosmwasm Authentication Demos
+
+welcome!
 
 ## Thoughts On Account Token Security Design
 
-Since account tokens are the key for smart accounts, it is essential to keep in mind the security vulnurabilities that exists in a multi contract system that involved the smart contract of your Bitsong Account Token. Below will list a few obvious examples, but as always security is never static.
+Since account authenticators are a direct membrane for account authorization, it is essential to keep in mind the security vulnurabilities that exists in a multi authenticator system that involved the your accounts . Below will list a few obvious examples, but as always security is never static and is unique to your decisions.
 
 ### Centralized Smart Contract Ownership & Migration Attack
 
-If the code-id of the accounts used has a global contract admin, then the possible risk of the admins integrity being compromised, and an attack may occur on wallets. Bitsong mitigates this risk by having the governance module set as the admin able to migrate a contract for all of the contracts used in the accounts framework.
-
-There is still a risk of any wallet address compromized that is also authorized to execute actions as the module, however there are none.
+If the code-id of the accounts used has a global contract admin, then the possible risk of the admins integrity being compromised and an attack may occur on wallets actions via contract migration. Always check ownership parameters for smart contracts (and tokens).
 
 ### Undesired Operator Or Approval Authorization
 

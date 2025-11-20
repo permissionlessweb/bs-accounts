@@ -1,6 +1,5 @@
 use cosmwasm_std::Coin;
 
-pub mod minter;
 pub mod traits;
 pub mod verify_generic;
 
