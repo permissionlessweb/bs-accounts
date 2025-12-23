@@ -12,7 +12,7 @@ use crate::state::WAVS_PUBKEY;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BtsgAccountWavsAuthStruct {}
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Default, Deserialize)]
 pub struct BtsgAccountWavs {}
 impl btsg_account::traits::default::BtsgAccountTrait for BtsgAccountWavs {
     type InstantiateMsg = crate::msg::InstantiateMsg;

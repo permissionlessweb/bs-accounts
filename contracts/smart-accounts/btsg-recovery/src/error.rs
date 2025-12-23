@@ -9,9 +9,6 @@ pub enum ContractError {
     #[error("Unauthorized - only the smart account can perform this action")]
     Unauthorized {},
 
-    #[error("Fantoken has not been created yet")]
-    FantokenNotCreated {},
-
     #[error("Minting would exceed maximum supply")]
     ExceedsMaxSupply {},
 

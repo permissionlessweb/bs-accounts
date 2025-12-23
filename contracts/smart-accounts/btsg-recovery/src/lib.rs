@@ -1,20 +1,29 @@
 use crate::error::ContractError;
+use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::Response;
 use serde::{Deserialize, Serialize};
 
 pub mod contract;
 mod error;
-pub mod msg;
-pub mod state;
+
+#[cw_serde]
+pub struct InstantiateMsg {}
+
+#[cw_serde]
+pub enum ExecuteMsg {}
+
+#[cw_serde]
+#[derive(QueryResponses)]
+pub enum QueryMsg {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BtsgAccountBackupStructs {}
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BtsgAccountBackup {}
 impl btsg_account::traits::default::BtsgAccountTrait for BtsgAccountBackup {
-    type InstantiateMsg = crate::msg::InstantiateMsg;
-    type ExecuteMsg = crate::msg::ExecuteMsg;
-    type QueryMsg = crate::msg::QueryMsg;
+    type InstantiateMsg = InstantiateMsg;
+    type ExecuteMsg = ExecuteMsg;
+    type QueryMsg = QueryMsg;
     type SudoMsg = btsg_auth::AuthSudoMsg;
     type ContractError = crate::error::ContractError;
     type AuthMethodStructs = BtsgAccountBackupStructs;
@@ -26,19 +35,11 @@ impl btsg_account::traits::default::BtsgAccountTrait for BtsgAccountBackup {
         req: &Self::SudoMsg,
     ) -> Self::AuthProcessResult {
         match req {
-            btsg_auth::AuthSudoMsg::OnAuthAdded(req) => {
-                Self::on_auth_added(deps, env, req)
-            }
-            btsg_auth::AuthSudoMsg::OnAuthRemoved(req) => {
-                Self::on_auth_removed(deps, env, req)
-            }
-            btsg_auth::AuthSudoMsg::Authenticate(req) => {
-                Self::on_auth_request(deps, env, req)
-            }
+            btsg_auth::AuthSudoMsg::OnAuthAdded(req) => Self::on_auth_added(deps, env, req),
+            btsg_auth::AuthSudoMsg::OnAuthRemoved(req) => Self::on_auth_removed(deps, env, req),
+            btsg_auth::AuthSudoMsg::Authenticate(req) => Self::on_auth_request(deps, env, req),
             btsg_auth::AuthSudoMsg::Track(req) => Self::on_auth_track(deps, env, req),
-            btsg_auth::AuthSudoMsg::ConfirmExecution(req) => {
-                Self::on_auth_confirm(deps, env, req)
-            }
+            btsg_auth::AuthSudoMsg::ConfirmExecution(req) => Self::on_auth_confirm(deps, env, req),
         }
     }
 

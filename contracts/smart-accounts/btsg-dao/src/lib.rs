@@ -17,7 +17,7 @@ use serde::{Deserialize, Serialize};
 
 const CONTRACT_NAME: &str = "crates.io:btsg-irl";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
-const FANTOKEN_CREATE_REPLY_ID: u64 = 1;
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BtsgAccountDaoStructs {}
 #[derive(Debug, Clone, Serialize, Deserialize)]

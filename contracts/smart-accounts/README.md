@@ -4,6 +4,11 @@ STILL EXPERIMENTAL & UNAUDITED,USE AT YOUR OWN RISK.
 
 # BTSG Authenticator Trait for CosmWasm Contracts
 
+## TODO
+
+- application specific accounts: tls-proof from domain
+- account recovery/backup
+
 ## Overview
 
 This library provides the `BtsgAccountTrait` for implementing CosmWasm-based authenticators in the [x/smart-account module](https://github.com/terpnetwork/terp-core/blob/main/x/smart-account/README.md). The trait enables your contract to handle authentication logic as a "CosmWasm Authenticator," allowing custom, on-chain verification of transactions while integrating seamlessly with the Cosmos SDK's authentication flow.

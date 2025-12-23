@@ -19,27 +19,27 @@ documentation = "https://docs.bitsong.io"
 license    = "Apache-2.0"
 
 [workspace.dependencies]
-btsg-account                 = { path = "packages/btsg-account" }
-btsg-auth                    = { path = "packages/btsg-auth" }
-easy-addr                    = { path = "packages/easy-addr" }
-btsg-irl                     = { path = "contracts/smart-accounts/btsg-irl"  }
-btsg-wavs                    = { path = "contracts/smart-accounts/btsg-wavs" }
-btsg-zktls                   = { path = "contracts/smart-accounts/btsg-zktls"  }
-btsg-eth                   = { path = "contracts/smart-accounts/btsg-eth"  }
+btsg-account                   = { path = "packages/btsg-account" }
+btsg-auth                      = { path = "packages/btsg-auth" }
+easy-addr                      = { path = "packages/easy-addr" }
+btsg-irl                       = { path = "contracts/smart-accounts/btsg-irl"  }
+btsg-wavs                      = { path = "contracts/smart-accounts/btsg-wavs" }
+btsg-zktls                     = { path = "contracts/smart-accounts/btsg-zktls"  }
+btsg-eth                       = { path = "contracts/smart-accounts/btsg-eth"  }
 btsg-ed25519                   = { path = "contracts/smart-accounts/btsg-ed25519"  }
 btsg-passkey                   = { path = "contracts/smart-accounts/btsg-passkey"  }
 
-abstract-std      = { version = "0.26.0" }
-cw-orch           = { version = "0.28.0" }
+abstract-std                   = { version = "0.26.0" }
+cw-orch                        = { version = "0.28.0" }
 
 # bs721                        = { git = "https://github.com/permissionlessweb/bs-nfts", branch = "feat/cosmwasm@v3",package = "bs721" }
-bs721-base                   = { git = "https://github.com/permissionlessweb/bs-nfts", branch = "feat/cosmwasm@v3"}
-bs-controllers               = { git = "https://github.com/permissionlessweb/bs-nfts", branch = "feat/cosmwasm@v3", library = "bs-controllers" } 
-btsg-nft-scripts             = { git = "https://github.com/permissionlessweb/bs-nfts", branch = "feat/cosmwasm@v3", package = "btsg-nft-scripts" }
+bs721-base                     = { git = "https://github.com/permissionlessweb/bs-nfts", branch = "feat/cosmwasm@v3"}
+bs-controllers                 = { git = "https://github.com/permissionlessweb/bs-nfts", branch = "feat/cosmwasm@v3", library = "bs-controllers" } 
+btsg-nft-scripts               = { git = "https://github.com/permissionlessweb/bs-nfts", branch = "feat/cosmwasm@v3", package = "btsg-nft-scripts" }
 
-saa = { git = "https://github.com/permissionlessweb/smart-account-auth", package = "smart-account-auth",branch = "feat/cosmwasm@v3", features = ["cosmwasm", "native", "curves", "session", "utils", "types"]}
-saa-common           = { git = "https://github.com/permissionlessweb/smart-account-auth", branch = "feat/cosmwasm@v3", features = [ ]}
-saa-passkeys         = { git = "https://github.com/permissionlessweb/smart-account-auth", library = "passkeys",features = ["cosmwasm"]}
+saa                           = { git = "https://github.com/permissionlessweb/smart-account-auth", package = "smart-account-auth",branch = "feat/cosmwasm@v3", features = ["cosmwasm", "native", "curves", "session", "utils", "types"]}
+saa-common                    = { git = "https://github.com/permissionlessweb/smart-account-auth", branch = "feat/cosmwasm@v3", features = [ ]}
+saa-passkeys                  = { git = "https://github.com/permissionlessweb/smart-account-auth", library = "passkeys",features = ["cosmwasm"]}
  
 cosmos-sdk-proto  = { version = "0.28.0",  git = "https://github.com/permissionlessweb/cosmos-rust", default-features = false }
 cosmwasm-schema   = { version = "3.0.2" }
