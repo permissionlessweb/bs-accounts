@@ -29,27 +29,29 @@ btsg-eth                       = { path = "contracts/smart-accounts/btsg-eth"  }
 btsg-ed25519                   = { path = "contracts/smart-accounts/btsg-ed25519"  }
 btsg-passkey                   = { path = "contracts/smart-accounts/btsg-passkey"  }
 
-abstract-std                   = { version = "0.26.0" }
-cw-orch                        = { version = "0.28.0" }
 
-# bs721                        = { git = "https://github.com/permissionlessweb/bs-nfts", branch = "feat/cosmwasm@v3",package = "bs721" }
-bs721-base                     = { git = "https://github.com/permissionlessweb/bs-nfts", branch = "feat/cosmwasm@v3"}
-bs-controllers                 = { git = "https://github.com/permissionlessweb/bs-nfts", branch = "feat/cosmwasm@v3", library = "bs-controllers" } 
-btsg-nft-scripts               = { git = "https://github.com/permissionlessweb/bs-nfts", branch = "feat/cosmwasm@v3", package = "btsg-nft-scripts" }
 
-saa                           = { git = "https://github.com/permissionlessweb/smart-account-auth", package = "smart-account-auth",branch = "feat/cosmwasm@v3", features = ["cosmwasm", "native", "curves", "session", "utils", "types"]}
-saa-common                    = { git = "https://github.com/permissionlessweb/smart-account-auth", branch = "feat/cosmwasm@v3", features = [ ]}
-saa-passkeys                  = { git = "https://github.com/permissionlessweb/smart-account-auth", library = "passkeys",features = ["cosmwasm"]}
  
-cosmos-sdk-proto  = { version = "0.28.0",  git = "https://github.com/permissionlessweb/cosmos-rust", default-features = false }
-cosmwasm-schema   = { version = "3.0.2" }
-cosmwasm-std      = { version = "3.0.2", features = ["cosmwasm_1_4", "cosmwasm_2_0"] }
-cw2               = { version = "3.0.0" }
-cw-ownable        = { git = "https://github.com/permissionlessweb/cw-plus-plus",package = "cw-ownable" }
-cw-storage-macro  = { version = "3.0.1" }
-cw-storage-plus   = { version = "3.0.1" } 
-cosmwasm-crypto   = { version = "3.0.2" }
-cw-utils          = { version = "3.0.0" }
+
+abstract-std      = { version = "0.26.0" }
+cw-orch           = { version = "0.28.0" }
+
+# bs721           = { git = "https://github.com/permissionlessweb/bs-nfts", branch = "feat/cosmwasm@v3",package = "bs721" }
+bs721-base        = { git = "https://github.com/permissionlessweb/bs-nfts", branch = "feat/cosmwasm@v3"}
+bs-controllers    = { git = "https://github.com/permissionlessweb/bs-nfts", branch = "feat/cosmwasm@v3", library = "bs-controllers" } 
+btsg-nft-scripts  = { git = "https://github.com/permissionlessweb/bs-nfts", branch = "feat/cosmwasm@v3", package = "btsg-nft-scripts" }
+saa               = { git = "https://github.com/permissionlessweb/smart-account-auth", branch = "mvp", package = "smart-account-auth", features = ["cosmwasm", "native", "curves", "session", "utils", "types"]}
+saa-common        = { git = "https://github.com/permissionlessweb/smart-account-auth", branch = "mvp", features = [ ]}
+saa-passkeys      = { git = "https://github.com/permissionlessweb/smart-account-auth", branch = "mvp", library = "passkeys", features = ["cosmwasm"] }
+cosmos-sdk-proto  = { git = "https://github.com/permissionlessweb/cosmos-rust", version = "0.28.0", default-features = false }
+cosmwasm-std      = { git = "https://github.com/permissionlessweb/cosmwasm", branch = "mvp",features = ["cosmwasm_1_4", "cosmwasm_2_0"] }
+cosmwasm-schema   = { git = "https://github.com/permissionlessweb/cosmwasm", branch = "mvp", package = "cosmwasm-schema" }
+cw2               = { git = "https://github.com/permissionlessweb/cw-minus", branch = "mvp", package = "cw2" }
+cw-ownable        = { git = "https://github.com/permissionlessweb/cw-plus-plus",package = "cw-ownable" , branch = "feat/mvp" }
+cw-storage-macro  = { git = "https://github.com/permissionlessweb/cw-storage-plus", branch = "mvp",package = "cw-storage-macro" }
+cw-storage-plus   = { git = "https://github.com/permissionlessweb/cw-storage-plus", branch = "mvp" }
+cosmwasm-crypto   = { git = "https://github.com/permissionlessweb/cosmwasm", branch = "mvp",package = "cosmwasm-crypto" }
+cw-utils          = { git = "https://github.com/permissionlessweb/cw-minus", branch = "mvp", package = "cw-utils" }
 
 bech32            = { version = "0.11.0", default-features = false, features = ["alloc"] }
 ecdsa             = { version = "0.16.2" }  

@@ -39,7 +39,7 @@ Add to `Cargo.toml`:
 ```toml
 [dependencies]
 btsg-auth = "0.1"  # Or latest version
-cosmwasm-std = "1.5"  # Compatible with your chain
+cosmwasm-std = "3.0.2"  # Compatible with your chain
 cw-serde = "0.16"
 serde = { version = "1.0", features = ["derive"] }
 ```
