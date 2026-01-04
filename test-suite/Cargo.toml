@@ -18,7 +18,6 @@ easy-addr                     = { workspace = true }
 # CosmWasm dependencies
 cosmwasm-std                  = { workspace = true }
 cosmwasm-schema               = { workspace = true }
-cw-multi-test                 = { version = "3.0.1", features = ["stargate", "cosmwasm_2_1", "staking"] }
 cw-ownable                    = { workspace = true }
 cw-utils                      = { workspace = true }
 cw2                           = { workspace = true }
@@ -37,8 +36,11 @@ serde                         = { workspace = true }
 serde_json                    = { workspace = true }
 bech32                        = { workspace = true }
 
+#cw-multi-test                 = { git = "https://github.com/permissionlessweb/cw-multi-test", branch = "mvp", features = ["stargate", "cosmwasm_2_1", "staking"] }
+cw-multi-test                 = { path = "../../zk-multi-test", features = ["stargate", "cosmwasm_2_1", "staking"] }
+
 [dev-dependencies]
-cw-multi-test                 = { version = "3.0.0", features = ["stargate", "cosmwasm_2_1", "staking"] }
+cw-multi-test                 = { path = "../../zk-multi-test", features = ["stargate", "cosmwasm_2_1", "staking"] }
 
 [lib]
 crate-type = ["cdylib", "rlib"]

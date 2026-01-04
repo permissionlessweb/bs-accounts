@@ -1,4 +1,0 @@
-[submodule "submodules/smart-account-auth"]
-	path = submodules/smart-account-auth
-	url = https://github.com/permissionlessweb/smart-account-auth
-	branch = feat/cosmwasm@v3

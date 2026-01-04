@@ -24,14 +24,8 @@ cw-storage-plus    = { workspace = true }
 cosmwasm-std       = { workspace = true }
 cw-ownable         = { workspace = true }
 cw-orch            = { workspace = true }
-cw-utils           = { workspace = true }
 cw2                = { workspace = true }
-schemars           = { workspace = true }
-serde              = { workspace = true }
 thiserror          = { workspace = true }
-
-
-saa-passkeys  = { workspace = true }
 saa   = { workspace = true }
 saa-common    = { workspace = true }
 

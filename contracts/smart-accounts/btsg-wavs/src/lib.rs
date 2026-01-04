@@ -76,6 +76,7 @@ impl btsg_account::traits::default::BtsgAccountTrait for BtsgAccountWavs {
         if a < b {
             return Err(ContractError::InvalidPubkeyCount { a, b });
         }
+
         // EXAMPLE IMPLEMENTATION FOR BLS12_381 VERIFICATION COMMONWARE-CRYPTO -> COSMWASM_STD
         // TODO: improve functionality/integrate described workflow here: https://gist.github.com/liangping/3809ca1f1c13bc250217041a7d343fcf
         if !deps.api.bls12_381_pairing_equality(
