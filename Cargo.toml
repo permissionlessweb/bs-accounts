@@ -33,36 +33,31 @@ btsg-passkey                   = { path = "contracts/smart-accounts/btsg-passkey
 abstract-std      = { version = "0.26.0" }
 cw-orch           = { version = "0.28.0" }
 
-# bs721-base        = { git = "https://github.com/permissionlessweb/bs-nfts", branch = "feat/cosmwasm@v3"}
-# bs-controllers    = { git = "https://github.com/permissionlessweb/bs-nfts", branch = "feat/cosmwasm@v3", library = "bs-controllers" } 
-#cw-utils          = { git = "https://github.com/permissionlessweb/cw-minus", branch = "mvp", package = "cw-utils" }
-#cosmwasm-std      = { git = "https://github.com/permissionlessweb/cosmwasm", branch = "mvp",features = ["cosmwasm_1_4", "cosmwasm_2_0"] }
-#cosmwasm-schema   = { git = "https://github.com/permissionlessweb/cosmwasm", branch = "mvp", package = "cosmwasm-schema" }
-#cw-storage-plus   = { git = "https://github.com/permissionlessweb/cw-storage-plus", branch = "mvp" }
-#cw2               = { git = "https://github.com/permissionlessweb/cw-minus", branch = "mvp", package = "cw2" }
-#cw-ownable        = { git = "https://github.com/permissionlessweb/cw-plus-plus",package = "cw-ownable" , branch = "feat/mvp" }
-#cw-storage-macro  = { git = "https://github.com/permissionlessweb/cw-storage-plus", branch = "mvp",package = "cw-storage-macro" }
-#cosmwasm-crypto   = { git = "https://github.com/permissionlessweb/cosmwasm", branch = "mvp", package = "cosmwasm-crypto" }
-#saa               = { git = "https://github.com/permissionlessweb/smart-account-auth", branch = "mvp", package = "smart-account-auth", features = ["cosmwasm", "native", "curves", "session", "utils", "types"]}
-#saa-common        = { git = "https://github.com/permissionlessweb/smart-account-auth", branch = "mvp", features = [ ]}
-#saa-passkeys      = { git = "https://github.com/permissionlessweb/smart-account-auth", branch = "mvp", library = "passkeys", features = ["cosmwasm"] }
-#btsg-nft-scripts  = { git = "https://github.com/permissionlessweb/bs-nfts", branch = "feat/cosmwasm@v3", package = "btsg-nft-scripts" }
-
-# include paths for local development (expects all workspaces in the same directory, using git worktrees)
-bs721-base        = { path = "../zk-nfts/contracts/collections/bs721-base" }
-bs-controllers    = { path = "../zk-nfts/packages/controllers" }
-saa               = { path = "../zk-saa/packages/bundle", features = ["cosmwasm", "native", "curves", "session", "utils", "types"], package = "smart-account-auth" }
-saa-common        = { path = "../zk-saa/packages/common", features = [ ]}
-saa-passkeys      = { path = "../zk-saa/packages/passkeys", library = "passkeys", features = ["cosmwasm"] }
+cw-utils          = { git = "https://github.com/permissionlessweb/cw-minus", branch = "mvp", package = "cw-utils" }
+cosmwasm-std      = { git = "https://github.com/permissionlessweb/cosmwasm", branch = "mvp",features = ["cosmwasm_1_4", "cosmwasm_2_0"] }
+cosmwasm-schema   = { git = "https://github.com/permissionlessweb/cosmwasm", branch = "mvp", package = "cosmwasm-schema" }
+cw-storage-plus   = { git = "https://github.com/permissionlessweb/cw-storage-plus", branch = "mvp" }
+cw2               = { git = "https://github.com/permissionlessweb/cw-minus", branch = "mvp", package = "cw2" }
+cw-ownable        = { git = "https://github.com/permissionlessweb/cw-plus-plus",package = "cw-ownable" , branch = "feat/mvp" }
+cw-storage-macro  = { git = "https://github.com/permissionlessweb/cw-storage-plus", branch = "mvp",package = "cw-storage-macro" }
+cosmwasm-crypto   = { git = "https://github.com/permissionlessweb/cosmwasm", branch = "mvp", package = "cosmwasm-crypto" }
 cosmos-sdk-proto  = { git = "https://github.com/permissionlessweb/cosmos-rust", version = "0.28.0", default-features = false }
-cw-ownable        = { path = "../zk-plus-plus/packages/ownable" }
-cw-storage-macro  = { path = "../zk-storage-plus/macros" }
-cosmwasm-crypto   = { path = "../zk-cosmwasm/mvp/packages/crypto" }
-cw-utils          = { path = "../zk-cw-minus/packages/cw-utils" }
-cosmwasm-std      = { path = "../zk-cosmwasm/mvp/packages/std" }
-cosmwasm-schema   = { path = "../zk-cosmwasm/mvp/packages/schema" }
-cw-storage-plus  = { path = "../zk-storage-plus" }
-cw2               = { path = "../zk-cw-minus/packages/cw2" }
+saa               = { git = "https://github.com/permissionlessweb/smart-account-auth", branch = "mvp", package = "smart-account-auth", features = ["cosmwasm", "native", "curves", "session", "utils", "types"]}
+saa-common        = { git = "https://github.com/permissionlessweb/smart-account-auth", branch = "mvp", features = [ ]}
+saa-passkeys      = { git = "https://github.com/permissionlessweb/smart-account-auth", branch = "mvp", library = "passkeys", features = ["cosmwasm"] }
+ 
+# include paths for local development (expects all workspaces in the same directory, using git worktrees)
+#saa               = { path = "../zk-saa/packages/bundle", features = ["cosmwasm", "native", "curves", "session", "utils", "types"], package = "smart-account-auth" }
+#saa-common        = { path = "../zk-saa/packages/common", features = [ ]}
+#saa-passkeys      = { path = "../zk-saa/packages/passkeys", library = "passkeys", features = ["cosmwasm"] }
+#cw-ownable        = { path = "../zk-plus-plus/packages/ownable" }
+#cw-storage-macro  = { path = "../zk-storage-plus/macros" }
+#cosmwasm-crypto   = { path = "../zk-cosmwasm/mvp/packages/crypto" }
+#cw-utils          = { path = "../zk-cw-minus/packages/cw-utils" }
+#cosmwasm-std      = { path = "../zk-cosmwasm/mvp/packages/std" }
+#cosmwasm-schema   = { path = "../zk-cosmwasm/mvp/packages/schema" }
+#cw-storage-plus  = { path = "../zk-storage-plus" }
+#cw2               = { path = "../zk-cw-minus/packages/cw2" }
 
 
 bech32            = { version = "0.11.0", default-features = false, features = ["alloc"] }
